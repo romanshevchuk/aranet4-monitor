@@ -95,6 +95,13 @@ public partial class MainWindow : Window
             device = new Aranet4Device { Address = FormatAddress(args.BluetoothAddress) };
             _devicesByAddress.Add(args.BluetoothAddress, device);
             Devices.Add(device);
+
+            // The dashboard is designed around the primary sensor; keep the first one in focus.
+            if (DevicesList.SelectedItem is null)
+            {
+                DevicesList.SelectedItem = device;
+                DevicesList.ScrollIntoView(device);
+            }
         }
 
         var advertisement = args.Advertisement;
@@ -120,12 +127,12 @@ public partial class MainWindow : Window
         else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.") device.IntegrationState = decodeMessage;
 
         StatusText.Text = $"Listening — {Devices.Count} Aranet4 device(s), last packet {device.Name}";
-        if (DevicesGrid.SelectedItem == device) ShowDetails(device);
+        if (DevicesList.SelectedItem == device) ShowDetails(device);
     }
 
-    private void DevicesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (DevicesGrid.SelectedItem is Aranet4Device device) ShowDetails(device);
+        if (DevicesList.SelectedItem is Aranet4Device device) ShowDetails(device);
     }
 
     private void ShowDetails(Aranet4Device device)
@@ -134,13 +141,21 @@ public partial class MainWindow : Window
         TemperatureText.Text = device.Temperature;
         HumidityText.Text = device.Humidity;
         PressureText.Text = device.Pressure;
-        DeviceInfoText.Text = $"{device.Name} · {device.Address} · RSSI {device.Rssi} dBm · firmware {device.Firmware} · battery {device.Battery} · measurement age {device.MeasurementAge} · interval {device.MeasurementInterval}.{Environment.NewLine}{device.IntegrationState}";
+        BatteryText.Text = device.Battery;
+        AgeText.Text = device.MeasurementAge;
+        IntervalText.Text = device.MeasurementInterval;
+        RssiText.Text = $"{device.Rssi} dBm";
+        LastSeenText.Text = device.LastSeen == default ? "No data yet" : $"Last seen {device.LastSeen:HH:mm:ss}";
+        Co2CaptionText.Text = device.IntegrationState;
+        DeviceInfoText.Text = $"{device.Name} · {device.Address} · firmware {device.Firmware} · {device.Packets} packets received";
         RawPacketText.Text = $"ADVERTISEMENT{Environment.NewLine}{device.LastAdvertisement}{Environment.NewLine}{Environment.NewLine}SCAN RESPONSE{Environment.NewLine}{device.LastScanResponse}";
     }
 
     private void ClearDetails()
     {
-        Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = "—";
+        Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = AgeText.Text = IntervalText.Text = RssiText.Text = "—";
+        Co2CaptionText.Text = "Waiting for a live beacon";
+        LastSeenText.Text = "No data yet";
         DeviceInfoText.Text = "Select a device to inspect its beacon captures.";
         RawPacketText.Clear();
     }
