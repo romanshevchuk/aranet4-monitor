@@ -3,6 +3,9 @@ using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
+using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Storage.Streams;
 
@@ -13,6 +16,7 @@ public partial class MainWindow : Window
     private static readonly Guid AranetServiceUuid = Guid.Parse("0000fce0-0000-1000-8000-00805f9b34fb");
     private readonly Dictionary<ulong, Aranet4Device> _devicesByAddress = new();
     private BluetoothLEAdvertisementWatcher? _watcher;
+    private readonly DispatcherTimer _tickTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     public ObservableCollection<Aranet4Device> Devices { get; } = [];
 
@@ -20,7 +24,21 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = this;
-        Closed += (_, _) => StopWatching();
+        Closed += (_, _) => { _tickTimer.Stop(); StopWatching(); };
+
+        Devices.CollectionChanged += (_, _) =>
+        {
+            DevicesCountText.Text = Devices.Count.ToString(CultureInfo.InvariantCulture);
+            EmptyState.Visibility = Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        };
+
+        // Keeps "3s ago" labels and the live dots fresh between packets.
+        _tickTimer.Tick += (_, _) =>
+        {
+            foreach (var device in Devices) device.Tick();
+            if (DevicesList.SelectedItem is Aranet4Device selected) ShowLastSeen(selected);
+        };
+        _tickTimer.Start();
     }
 
     private void StartButton_Click(object sender, RoutedEventArgs e)
@@ -33,9 +51,10 @@ public partial class MainWindow : Window
             _watcher.Start();
             StartButton.IsEnabled = false;
             StopButton.IsEnabled = true;
-            StatusText.Text = "Listening for Aranet4 beacon packets…";
+            SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
+            EmptyHintText.Text = "Listening… power-cycle or move the sensor closer if nothing shows up.";
         }
-        catch (Exception ex) { StatusText.Text = $"Could not start: {ex.Message}"; }
+        catch (Exception ex) { SetStatus($"Could not start: {ex.Message}", StatusKind.Error); }
     }
 
     private void StopButton_Click(object sender, RoutedEventArgs e) => StopWatching();
@@ -56,7 +75,7 @@ public partial class MainWindow : Window
         _watcher = null;
         StartButton.IsEnabled = true;
         StopButton.IsEnabled = false;
-        StatusText.Text = "Stopped";
+        SetStatus("Stopped", StatusKind.Idle);
     }
 
     private void Watcher_Stopped(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementWatcherStoppedEventArgs args) =>
@@ -66,7 +85,7 @@ public partial class MainWindow : Window
             {
                 StartButton.IsEnabled = true;
                 StopButton.IsEnabled = false;
-                StatusText.Text = $"Listener stopped: {args.Error}";
+                SetStatus($"Listener stopped: {args.Error}", args.Error == BluetoothError.Success ? StatusKind.Idle : StatusKind.Error);
             }
         });
 
@@ -115,18 +134,20 @@ public partial class MainWindow : Window
         if (measurement is not null)
         {
             device.Firmware = measurement.Firmware;
-            device.Co2 = $"{measurement.Co2:N0} ppm";
+            device.Co2Ppm = measurement.Co2;
             device.Temperature = $"{measurement.TemperatureCelsius:0.0} °C";
             device.Pressure = $"{measurement.PressureHpa:0.0} hPa";
             device.Humidity = $"{measurement.HumidityPercent}%";
+            device.HumidityValue = measurement.HumidityPercent;
             device.Battery = measurement.BatteryPercent is null ? "—" : $"{measurement.BatteryPercent}%";
+            device.BatteryValue = measurement.BatteryPercent ?? 0;
             device.MeasurementInterval = measurement.IntervalSeconds is null ? "—" : $"{measurement.IntervalSeconds} s";
             device.MeasurementAge = measurement.AgeSeconds is null ? "—" : $"{measurement.AgeSeconds} s";
             device.IntegrationState = "Live Smart Home beacon decoded";
         }
         else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.") device.IntegrationState = decodeMessage;
 
-        StatusText.Text = $"Listening — {Devices.Count} Aranet4 device(s), last packet {device.Name}";
+        SetStatus($"Listening — {Devices.Count} Aranet4 device(s), last packet {device.Name}", StatusKind.Listening);
         if (DevicesList.SelectedItem == device) ShowDetails(device);
     }
 
@@ -135,29 +156,101 @@ public partial class MainWindow : Window
         if (DevicesList.SelectedItem is Aranet4Device device) ShowDetails(device);
     }
 
+    private enum StatusKind { Idle, Listening, Error }
+
+    private void SetStatus(string text, StatusKind kind)
+    {
+        StatusText.Text = text;
+        StatusDot.Tag = kind switch { StatusKind.Listening => "on", StatusKind.Error => "error", _ => null };
+    }
+
     private void ShowDetails(Aranet4Device device)
     {
-        Co2Text.Text = device.Co2;
+        var hasReading = device.Co2Ppm > 0;
+        Co2Text.Text = hasReading ? device.Co2Ppm.ToString("N0", CultureInfo.CurrentCulture) : "—";
+        Co2UnitText.Visibility = hasReading ? Visibility.Visible : Visibility.Collapsed;
+        Co2CaptionText.Text = device.IntegrationState;
+        ShowQuality(device.Co2Ppm);
+
         TemperatureText.Text = device.Temperature;
         HumidityText.Text = device.Humidity;
+        HumidityBar.Value = device.HumidityValue;
         PressureText.Text = device.Pressure;
         BatteryText.Text = device.Battery;
+        BatteryBar.Value = device.BatteryValue;
+        BatteryBar.Foreground = new SolidColorBrush(device.BatteryValue switch
+        {
+            <= 15 => Color.FromRgb(0xEF, 0x5B, 0x5B),
+            <= 35 => Color.FromRgb(0xF5, 0xB9, 0x42),
+            _ => Color.FromRgb(0x22, 0xC5, 0x5E),
+        });
+
         AgeText.Text = device.MeasurementAge;
         IntervalText.Text = device.MeasurementInterval;
-        RssiText.Text = $"{device.Rssi} dBm";
-        LastSeenText.Text = device.LastSeen == default ? "No data yet" : $"Last seen {device.LastSeen:HH:mm:ss}";
-        Co2CaptionText.Text = device.IntegrationState;
-        DeviceInfoText.Text = $"{device.Name} · {device.Address} · firmware {device.Firmware} · {device.Packets} packets received";
-        RawPacketText.Text = $"ADVERTISEMENT{Environment.NewLine}{device.LastAdvertisement}{Environment.NewLine}{Environment.NewLine}SCAN RESPONSE{Environment.NewLine}{device.LastScanResponse}";
+        RssiText.Text = device.Packets == 0 ? "—" : $"{device.Rssi} dBm";
+        DetailSignal.Bars = device.SignalBars;
+        ShowLastSeen(device);
+
+        InfoNameText.Text = device.Name;
+        InfoAddressText.Text = device.Address;
+        InfoFirmwareText.Text = $"Firmware {device.Firmware}";
+        InfoPacketsText.Text = device.Packets == 1 ? "1 packet" : $"{device.Packets:N0} packets";
+        AdvertisementText.Text = device.LastAdvertisement;
+        ScanResponseText.Text = device.LastScanResponse;
+    }
+
+    private void ShowLastSeen(Aranet4Device device) =>
+        LastSeenText.Text = device.LastSeen == default ? "No data yet" : $"Seen {device.LastSeenAgo}";
+
+    /// <summary>Colours the badge and moves the gauge marker (scale: 400–2000 ppm).</summary>
+    private void ShowQuality(int ppm)
+    {
+        if (ppm <= 0)
+        {
+            QualityBadge.Visibility = Visibility.Collapsed;
+            GaugeMarkerGrid.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var (label, color) = ppm switch
+        {
+            < 1000 => ("Good air", Color.FromRgb(0x2E, 0xC2, 0x7E)),
+            < 1400 => ("Getting stuffy", Color.FromRgb(0xF5, 0xB9, 0x42)),
+            _ => ("Poor — ventilate", Color.FromRgb(0xEF, 0x5B, 0x5B)),
+        };
+        QualityText.Text = label;
+        QualityBadge.Background = new SolidColorBrush(color);
+        QualityBadge.Visibility = Visibility.Visible;
+
+        var fraction = Math.Clamp((ppm - 400) / 1600.0, 0.0, 1.0);
+        GaugeLeft.Width = new GridLength(Math.Max(fraction, 0.001), GridUnitType.Star);
+        GaugeRight.Width = new GridLength(Math.Max(1 - fraction, 0.001), GridUnitType.Star);
+        GaugeMarkerGrid.Visibility = Visibility.Visible;
     }
 
     private void ClearDetails()
     {
         Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = AgeText.Text = IntervalText.Text = RssiText.Text = "—";
+        Co2UnitText.Visibility = Visibility.Collapsed;
         Co2CaptionText.Text = "Waiting for a live beacon";
         LastSeenText.Text = "No data yet";
-        DeviceInfoText.Text = "Select a device to inspect its beacon captures.";
-        RawPacketText.Clear();
+        HumidityBar.Value = BatteryBar.Value = 0;
+        DetailSignal.Bars = 0;
+        ShowQuality(0);
+        InfoNameText.Text = "No device selected";
+        InfoAddressText.Text = "Address —";
+        InfoFirmwareText.Text = "Firmware —";
+        InfoPacketsText.Text = "0 packets";
+        AdvertisementText.Clear();
+        ScanResponseText.Clear();
+    }
+
+    private void CopyPacket_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string which }) return;
+        var text = which == "adv" ? AdvertisementText.Text : ScanResponseText.Text;
+        if (string.IsNullOrWhiteSpace(text)) return;
+        try { Clipboard.SetText(text); } catch (System.Runtime.InteropServices.COMException) { /* clipboard busy */ }
     }
 
     private static string FormatPacket(BluetoothLEAdvertisementReceivedEventArgs args, IEnumerable<ManufacturerBlock> manufacturerBlocks)
