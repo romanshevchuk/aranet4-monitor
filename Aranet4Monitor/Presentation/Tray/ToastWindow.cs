@@ -19,8 +19,8 @@ public enum ToastKind
 /// </summary>
 public sealed class ToastWindow : Window
 {
-    private const double CardWidth = 440;
-    private const double ShadowMargin = 16;
+    private const double CardWidth = 400;
+    private const double ShadowMargin = 12;
     private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(12);
 
     private readonly DispatcherTimer timer = new() { Interval = Lifetime };
@@ -46,84 +46,115 @@ public sealed class ToastWindow : Window
             ToastKind.Success => Color.FromRgb(0x2E, 0xC2, 0x7E),
             _ => Color.FromRgb(0x5B, 0x9B, 0xFF),
         };
+        var symbol = kind switch
+        {
+            ToastKind.Danger or ToastKind.Warning => "!",
+            ToastKind.Success => "✓",
+            _ => "i",
+        };
         var font = new FontFamily("Segoe UI Variable Text, Segoe UI");
 
         var titleText = new TextBlock
         {
             Text = title,
             FontFamily = font,
-            FontSize = 20,
+            FontSize = 16,
             FontWeight = FontWeights.SemiBold,
             Foreground = Brushes.White,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 28, 0),
+            Margin = new Thickness(0, 0, 10, 0),
         };
         var bodyText = new TextBlock
         {
             Text = body,
             FontFamily = font,
-            FontSize = 16,
+            FontSize = 14,
             Foreground = new SolidColorBrush(Color.FromRgb(0xD7, 0xE7, 0xFF)),
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 5, 0, 0),
         };
-        var hint = new TextBlock
+        var iconText = new TextBlock
         {
-            Text = "Click to open Aranet4 Monitor",
+            Text = symbol,
             FontFamily = font,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0xA9, 0xD0)),
-            Margin = new Thickness(0, 10, 0, 0),
+            FontSize = 16,
+            FontWeight = FontWeights.Bold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x0F, 0x1B, 0x2E)),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
         };
-        var text = new StackPanel { Margin = new Thickness(18, 14, 16, 14) };
-        text.Children.Add(titleText);
-        text.Children.Add(bodyText);
-        text.Children.Add(hint);
-
-        var close = new TextBlock
+        var iconBadge = new Border
         {
-            Text = "✕",
-            FontSize = 14,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0xA9, 0xD0)),
-            Margin = new Thickness(0, 10, 12, 0),
+            Width = 30,
+            Height = 30,
+            Margin = new Thickness(14, 14, 0, 0),
+            Background = new SolidColorBrush(accent),
+            CornerRadius = new CornerRadius(15),
+            Child = iconText,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+
+        var close = new Button
+        {
+            Content = "×",
+            Width = 26,
+            Height = 26,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = new SolidColorBrush(Color.FromRgb(0xA9, 0xB6, 0xCB)),
+            FontSize = 18,
             Cursor = System.Windows.Input.Cursors.Hand,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
-            VerticalAlignment = System.Windows.VerticalAlignment.Top,
+            VerticalAlignment = VerticalAlignment.Top,
             ToolTip = "Dismiss",
         };
-        close.MouseLeftButtonUp += (_, e) => { e.Handled = true; Dismiss(); };
+        close.Click += (_, _) => Dismiss();
 
-        var accentBar = new Border
-        {
-            Width = 6,
-            Background = new SolidColorBrush(accent),
-            CornerRadius = new CornerRadius(14, 0, 0, 14),
-        };
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(close, 1);
+        header.Children.Add(titleText);
+        header.Children.Add(close);
+
+        var text = new StackPanel { Margin = new Thickness(14, 12, 12, 12) };
+        text.Children.Add(header);
+        text.Children.Add(bodyText);
 
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(iconBadge, 0);
         Grid.SetColumn(text, 1);
-        Grid.SetColumn(close, 1);
-        grid.Children.Add(accentBar);
+        grid.Children.Add(iconBadge);
         grid.Children.Add(text);
-        grid.Children.Add(close);
 
         var card = new Border
         {
             Width = CardWidth,
             Margin = new Thickness(ShadowMargin),
-            CornerRadius = new CornerRadius(14),
-            Background = new LinearGradientBrush(Color.FromRgb(0x1E, 0x3C, 0x66), Color.FromRgb(0x14, 0x25, 0x44), 45),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(90, 0x89, 0xB4, 0xFF)),
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromRgb(0x0F, 0x1B, 0x2E)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x36, 0x50, 0x7A)),
             BorderThickness = new Thickness(1),
             Cursor = System.Windows.Input.Cursors.Hand,
-            Effect = new DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Opacity = 0.35, Color = Colors.Black },
+            Effect = new DropShadowEffect { BlurRadius = 16, ShadowDepth = 3, Opacity = 0.3, Color = Colors.Black },
             Child = grid,
         };
-        card.MouseLeftButtonUp += (_, _) => { Clicked?.Invoke(this, EventArgs.Empty); Dismiss(); };
+        card.MouseLeftButtonUp += (_, _) =>
+        {
+            Clicked?.Invoke(this, EventArgs.Empty);
+            Dismiss();
+        };
         card.MouseEnter += (_, _) => timer.Stop();
-        card.MouseLeave += (_, _) => { if (!closing) { timer.Start(); } };
+        card.MouseLeave += (_, _) =>
+        {
+            if (!closing)
+            {
+                timer.Start();
+            }
+        };
         Content = card;
 
         // Measure now so the window can be placed in the bottom-right corner before it is shown.

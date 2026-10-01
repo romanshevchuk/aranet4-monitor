@@ -319,7 +319,7 @@
                             <Button x:Name="PauseAlertsButton" Content="Pause 1 h" Style="{StaticResource SmallLinkButton}" Click="PauseAlerts_Click"
                                     ToolTip="Silence ventilation alerts for one hour" />
                         </WrapPanel>
-                        <TextBlock x:Name="AlertStatusText" Foreground="#B45309" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="AlertStatusText" Foreground="#66738A" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </Border>
 

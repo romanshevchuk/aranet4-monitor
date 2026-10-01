@@ -196,7 +196,13 @@ public sealed class TrayIconService : IDisposable
             }
         }
 
-        icon.ShowBalloonTip(8_000, title, body, System.Windows.Forms.ToolTipIcon.None);
+        var toolTipIcon = kind switch
+        {
+            ToastKind.Warning => System.Windows.Forms.ToolTipIcon.Warning,
+            ToastKind.Danger => System.Windows.Forms.ToolTipIcon.Error,
+            _ => System.Windows.Forms.ToolTipIcon.Info,
+        };
+        icon.ShowBalloonTip(8_000, title, body, toolTipIcon);
     }
 
     private static System.Drawing.Icon LoadDefaultIcon()

@@ -33,6 +33,10 @@ public partial class MainWindow : Window
     private static readonly Brush TrendRising = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
     private static readonly Brush TrendFalling = Frozen(Color.FromRgb(0x7B, 0xE0, 0xAE));
     private static readonly Brush TrendSteady = Frozen(Color.FromRgb(0x9D, 0xB8, 0xE0));
+    private static readonly Brush alertStatusNeutral = Frozen(Color.FromRgb(0x66, 0x73, 0x8A));
+    private static readonly Brush alertStatusSuccess = Frozen(Color.FromRgb(0x15, 0x80, 0x3D));
+    private static readonly Brush alertStatusWarning = Frozen(Color.FromRgb(0xB4, 0x53, 0x09));
+    private static readonly Brush alertStatusDanger = Frozen(Color.FromRgb(0xB4, 0x23, 0x18));
 
     private static Brush Frozen(Color color)
     {
@@ -50,9 +54,11 @@ public partial class MainWindow : Window
         HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
         AlertThresholdTextBox.Text = preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
         AlertDurationTextBox.Text = preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
-        AlertStatusText.Text = preferences.LastCo2AlertAt is { } lastAlert
-            ? $"Last notification: {preferences.LastCo2AlertPpm:N0} ppm at {lastAlert:t}"
-            : "No high-CO₂ alerts sent yet.";
+        SetAlertStatus(
+            preferences.LastCo2AlertAt is { } lastAlert
+                ? $"Last notification: {preferences.LastCo2AlertPpm:N0} ppm at {lastAlert:t}"
+                : "No high-CO₂ alerts sent yet.",
+            alertStatusNeutral);
         notifications.RestoreRequested += (_, _) => RestoreFromTray();
         notifications.ExitRequested += (_, _) => ExitFromTray();
         notifications.PauseToggleRequested += (_, _) => ToggleAlertPause();

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Media;
 using Aranet4Monitor.Alerts;
 
 namespace Aranet4Monitor;
@@ -18,7 +19,20 @@ public partial class MainWindow
     {
         notifications.SetAlertsPaused(AlertsPaused, alertsPausedUntil);
         PauseAlertsButton.Content = AlertsPaused ? "Resume alerts" : "Pause 1 h";
-        AlertStatusText.Text = AlertsPaused ? $"Alerts paused until {alertsPausedUntil:t}." : "Alerts are on.";
+        if (AlertsPaused)
+        {
+            SetAlertStatus($"Alerts paused until {alertsPausedUntil:t}.", alertStatusWarning);
+        }
+        else
+        {
+            SetAlertStatus("Alerts are on.", alertStatusNeutral);
+        }
+    }
+
+    private void SetAlertStatus(string text, Brush foreground)
+    {
+        AlertStatusText.Text = text;
+        AlertStatusText.Foreground = foreground;
     }
 
     private void PauseAlerts_Click(object sender, RoutedEventArgs e) => ToggleAlertPause();
@@ -27,7 +41,7 @@ public partial class MainWindow
     {
         // Preview the real notification, using a level just above the user's threshold.
         notifications.NotifyHighCo2(AlertThreshold + 80);
-        AlertStatusText.Text = "Test notification sent. Click it to bring this window back.";
+        SetAlertStatus("Test notification sent.", alertStatusSuccess);
     }
 
     private int AlertThreshold => int.TryParse(AlertThresholdTextBox.Text, out var value)

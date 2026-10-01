@@ -200,16 +200,20 @@ public partial class MainWindow
                     preferences.LastCo2AlertAt = now;
                     preferences.LastCo2AlertPpm = measurement.Co2;
                     preferences.Save();
-                    AlertStatusText.Text = $"Alert sent: {measurement.Co2:N0} ppm at {now:t}";
+                    SetAlertStatus($"Alert sent: {measurement.Co2:N0} ppm at {now:t}", alertStatusDanger);
                     notifications.NotifyHighCo2(measurement.Co2);
                 }
                 else if (alertDue)
                 {
-                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm, but alerts are paused until {alertsPausedUntil:t}.";
+                    SetAlertStatus(
+                        $"Above {AlertThreshold:N0} ppm, but alerts are paused until {alertsPausedUntil:t}.",
+                        alertStatusWarning);
                 }
                 else if (measurement.Co2 > AlertThreshold)
                 {
-                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm; waiting for {AlertDurationMinutes} minutes of sustained readings.";
+                    SetAlertStatus(
+                        $"Above {AlertThreshold:N0} ppm; waiting for {AlertDurationMinutes} minutes of sustained readings.",
+                        alertStatusWarning);
                 }
                 else if (measurement.Co2 <= Co2AlertService.GetResetThreshold(AlertThreshold))
                 {
@@ -219,9 +223,16 @@ public partial class MainWindow
                         notifications.NotifyRecovered(measurement.Co2);
                     }
 
-                    AlertStatusText.Text = preferences.LastCo2AlertAt is { } previousAlert
-                        ? $"Recovered below {Co2AlertService.GetResetThreshold(AlertThreshold):N0} ppm. Last alert {previousAlert:t}."
-                        : "No active high-CO₂ alert.";
+                    if (preferences.LastCo2AlertAt is { } previousAlert)
+                    {
+                        SetAlertStatus(
+                            $"Recovered below {Co2AlertService.GetResetThreshold(AlertThreshold):N0} ppm. Last alert {previousAlert:t}.",
+                            alertStatusSuccess);
+                    }
+                    else
+                    {
+                        SetAlertStatus("No active high-CO₂ alert.", alertStatusNeutral);
+                    }
                 }
             }
         }

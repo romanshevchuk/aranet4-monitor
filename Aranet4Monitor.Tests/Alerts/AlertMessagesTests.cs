@@ -44,6 +44,25 @@ public sealed class AlertMessagesTests
     }
 
     [Fact]
+    public void TitlesStartWithTextInsteadOfAnEmojiGlyph()
+    {
+        foreach (var ppm in new[] { 1300, 1600, 2400 })
+        {
+            for (var rotation = 0; rotation < 10; rotation++)
+            {
+                var title = AlertMessages.Create(ppm, rotation).Title;
+                Assert.True(char.IsLetter(title[0]), title);
+            }
+        }
+
+        for (var rotation = 0; rotation < 10; rotation++)
+        {
+            var title = AlertMessages.CreateRecovered(820, rotation).Title;
+            Assert.True(char.IsLetter(title[0]), title);
+        }
+    }
+
+    [Fact]
     public void NegativeRotationDoesNotThrow()
     {
         Assert.NotNull(AlertMessages.Create(1600, -7));
