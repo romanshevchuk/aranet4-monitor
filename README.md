@@ -17,11 +17,11 @@ An unofficial Windows system-tray app for Aranet4 sensors. Monitor live readings
 
 ## Download
 
-No release has been published yet. When a `v*` tag is pushed, GitHub Actions creates a self-contained Windows x64 ZIP on the [Releases page](https://github.com/romanshevchuk/aranet4-monitor/releases).
+No release has been published yet. When a `v*` tag is pushed, GitHub Actions creates self-contained ZIPs for x64, ARM64, and x86 Windows on the [Releases page](https://github.com/romanshevchuk/aranet4-monitor/releases).
 
 When a release is available:
 
-1. Download `Aranet4Monitor-win-x64.zip` from the release.
+1. Download the ZIP matching your Windows device's processor architecture (`win-x64`, `win-arm64`, or `win-x86`).
 2. Extract it to a folder of your choice.
 3. Run `Aranet4Monitor.exe`.
 
@@ -29,7 +29,7 @@ The .NET SDK and .NET Desktop Runtime are not required. The app is unsigned, so 
 
 ## Requirements
 
-- A Windows 10 Enterprise/LTSC release supported by .NET 10 (the app's minimum target is build 17763 / version 1809), or a supported Windows 11 release.
+- A Windows 10 Enterprise/LTSC release supported by .NET 10 (the app's minimum target is build 17763 / version 1809), or a supported Windows 11 release. Standard Windows 10 Home/Pro editions are not supported by .NET 10.
 - Bluetooth Low Energy support and an Aranet4 nearby.
 - History sync may prompt Windows to pair with the sensor; live beacon readings do not require history sync.
 
@@ -53,7 +53,7 @@ dotnet publish Aranet4Monitor/Aranet4Monitor.csproj `
 	--self-contained true
 ```
 
-The publish folder is `Aranet4Monitor/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/`. For a different processor architecture, publish with its Windows runtime identifier and distribute a matching build.
+The publish folder is `Aranet4Monitor/bin/Release/net10.0-windows10.0.19041.0/<runtime-id>/publish/`, where `<runtime-id>` is `win-x64`, `win-arm64`, or `win-x86`.
 
 ## Privacy and data storage
 

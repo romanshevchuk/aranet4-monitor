@@ -5,21 +5,44 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
   publish:
     runs-on: windows-latest
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [win-x64, win-arm64, win-x86]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: Publish self-contained Windows x64 app
-        run: dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime win-x64 --self-contained true
+      - name: Publish self-contained Windows app
+        run: dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true
       - name: Create ZIP
         shell: pwsh
-        run: Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\*" -DestinationPath "Aranet4Monitor-win-x64.zip" -CompressionLevel Optimal
+        run: Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\${{ matrix.rid }}\publish\*" -DestinationPath "Aranet4Monitor-${{ matrix.rid }}.zip" -CompressionLevel Optimal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: Aranet4Monitor-${{ matrix.rid }}.zip
+          if-no-files-found: error
+
+  release:
+    needs: publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: true
       - name: Create or update GitHub release
         shell: pwsh
         env:
@@ -27,8 +50,11 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
           gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag "Aranet4Monitor-win-x64.zip" --clobber
-          } else {
-            gh release create $tag "Aranet4Monitor-win-x64.zip" --title $tag --generate-notes --verify-tag
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title $tag --generate-notes --verify-tag
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          Get-ChildItem artifacts -Filter "Aranet4Monitor-win-*.zip" -File | ForEach-Object {
+            gh release upload $tag $_.FullName --clobber
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
