@@ -16,8 +16,6 @@ public sealed record AranetHistorySyncResult(IReadOnlyList<Co2Sample> Samples, D
 
 public static class Aranet4HistorySync
 {
-    private static readonly Guid CurrentService = Guid.Parse("0000fce0-0000-1000-8000-00805f9b34fb");
-    private static readonly Guid LegacyService = Guid.Parse("f0cd1400-95da-4f4b-9ac8-aa55d312af0c");
     private static readonly Guid CommandCharacteristic = Guid.Parse("f0cd1402-95da-4f4b-9ac8-aa55d312af0c");
     private static readonly Guid TotalReadingsCharacteristic = Guid.Parse("f0cd2001-95da-4f4b-9ac8-aa55d312af0c");
     private static readonly Guid IntervalCharacteristic = Guid.Parse("f0cd2002-95da-4f4b-9ac8-aa55d312af0c");
@@ -141,7 +139,11 @@ public static class Aranet4HistorySync
 
     private static async Task<GattDeviceService> GetAranetServiceAsync(BluetoothLEDevice device)
     {
-        foreach (var serviceId in new[] { CurrentService, LegacyService })
+        foreach (var serviceId in new[]
+        {
+            Aranet4AdvertisementFilter.CurrentServiceUuid,
+            Aranet4AdvertisementFilter.LegacyServiceUuid,
+        })
         {
             var result = await device.GetGattServicesForUuidAsync(serviceId, BluetoothCacheMode.Uncached);
             if (result.Status == GattCommunicationStatus.Success && result.Services.Count > 0)

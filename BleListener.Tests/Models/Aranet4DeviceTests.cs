@@ -1,3 +1,4 @@
+using BleListener.Models;
 using Xunit;
 
 namespace BleListener.Tests.Models;

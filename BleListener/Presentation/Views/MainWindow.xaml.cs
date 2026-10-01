@@ -19,7 +19,6 @@ namespace BleListener;
 
 public partial class MainWindow : Window
 {
-    private static readonly Guid AranetServiceUuid = Guid.Parse("0000fce0-0000-1000-8000-00805f9b34fb");
     private readonly Dictionary<ulong, Aranet4Device> _devicesByAddress = new();
     private BluetoothLEAdvertisementWatcher? _watcher;
     private readonly DispatcherTimer _tickTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -208,9 +207,10 @@ public partial class MainWindow : Window
         var advertisement = args.Advertisement;
         var manufacturerBlocks = advertisement.ManufacturerData
             .Select(block => new ManufacturerBlock(block.CompanyId, ToBytes(block.Data))).ToArray();
-        var hasAranetManufacturerBlock = manufacturerBlocks.Any(block => block.CompanyId == Aranet4BeaconParser.AranetCompanyId);
-        var isAranet = advertisement.LocalName.StartsWith("Aranet4", StringComparison.OrdinalIgnoreCase)
-            || advertisement.ServiceUuids.Contains(AranetServiceUuid) || hasAranetManufacturerBlock;
+        var isAranet = Aranet4AdvertisementFilter.IsCandidate(
+            advertisement.LocalName,
+            advertisement.ServiceUuids,
+            manufacturerBlocks.Select(block => (block.CompanyId, block.Data.Length)));
         if (!isAranet && !_devicesByAddress.ContainsKey(args.BluetoothAddress)) return;
 
         var packet = FormatPacket(args, manufacturerBlocks);

@@ -1,3 +1,4 @@
+using BleListener.Bluetooth;
 using Xunit;
 
 namespace BleListener.Tests.Bluetooth;
