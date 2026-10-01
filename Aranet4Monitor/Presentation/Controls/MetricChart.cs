@@ -21,7 +21,7 @@ public sealed class MetricChart : FrameworkElement
     private static readonly Color Warn = Color.FromRgb(0xF5, 0xB9, 0x42);
     private static readonly Color Bad = Color.FromRgb(0xEF, 0x5B, 0x5B);
 
-    private static readonly Brush AxisText = Solid(Color.FromRgb(0x83, 0x91, 0xA7));
+    private static readonly Brush AxisText = Solid(Color.FromRgb(0x66, 0x73, 0x8A));
     private static readonly Brush InkText = Solid(Color.FromRgb(0x16, 0x22, 0x38));
     private static readonly Brush MutedText = Solid(Color.FromRgb(0x66, 0x73, 0x8A));
     private static readonly Pen GridPen = new(Solid(Color.FromRgb(0xE8, 0xED, 0xF5)), 1);

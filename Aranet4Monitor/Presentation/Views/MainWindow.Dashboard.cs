@@ -37,6 +37,7 @@ public partial class MainWindow
         Co2Text.Text = hasReading ? device.Co2Ppm.ToString("N0", CultureInfo.CurrentCulture) : "—";
         Co2UnitText.Visibility = hasReading ? Visibility.Visible : Visibility.Collapsed;
         Co2CaptionText.Text = device.IntegrationState;
+        SyncHistoryButton.IsEnabled = syncCancellation is null;
         ShowQuality(device.Co2Ppm);
         Title = hasReading ? $"{device.Co2Ppm:N0} ppm · Aranet4 Monitor" : "Aranet4 Monitor";
 
@@ -83,7 +84,7 @@ public partial class MainWindow
             return string.Empty;
         }
 
-        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
+        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)} – {Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
     }
 
     private void RefreshChart()
@@ -154,7 +155,7 @@ public partial class MainWindow
         {
             < 1000 => ("Good air", Color.FromRgb(0x2E, 0xC2, 0x7E)),
             < 1400 => ("Getting stuffy", Color.FromRgb(0xF5, 0xB9, 0x42)),
-            _ => ("Poor — ventilate", Color.FromRgb(0xEF, 0x5B, 0x5B)),
+            _ => ("High CO₂ · ventilate", Color.FromRgb(0xEF, 0x5B, 0x5B)),
         };
         QualityText.Text = label;
         QualityBadge.Background = new SolidColorBrush(color);
@@ -175,6 +176,7 @@ public partial class MainWindow
         HumidityBar.Value = BatteryBar.Value = 0;
         DetailSignal.Bars = 0;
         ShowQuality(0);
+        SyncHistoryButton.IsEnabled = false;
         ChipNameText.Text = "Searching for sensor…";
         LastSeenText.Text = string.Empty;
         DeviceDot.Fill = DotIdle;

@@ -19,7 +19,6 @@ public partial class MainWindow : Window
     private DateTime? alertsPausedUntil;
     private CancellationTokenSource? syncCancellation;
     private DateTime devicePopupClosedAt;
-    private DateTime statusHoldUntil;
     private int tickCount;
     private bool allowClose;
 
@@ -156,5 +155,12 @@ public partial class MainWindow : Window
             StatusKind.Error => "error",
             _ => null
         };
+    }
+
+    private void SetSyncStatus(string text, string? details = null)
+    {
+        SyncStatusText.Text = text;
+        SyncStatusText.ToolTip = details ?? text;
+        SyncStatusText.Visibility = string.IsNullOrWhiteSpace(text) ? Visibility.Collapsed : Visibility.Visible;
     }
 }

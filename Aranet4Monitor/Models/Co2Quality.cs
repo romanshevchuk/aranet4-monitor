@@ -23,7 +23,7 @@ public static class Co2Quality
     {
         Co2Level.Good => "Good air",
         Co2Level.Fair => "Getting stuffy",
-        Co2Level.Poor => "Poor — ventilate",
+        Co2Level.Poor => "High · ventilate",
         _ => "No reading",
     };
 }

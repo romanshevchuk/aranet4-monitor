@@ -85,6 +85,14 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style x:Key="HeaderActionButton" TargetType="Button" BasedOn="{StaticResource BtnBase}">
+        <Setter Property="Background" Value="#22385A" />
+        <Setter Property="BorderBrush" Value="#4A6FA5" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="11,6" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
 
     <!-- The small device pill in the header (opens the device list) -->
     <Style x:Key="DeviceChip" TargetType="Button">

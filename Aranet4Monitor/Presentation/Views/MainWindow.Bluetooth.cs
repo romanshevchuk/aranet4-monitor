@@ -163,7 +163,7 @@ public partial class MainWindow
             device.Battery = measurement.BatteryPercent is null ? "—" : $"{measurement.BatteryPercent}%";
             device.BatteryValue = measurement.BatteryPercent ?? 0;
             device.MeasurementInterval = measurement.IntervalSeconds is null ? "—" : $"{measurement.IntervalSeconds} s";
-            device.MeasurementAge = measurement.AgeSeconds is null ? "—" : $"{measurement.AgeSeconds} s";
+            device.MeasurementAge = FormatMeasurementAge(measurement.AgeSeconds);
             device.IntegrationState = "Live Smart Home beacon decoded";
 
             // The same measurement is repeated in many packets; TryAddSample keeps one point per measurement.
@@ -206,13 +206,13 @@ public partial class MainWindow
                 else if (alertDue)
                 {
                     SetAlertStatus(
-                        $"Above {AlertThreshold:N0} ppm, but alerts are paused until {alertsPausedUntil:t}.",
+                        $"Above your alert level, but notifications are paused until {alertsPausedUntil:t}.",
                         alertStatusWarning);
                 }
                 else if (measurement.Co2 > AlertThreshold)
                 {
                     SetAlertStatus(
-                        $"Above {AlertThreshold:N0} ppm; waiting for {AlertDurationMinutes} minutes of sustained readings.",
+                        $"Above your alert level; waiting for {AlertDurationMinutes} minutes of sustained readings.",
                         alertStatusWarning);
                 }
                 else if (measurement.Co2 <= Co2AlertService.GetResetThreshold(AlertThreshold))
@@ -242,7 +242,7 @@ public partial class MainWindow
         }
 
         // Don't overwrite a sync progress/result message the user is still reading.
-        if (syncCancellation is null && DateTime.Now >= statusHoldUntil)
+        if (syncCancellation is null && watcher?.Status == BluetoothLEAdvertisementWatcherStatus.Started)
         {
             SetStatus("Listening", StatusKind.Listening);
         }
@@ -306,6 +306,31 @@ public partial class MainWindow
 
     private static string FormatAddress(ulong address) => string.Join(":", Enumerable.Range(0, 6)
         .Select(index => ((address >> ((5 - index) * 8)) & 0xFF).ToString("X2", CultureInfo.InvariantCulture)));
+
+    private static string FormatMeasurementAge(ushort? ageSeconds)
+    {
+        if (ageSeconds is not { } seconds)
+        {
+            return "—";
+        }
+
+        if (seconds < 5)
+        {
+            return "just now";
+        }
+
+        if (seconds < 60)
+        {
+            return $"{seconds}s ago";
+        }
+
+        if (seconds < 3_600)
+        {
+            return $"{seconds / 60}m {seconds % 60}s ago";
+        }
+
+        return $"{seconds / 3_600}h {seconds % 3_600 / 60}m ago";
+    }
 
     private static byte[] ToBytes(IBuffer buffer)
     {

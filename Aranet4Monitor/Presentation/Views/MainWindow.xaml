@@ -26,7 +26,8 @@
             </Border.Background>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -47,7 +48,17 @@
                     </StackPanel>
                 </Button>
 
-                <Border Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,10,0"
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <Button x:Name="SyncHistoryButton" Content="Sync now" Style="{StaticResource HeaderActionButton}"
+                        Click="SyncHistory_Click" IsEnabled="False"
+                        ToolTip="Sync stored CO₂, temperature, humidity and pressure history for the selected sensor" />
+                    <Button x:Name="CancelHistorySyncButton" Content="Cancel sync" Style="{StaticResource HeaderActionButton}"
+                        Click="CancelHistorySync_Click" IsEnabled="False" Visibility="Collapsed" Margin="6,0,0,0" />
+                    <TextBlock x:Name="SyncStatusText" FontSize="11" Foreground="#B8C7DD" Margin="8,0,0,0"
+                               VerticalAlignment="Center" MaxWidth="145" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+                </StackPanel>
+
+                <Border Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,10,0"
                         Background="#22385A" BorderBrush="#36507A" BorderThickness="1" CornerRadius="14" Padding="14,6">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="StatusDot" Style="{StaticResource StatusDotStyle}" />
@@ -56,7 +67,7 @@
                     </StackPanel>
                 </Border>
 
-                <Button x:Name="MoreButton" Grid.Column="3" Style="{StaticResource GhostButton}" Margin="0" Padding="12,2" FontSize="20"
+                <Button x:Name="MoreButton" Grid.Column="5" Style="{StaticResource GhostButton}" Margin="0" Padding="12,2" FontSize="20"
                         Content="⋯" VerticalAlignment="Center" Click="MoreButton_Click" ToolTip="More">
                     <Button.ContextMenu>
                         <ContextMenu x:Name="MoreMenu" Placement="Bottom">
@@ -280,13 +291,10 @@
                                 <Ellipse x:Name="ChartDot" Width="8" Height="8" Fill="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock x:Name="ChartTitleText" Text="CO₂ HISTORY" Style="{StaticResource SectionLabel}" />
                             </StackPanel>
-                            <TextBlock x:Name="ChartStatsText" Text="No readings yet" Foreground="{StaticResource Ink}" FontSize="14" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="ChartStatsText" Text="No readings yet" Foreground="{StaticResource Ink}" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button x:Name="SyncHistoryButton" Content="Sync sensor" Style="{StaticResource SmallLinkButton}" Click="SyncHistory_Click" Margin="0,0,4,0"
-                                    ToolTip="Download the sensor's stored history (CO₂, temperature, humidity and pressure)" />
-                            <Button x:Name="CancelHistorySyncButton" Content="Cancel sync" Style="{StaticResource SmallLinkButton}" Click="CancelHistorySync_Click" IsEnabled="False" Margin="0,0,4,0" />
-                            <Button Content="Export CSV" Style="{StaticResource SmallLinkButton}" Click="ExportCsv_Click" Margin="0,0,12,0" />
+                            <Button Content="Export CSV" Style="{StaticResource SmallLinkButton}" Click="ExportCsv_Click" Margin="0,0,12,0" VerticalAlignment="Center" />
                             <Border Background="#EEF2F8" CornerRadius="11" Padding="3">
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Content="1h" Tag="1" GroupName="ChartRange" Style="{StaticResource SegmentButton}" Checked="RangeButton_Checked" />
@@ -340,7 +348,7 @@
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="READING AGE" Style="{StaticResource SectionLabel}" />
+                            <TextBlock Text="MEASUREMENT AGE" Style="{StaticResource SectionLabel}" />
                             <TextBlock x:Name="AgeText" Text="—" Style="{StaticResource SysValue}" Margin="0,3,0,0" />
                         </StackPanel>
                         <StackPanel>

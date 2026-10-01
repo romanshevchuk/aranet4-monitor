@@ -53,17 +53,20 @@ public partial class MainWindow
         var bluetoothAddress = _devicesByAddress.FirstOrDefault(entry => ReferenceEquals(entry.Value, device)).Key;
         if (bluetoothAddress == 0)
         {
-            SetStatus("Could not identify the selected sensor.", StatusKind.Error);
+            SetSyncStatus("Sensor unavailable", "Could not identify the selected sensor.");
             return;
         }
 
+        SetSyncStatus(string.Empty);
         SyncHistoryButton.IsEnabled = false;
+        SyncHistoryButton.Content = "Syncing…";
         CancelHistorySyncButton.IsEnabled = true;
+        CancelHistorySyncButton.Visibility = Visibility.Visible;
         var cancellation = new CancellationTokenSource();
         syncCancellation = cancellation;
         try
         {
-            var progress = new Progress<string>(message => SetStatus(message, watcher is null ? StatusKind.Idle : StatusKind.Listening));
+            var progress = new Progress<string>(message => SetSyncStatus(message));
             var cursor = HistoryStore.LoadSyncCursor(device.Address);
             var result = await Aranet4HistorySync.SyncAsync(bluetoothAddress, cursor, progress, cancellation.Token);
             var added = device.MergeHistory(result.Samples);
@@ -82,35 +85,46 @@ public partial class MainWindow
                 ShowDetails(device);
             }
 
-            var statusKind = watcher is null ? StatusKind.Idle : StatusKind.Listening;
-            statusHoldUntil = DateTime.Now.AddSeconds(12);
-            SetStatus(result.MissingRecords > 0
-                ? $"History sync incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received. Sync again to fill the gap."
-                : $"History sync complete: {added:N0} new readings.", statusKind);
+            if (result.MissingRecords > 0)
+            {
+                SetSyncStatus(
+                    "Incomplete · retry needed",
+                    $"History sync incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received. Sync again to fill the gap.");
+            }
+            else if (added > 0)
+            {
+                SetSyncStatus($"Synced {added:N0} readings");
+            }
+            else
+            {
+                SetSyncStatus("No new readings");
+            }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            statusHoldUntil = DateTime.Now.AddSeconds(12);
-            SetStatus("History sync cancelled. Retry to resume from the last completed sync.", watcher is null ? StatusKind.Idle : StatusKind.Listening);
+            SetSyncStatus("Sync cancelled", "History sync cancelled. Retry to resume from the last completed sync.");
         }
         catch (Exception ex)
         {
-            statusHoldUntil = DateTime.Now.AddSeconds(12);
-            SetStatus($"History sync failed: {ex.Message}", StatusKind.Error);
+            SetSyncStatus("Sync failed", ex.Message);
             MessageBox.Show(this, ex.Message, "History sync", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
             syncCancellation = null;
             cancellation.Dispose();
-            SyncHistoryButton.IsEnabled = true;
+            SyncHistoryButton.Content = "Sync now";
+            SyncHistoryButton.IsEnabled = Dashboard.SelectedDevice is not null;
+            CancelHistorySyncButton.Content = "Cancel sync";
             CancelHistorySyncButton.IsEnabled = false;
+            CancelHistorySyncButton.Visibility = Visibility.Collapsed;
         }
     }
 
     private void CancelHistorySync_Click(object sender, RoutedEventArgs e)
     {
         CancelHistorySyncButton.IsEnabled = false;
+        CancelHistorySyncButton.Content = "Cancelling…";
         syncCancellation?.Cancel();
     }
 }
