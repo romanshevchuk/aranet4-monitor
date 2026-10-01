@@ -11,6 +11,11 @@ public sealed class Co2AlertService
 
     private readonly Dictionary<string, AlertState> _states = new(StringComparer.OrdinalIgnoreCase);
 
+    public void DeferNotification(string deviceId)
+    {
+        if (_states.TryGetValue(deviceId, out var state)) state.Notified = false;
+    }
+
     public bool ShouldNotify(
         string deviceId,
         int ppm,

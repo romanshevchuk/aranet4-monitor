@@ -51,6 +51,22 @@ public sealed class Co2AlertServiceTests
         Assert.True(alerts.ShouldNotify("sensor", 1501, start.AddMinutes(3), requiredDuration: duration));
     }
 
+    [Fact]
+    public void DeferringDueAlertAllowsNotificationAfterPauseWithoutRestartingDuration()
+    {
+        var alerts = new Co2AlertService();
+        var start = new DateTime(2026, 9, 30, 10, 0, 0, DateTimeKind.Local);
+        var duration = TimeSpan.FromMinutes(3);
+
+        Assert.False(alerts.ShouldNotify("sensor", 1501, start, requiredDuration: duration));
+        Assert.True(alerts.ShouldNotify("sensor", 1501, start.AddMinutes(3), requiredDuration: duration));
+
+        alerts.DeferNotification("sensor");
+
+        Assert.True(alerts.ShouldNotify("sensor", 1501, start.AddMinutes(4), requiredDuration: duration));
+        Assert.False(alerts.ShouldNotify("sensor", 1501, start.AddMinutes(5), requiredDuration: duration));
+    }
+
     [Theory]
     [InlineData(1500, 1400)]
     [InlineData(1450, 1350)]   // a low threshold pulls the reset point down with it

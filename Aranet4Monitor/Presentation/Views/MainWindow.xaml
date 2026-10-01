@@ -26,7 +26,7 @@
         </Style>
         <Style x:Key="MetricValue" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource Ink}" />
-            <Setter Property="FontSize" Value="32" />
+            <Setter Property="FontSize" Value="36" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,6,0,0" />
         </Style>
@@ -183,13 +183,17 @@
         <Style x:Key="MetricTab" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Margin" Value="0,0,12,0" />
             <Setter Property="Foreground" Value="#3B82F6" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="Bd" Background="White" BorderBrush="#E3E9F2" BorderThickness="2" CornerRadius="16" Padding="16,12">
-                            <ContentPresenter />
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#BFCDE3" /></Trigger>
@@ -450,41 +454,58 @@
                 <!-- Temperature -->
                 <RadioButton x:Name="TemperatureTab" Grid.Column="1" GroupName="Metric" Tag="Temperature" Foreground="#F97316"
                              Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the temperature chart">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Fill="#F97316" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <TextBlock Text="TEMPERATURE" Style="{StaticResource SectionLabel}" />
                         </StackPanel>
-                        <TextBlock x:Name="TemperatureText" Text="—" Style="{StaticResource MetricValue}" />
-                        <TextBlock x:Name="TemperatureRangeText" Style="{StaticResource SubText}" />
-                    </StackPanel>
+                        <TextBlock Grid.Row="1" x:Name="TemperatureText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="2" x:Name="TemperatureRangeText" Style="{StaticResource SubText}" />
+                    </Grid>
                 </RadioButton>
 
                 <!-- Humidity -->
                 <RadioButton x:Name="HumidityTab" Grid.Column="2" GroupName="Metric" Tag="Humidity" Foreground="#06B6D4"
                              Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the humidity chart">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Fill="#06B6D4" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <TextBlock Text="HUMIDITY" Style="{StaticResource SectionLabel}" />
                         </StackPanel>
-                        <TextBlock x:Name="HumidityText" Text="—" Style="{StaticResource MetricValue}" />
-                        <TextBlock x:Name="HumidityRangeText" Style="{StaticResource SubText}" />
-                        <ProgressBar x:Name="HumidityBar" Style="{StaticResource ThinBar}" Foreground="#06B6D4" Margin="0,8,0,0" />
-                    </StackPanel>
+                        <TextBlock Grid.Row="1" x:Name="HumidityText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Row="2">
+                            <TextBlock x:Name="HumidityRangeText" Style="{StaticResource SubText}" />
+                            <ProgressBar x:Name="HumidityBar" Style="{StaticResource ThinBar}" Foreground="#06B6D4" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Grid>
                 </RadioButton>
 
                 <!-- Pressure -->
                 <RadioButton x:Name="PressureTab" Grid.Column="3" GroupName="Metric" Tag="Pressure" Foreground="#8B5CF6" Margin="0"
                              Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the pressure chart">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Fill="#8B5CF6" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <TextBlock Text="PRESSURE" Style="{StaticResource SectionLabel}" />
                         </StackPanel>
-                        <TextBlock x:Name="PressureText" Text="—" Style="{StaticResource MetricValue}" />
-                        <TextBlock x:Name="PressureRangeText" Style="{StaticResource SubText}" />
-                    </StackPanel>
+                        <TextBlock Grid.Row="1" x:Name="PressureText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="2" x:Name="PressureRangeText" Style="{StaticResource SubText}" />
+                    </Grid>
                 </RadioButton>
             </Grid>
 
@@ -528,7 +549,7 @@
                     <StackPanel VerticalAlignment="Center">
                         <WrapPanel VerticalAlignment="Center">
                             <TextBlock Text="CO₂ alert: notify above" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBox x:Name="AlertThresholdTextBox" Text="1500" Width="60" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
+                            <TextBox x:Name="AlertThresholdTextBox" Text="1000" Width="60" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
                                      LostFocus="AlertThreshold_LostFocus" ToolTip="Ventilation alert threshold in ppm" />
                             <TextBlock Text="ppm for" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="6,0,4,0" />
                             <TextBox x:Name="AlertDurationTextBox" Text="10" Width="40" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"

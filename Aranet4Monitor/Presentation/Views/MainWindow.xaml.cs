@@ -281,7 +281,9 @@ public partial class MainWindow : Window
                     AlertThreshold,
                     TimeSpan.FromSeconds(measurement.IntervalSeconds ?? 60),
                     TimeSpan.FromMinutes(AlertDurationMinutes));
-                var notificationSent = alertDue && !AlertsPaused;
+                var alertsPaused = AlertsPaused;
+                if (alertDue && alertsPaused) _co2Alerts.DeferNotification(device.Address);
+                var notificationSent = alertDue && !alertsPaused;
                 if (notificationSent)
                 {
                     _alertedDevices.Add(device.Address);
