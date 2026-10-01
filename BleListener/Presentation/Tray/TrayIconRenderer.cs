@@ -1,9 +1,10 @@
+using BleListener.Models;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
-namespace BleListener;
+namespace BleListener.Presentation.Tray;
 
 /// <summary>
 /// Draws the CO₂ value onto a tray icon: a colour-coded tile that fills the whole icon, with the number

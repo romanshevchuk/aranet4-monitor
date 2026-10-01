@@ -1,9 +1,10 @@
+using BleListener.Models;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace BleListener;
+namespace BleListener.Storage;
 
 /// <summary>Saves each device's CO₂ history under the platform's local application-data folder.</summary>
 public static class HistoryStore

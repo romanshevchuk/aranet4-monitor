@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace BleListener;
+namespace BleListener.Storage;
 
 /// <summary>"Start with Windows" via the per-user Run key (no admin rights needed).</summary>
 public static class StartupRegistration

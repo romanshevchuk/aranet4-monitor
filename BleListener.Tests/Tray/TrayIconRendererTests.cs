@@ -1,7 +1,7 @@
-using BleListener;
+using BleListener.Presentation.Tray;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Tray;
 
 public sealed class TrayIconRendererTests
 {

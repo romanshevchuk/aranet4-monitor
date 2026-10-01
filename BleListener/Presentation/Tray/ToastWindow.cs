@@ -6,7 +6,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
-namespace BleListener;
+namespace BleListener.Presentation.Tray;
 
 public enum ToastKind { Info, Warning, Danger, Success }
 

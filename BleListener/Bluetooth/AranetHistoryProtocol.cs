@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace BleListener;
+namespace BleListener.Bluetooth;
 
 public readonly record struct AranetHistoryPage(byte Parameter, ushort StartIndex, IReadOnlyList<ushort> Values)
 {

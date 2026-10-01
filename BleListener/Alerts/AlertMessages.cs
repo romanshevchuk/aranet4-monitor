@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace BleListener;
+namespace BleListener.Alerts;
 
 public sealed record AlertMessage(string Title, string Body);
 

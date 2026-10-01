@@ -1,8 +1,8 @@
 using System.Text.Json;
-using BleListener;
+using BleListener.Bluetooth;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Bluetooth;
 
 public sealed class AranetHistoryProtocolTests
 {

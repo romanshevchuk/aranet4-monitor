@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace BleListener;
+namespace BleListener.Presentation.Controls;
 
 /// <summary>Tiny 4-bar signal strength indicator (like a phone's reception icon).</summary>
 public sealed class SignalBars : FrameworkElement

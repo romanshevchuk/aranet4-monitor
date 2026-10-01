@@ -9,6 +9,11 @@ using System.Windows.Threading;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Storage.Streams;
+using BleListener.Presentation.Tray;
+using BleListener.Alerts;
+using BleListener.Bluetooth;
+using BleListener.Storage;
+using BleListener.Models;
 
 namespace BleListener;
 

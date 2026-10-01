@@ -1,4 +1,4 @@
-namespace BleListener;
+namespace BleListener.Alerts;
 
 public sealed class Co2AlertService
 {

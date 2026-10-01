@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace BleListener;
+namespace BleListener.Models;
 
 public sealed class Aranet4Device : INotifyPropertyChanged
 {

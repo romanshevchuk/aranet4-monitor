@@ -1,7 +1,7 @@
-using BleListener;
+using BleListener.Alerts;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Alerts;
 
 public sealed class Co2AlertServiceTests
 {

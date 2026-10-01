@@ -1,4 +1,4 @@
-namespace BleListener;
+namespace BleListener.Models;
 
 /// <summary>Small helpers that turn a history into the texts shown around the chart.</summary>
 public static class Co2Stats

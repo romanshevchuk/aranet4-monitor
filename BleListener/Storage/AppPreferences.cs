@@ -1,6 +1,7 @@
+using BleListener.Alerts;
 using System.Text.Json;
 
-namespace BleListener;
+namespace BleListener.Storage;
 
 public sealed class AppPreferences
 {

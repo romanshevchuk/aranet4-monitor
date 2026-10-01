@@ -1,7 +1,7 @@
-using BleListener;
+using BleListener.Models;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Models;
 
 public sealed class MetricsTests
 {

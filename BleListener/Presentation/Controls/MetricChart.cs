@@ -1,9 +1,10 @@
+using BleListener.Models;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace BleListener;
+namespace BleListener.Presentation.Controls;
 
 /// <summary>
 /// Lightweight line chart for one metric at a time (CO₂, temperature, humidity or pressure).

@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace BleListener;
+namespace BleListener.Bluetooth;
 
 /// <summary>Decoder for the Aranet4 Smart Home Integrations BLE beacon payload.</summary>
 public static class Aranet4BeaconParser

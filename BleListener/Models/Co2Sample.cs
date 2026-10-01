@@ -1,4 +1,4 @@
-namespace BleListener;
+namespace BleListener.Models;
 
 /// <summary>One decoded CO₂ measurement. <see cref="Time"/> is when the sensor took it (local time).</summary>
 public sealed record Co2Sample(

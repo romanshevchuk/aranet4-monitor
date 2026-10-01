@@ -1,4 +1,4 @@
-namespace BleListener;
+namespace BleListener.Models;
 
 public enum Co2Level { Unknown, Good, Fair, Poor }
 

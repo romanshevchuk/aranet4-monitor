@@ -1,7 +1,6 @@
-using BleListener;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Models;
 
 public sealed class Aranet4DeviceTests
 {

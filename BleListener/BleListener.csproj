@@ -1,21 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <Nullable>enable</Nullable>
-    
-    <!-- CsWinRT's source generator emits unsafe interop code for WinRT generics (e.g. TypedEventHandler). -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <!-- The CsWinRT AOT source generator is only needed for NativeAOT/trimmed apps, and it emits duplicate code for this project. -->
-    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationIcon>Presentation\Assets\AppIcon.ico</ApplicationIcon>
 
     <!-- Shown by Windows in notifications and Task Manager instead of the raw assembly name. -->
     <AssemblyTitle>Aranet4 Home</AssemblyTitle>

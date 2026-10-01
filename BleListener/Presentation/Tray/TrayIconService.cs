@@ -1,4 +1,7 @@
-namespace BleListener;
+using BleListener.Alerts;
+using BleListener.Models;
+
+namespace BleListener.Presentation.Tray;
 
 /// <summary>
 /// The system-tray presence: a live CO₂ number as the icon, a context menu, and the notifications.

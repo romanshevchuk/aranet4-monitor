@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace BleListener;
+namespace BleListener.Models;
 
 /// <summary>The four measurements the sensor records; each one gets a card and a chart tab.</summary>
 public enum MetricKind { Co2, Temperature, Humidity, Pressure }

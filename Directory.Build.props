@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <!-- CsWinRT emits unsafe interop code for WinRT generics. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Avoid duplicate code from the CsWinRT AOT optimizer, which this project does not use. -->
+    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

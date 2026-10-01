@@ -1,4 +1,4 @@
-namespace BleListener;
+namespace BleListener.Bluetooth;
 
 /// <summary>
 /// Collects the pages of one metric download and says whether each page moved the transfer forward.
@@ -6,12 +6,12 @@ namespace BleListener;
 /// </summary>
 public sealed class HistoryTransfer
 {
-    private readonly ushort _startIndex;
+    private readonly ushort startIndex;
 
     public HistoryTransfer(ushort startIndex, ushort total)
     {
         if (startIndex == 0 || startIndex > total) throw new ArgumentOutOfRangeException(nameof(startIndex));
-        _startIndex = startIndex;
+        this.startIndex = startIndex;
         Total = total;
         LastIndex = startIndex - 1;
         Values = new ushort?[total - startIndex + 1];
@@ -37,7 +37,7 @@ public sealed class HistoryTransfer
         {
             var index = page.StartIndex + offset;
             if (index > Total) break;
-            if (index >= _startIndex) Values[index - _startIndex] = page.Values[offset];
+            if (index >= startIndex) Values[index - startIndex] = page.Values[offset];
             LastIndex = Math.Max(LastIndex, index);
         }
 

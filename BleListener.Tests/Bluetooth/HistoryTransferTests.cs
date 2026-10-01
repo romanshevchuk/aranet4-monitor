@@ -1,7 +1,6 @@
-using BleListener;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Bluetooth;
 
 public sealed class HistoryTransferTests
 {
@@ -43,5 +42,23 @@ public sealed class HistoryTransferTests
 
         Assert.True(transfer.IsComplete);
         Assert.Equal(2, transfer.MissingCount);
+    }
+
+    [Fact]
+    public void AcceptsOutOfOrderPagesAndFillsEarlierGaps()
+    {
+        var transfer = new HistoryTransfer(1, 5);
+
+        Assert.True(transfer.Apply(new AranetHistoryPage(4, 3, [830, 840])));
+        Assert.Equal(3, transfer.MissingCount);
+        Assert.False(transfer.IsComplete);
+
+        Assert.False(transfer.Apply(new AranetHistoryPage(4, 1, [810, 820])));
+        Assert.Equal(1, transfer.MissingCount);
+        Assert.False(transfer.IsComplete);
+
+        Assert.True(transfer.Apply(new AranetHistoryPage(4, 5, [850])));
+        Assert.True(transfer.IsComplete);
+        Assert.Equal(new ushort?[] { 810, 820, 830, 840, 850 }, transfer.Values);
     }
 }

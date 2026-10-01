@@ -1,62 +1,69 @@
 # Aranet4 Home
 
-Windows desktop monitor for Aranet4 sensors. It listens for Smart Home Integration BLE beacons and can pair/connect to retrieve measurements and history stored on the sensor.
+[![CI](https://github.com/romanshevchuk/aranet-home-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/romanshevchuk/aranet-home-desktop/actions/workflows/ci.yml)
 
-## Run
+An unofficial Windows tray app for live Aranet4 monitoring, local history, and ventilation alerts. It reads Smart Home Integration BLE broadcasts and can connect to a sensor to import its stored measurements.
 
-Requires Windows and the .NET 8 SDK. Enable Bluetooth and keep the Aranet4 nearby.
+> **Independent project:** Aranet and Aranet4 are referenced only to identify compatible hardware. This project is not affiliated with or endorsed by the manufacturer.
 
-```powershell
-dotnet run
-```
+## Features
 
-## Sensor history
+- Live CO₂, temperature, humidity, pressure, battery, and signal readings.
+- On-demand sensor-history sync, including incremental sync and CSV export.
+- Configurable persistent-high-CO₂ alerts and a live-reading tray icon.
+- Local-only history and settings; no account or cloud service.
 
-Select a detected sensor and choose **Sync sensor** to pair and import readings. The first sync downloads the full sensor log, even if live beacon samples are already saved. Later syncs use a separate per-sensor cursor from the last successfully completed sync, with a one-record overlap to safely merge by timestamp. **Cancel sync** leaves the cursor unchanged; retrying re-fetches the unfinished range. The app stores CO₂, temperature, humidity, and pressure history, and exports those fields to CSV. The dashboard has one chart at a time: click the CO₂, Temperature, Humidity or Pressure card to chart that metric. Every card also shows the min–max for the selected time range. **Sync sensor** imports all four metrics at once.
+## Download
 
-History and sync cursors are saved per sensor under `%LocalAppData%\AranetHome\history\`; up to 10,000 samples per device are retained. The alert threshold, alert duration, and last-alert details are stored in `%LocalAppData%\AranetHome\settings.json`. Clearing the device list does not delete saved history.
+Version-tagged GitHub releases include a self-contained Windows x64 ZIP. Extract the ZIP and run `BleListener.exe`; the .NET SDK and .NET Desktop Runtime are not required. The release workflow creates the ZIP when a `v*` tag is pushed.
 
-## Ventilation alerts
+The app is not code-signed, so Windows may show a SmartScreen warning. Only run software you trust and have obtained from the project’s official repository.
 
-By default, the app notifies when CO₂ stays above 1,500 ppm for 10 minutes and rearms at or below 1,400 ppm. Both the threshold and 1–60 minute persistence duration can be adjusted in the history panel. The persistence duration and reset margin are app choices to suppress brief spikes, not HSE-prescribed timing. The UK Health and Safety Executive says consistently higher than 1,500 ppm in an occupied room indicates poor ventilation, and cautions that CO₂ readings are a broad ventilation guide, not proof of a safe level. See [HSE guidance on using CO₂ monitors](https://www.hse.gov.uk/ventilation/using-co2-monitors.htm).
+## Requirements
 
-Notifications are short and playful, and their tone escalates with the reading. By default they appear as the app's own large pop-up (bottom-right, click to open the dashboard); right-click the tray icon → **Large pop-up notifications** to switch back to the standard Windows notification, whose text size is controlled by Windows (Settings → Accessibility → Text size). Use **Send test** (next to the threshold) to preview one, or **Pause 1 h** to snooze alerts. When the air clears after an alert you get a quick all-clear.
+- A Windows 10 Enterprise/LTSC release supported by .NET 10 (the app's minimum target is build 17763 / version 1809), or a supported Windows 11 release.
+- Bluetooth Low Energy support and an Aranet4 nearby.
+- History sync may prompt Windows to pair with the sensor; live beacon readings do not require history sync.
 
-## Dashboard layout
+The Windows 10 edition limitation follows [.NET 10’s supported Windows versions](https://learn.microsoft.com/dotnet/core/install/windows#supported-versions). The app targets Windows build 17763 or later.
 
-The window is designed to show everything at once, with no scrolling: four metric cards across the top (they double as chart tabs), one chart below, and a bottom strip with the CO₂ alert settings and sensor details (battery, signal, reading age, interval). The single-sensor device list lives behind the small device chip in the header (click it for the device list, firmware, packet count and Bluetooth diagnostics). Start/stop listening and "Forget detected devices" are in the ⋯ menu.
+## Build from source
 
-## System tray
-
-Closing or minimizing the window keeps the listener running in the tray.
-
-- The tray icon **is the live CO₂ number**, coloured by air quality (green / amber / red). The tile fills the whole icon and the digits are stretched to use every pixel. Below 1,000 ppm it shows the exact value ("820"); above that it shows thousands with one decimal ("1.3" = 1,300 ppm). Hover for the exact value. It turns grey if the sensor hasn't been heard from for 5 minutes. Right-click → **Show number on tray icon** switches to a plain coloured disc instead.
-- Click the icon to open the dashboard. Right-click for the menu: current reading, **Pause alerts for 1 hour**, **Start with Windows**, and **Exit**.
-- With **Start with Windows** enabled, the app launches hidden in the tray (`--tray`).
-
-## Tests and protocol reference
-
-Run fixture-based history protocol, incremental indexing, metric merging, and alert tests with:
+Building and running from source requires the .NET 10 SDK on Windows. From the repository root:
 
 ```powershell
+dotnet run --project BleListener/BleListener.csproj
 dotnet test BleListener.sln
 ```
 
-The [Aranet4-Python project](https://github.com/Anrijs/Aranet4-Python) (MIT) documents the GATT history protocol and is a useful reference for future firmware compatibility work.
+To create a self-contained x64 publish locally:
 
-## Project layout
-
-```
-App.xaml, GlobalUsings.cs     Application entry point
-Views/                        MainWindow (XAML + code-behind)
-Controls/                     MetricChart, SignalBars
-Bluetooth/                    Beacon parser, GATT history sync, history protocol, HistoryTransfer
-Models/                       Aranet4Device, Co2Sample, Co2Stats, Co2Quality, Metrics
-Alerts/                       Co2AlertService (when to alert), AlertMessages (what to say)
-Tray/                         TrayIconService (icon, menu, notifications), TrayIconRenderer (number icon), ToastWindow (large pop-up)
-Storage/                      HistoryStore, AppPreferences, StartupRegistration
-Assets/                       App icon
-BleListener.Tests/            xUnit tests, mirroring the folders above
+```powershell
+dotnet publish BleListener/BleListener.csproj --configuration Release --runtime win-x64 --self-contained true
 ```
 
-All code shares the `BleListener` namespace; folders only organise the files.
+The publish folder is `BleListener/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/`. For a different processor architecture, publish with its Windows runtime identifier and distribute a matching build.
+
+## Privacy
+
+The app communicates with the nearby sensor over Bluetooth LE. There is no analytics, telemetry, account, or cloud-upload feature in this repository.
+
+- Sensor history and sync cursors are stored as JSON in `%LOCALAPPDATA%\AranetHome\history\`, with files keyed by the sensor's Bluetooth address.
+- Preferences, including alert settings and last-alert details, are stored in `%LOCALAPPDATA%\AranetHome\settings.json`.
+- These files are not encrypted by the app. History is retained when you clear the detected-device list and when you remove the application. Delete `%LOCALAPPDATA%\AranetHome` to remove the saved data.
+- **Start with Windows** creates a per-user Windows startup entry. Turn it off from the tray menu before deleting the application if you no longer want it to start automatically.
+- CSV exports are written to the location you choose.
+
+## CO₂ and safety
+
+This app is not a certified safety, medical, or emergency-warning device. CO₂ readings are a broad indicator of ventilation; they do not establish that air is safe. Sensor readings can be missing, stale, or affected by placement and connectivity. Do not use this app in place of required safety monitoring or professional guidance.
+
+The default alert is 1,500 ppm sustained for 10 minutes, and it rearms at or below 1,400 ppm. These are configurable app settings, not HSE-prescribed timing. See the [UK Health and Safety Executive guidance on CO₂ monitors](https://www.hse.gov.uk/ventilation/using-co2-monitors.htm).
+
+## Acknowledgements
+
+The [Aranet4-Python project](https://github.com/Anrijs/Aranet4-Python) is a protocol research reference. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the specific sources and attribution. The app’s protocol and sync tests use local fixtures and do not require a sensor.
+
+## License
+
+For this independent utility, **MIT** is the simplest fit for permissive reuse. Choose Apache-2.0 instead if an explicit patent grant for contributions is important. No license file is currently included; making the repository public does not itself grant permission to reuse or redistribute the code. Add the selected license before inviting contributions or reuse.

@@ -1,8 +1,8 @@
-using BleListener;
 using Xunit;
 
-namespace BleListener.Tests;
+namespace BleListener.Tests.Alerts;
 
+using BleListener.Alerts;
 using System.Globalization;
 
 public sealed class AlertMessagesTests

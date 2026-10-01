@@ -6,8 +6,9 @@ using Windows.Devices.Enumeration;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Foundation;
 using Windows.Storage.Streams;
+using BleListener.Models;
 
-namespace BleListener;
+namespace BleListener.Bluetooth;
 
 /// <param name="SyncedThrough">Cursor to save. Null when nothing was synced or the download was incomplete.</param>
 /// <param name="MissingRecords">Records the sensor never delivered; &gt; 0 means the cursor must not advance.</param>

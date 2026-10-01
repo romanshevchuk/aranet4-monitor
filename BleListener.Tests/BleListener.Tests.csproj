@@ -1,16 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <Nullable>enable</Nullable>
-    <!-- CsWinRT's source generator emits unsafe interop code for WinRT generics (e.g. TypedEventHandler). -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- The CsWinRT AOT source generator is only needed for NativeAOT/trimmed apps, and it emits duplicate code for this project. -->
-    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
