@@ -8,13 +8,21 @@ public partial class MainWindow
 {
     private void DeviceChip_Click(object sender, RoutedEventArgs e)
     {
-        if (DevicePopup.IsOpen) { DevicePopup.IsOpen = false; return; }
+        if (DevicePopup.IsOpen)
+        {
+            DevicePopup.IsOpen = false;
+            return;
+        }
         // The same click that dismissed the popup (it closes on any outside press) must not reopen it.
-        if ((DateTime.UtcNow - _devicePopupClosedAt).TotalMilliseconds < 250) return;
+        if ((DateTime.UtcNow - devicePopupClosedAt).TotalMilliseconds < 250)
+        {
+            return;
+        }
+
         DevicePopup.IsOpen = true;
     }
 
-    private void DevicePopup_Closed(object? sender, EventArgs e) => _devicePopupClosedAt = DateTime.UtcNow;
+    private void DevicePopup_Closed(object? sender, EventArgs e) => devicePopupClosedAt = DateTime.UtcNow;
 
     private void MoreButton_Click(object sender, RoutedEventArgs e)
     {
@@ -25,10 +33,13 @@ public partial class MainWindow
     private void TemperatureUnit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.MenuItem { Tag: string tag }
-            || !Enum.TryParse<TemperatureUnit>(tag, ignoreCase: true, out var temperatureUnit)) return;
+            || !Enum.TryParse<TemperatureUnit>(tag, ignoreCase: true, out var temperatureUnit))
+        {
+            return;
+        }
 
-        _preferences.TemperatureDisplayUnit = temperatureUnit;
-        _preferences.Save();
+        preferences.TemperatureDisplayUnit = temperatureUnit;
+        preferences.Save();
         CelsiusUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Celsius;
         FahrenheitUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Fahrenheit;
         HistoryChart.TemperatureDisplayUnit = temperatureUnit;
@@ -36,19 +47,35 @@ public partial class MainWindow
         foreach (var device in Dashboard.Devices)
         {
             if (device.TemperatureCelsius is { } celsius)
+            {
                 device.Temperature = Metrics.FormatWithUnit((double)celsius, MetricKind.Temperature, temperatureUnit);
+            }
         }
 
-        if (Dashboard.SelectedDevice is { } selected) ShowDetails(selected);
-        else RefreshChart();
+        if (Dashboard.SelectedDevice is { } selected)
+        {
+            ShowDetails(selected);
+        }
+        else
+        {
+            RefreshChart();
+        }
     }
 
     private void RangeButton_Checked(object sender, RoutedEventArgs e)
     {
-        if (sender is not RadioButton { Tag: string tag }) return;
+        if (sender is not RadioButton { Tag: string tag })
+        {
+            return;
+        }
+
         var hours = int.Parse(tag, CultureInfo.InvariantCulture);
         Dashboard.HistoryRange = hours == 0 ? null : TimeSpan.FromHours(hours);
-        if (HistoryChart is null) return; // Checked fires once while the XAML is still being loaded
+        if (HistoryChart is null)
+        {
+            return; // Checked fires once while the XAML is still being loaded
+        }
+
         RefreshChart();
     }
 }

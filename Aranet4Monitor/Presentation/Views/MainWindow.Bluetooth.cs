@@ -1,34 +1,38 @@
 using System.Globalization;
 using System.Text;
 using System.Windows;
-using Windows.Devices.Bluetooth;
-using Windows.Devices.Bluetooth.Advertisement;
-using Windows.Storage.Streams;
 using Aranet4Monitor.Alerts;
 using Aranet4Monitor.Bluetooth;
 using Aranet4Monitor.Models;
 using Aranet4Monitor.Storage;
+using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.Advertisement;
+using Windows.Storage.Streams;
 
 namespace Aranet4Monitor;
 
 public partial class MainWindow
 {
     private readonly Dictionary<ulong, Aranet4Device> _devicesByAddress = new();
-    private BluetoothLEAdvertisementWatcher? _watcher;
-    private readonly Co2AlertService _co2Alerts = new();
-    private readonly HashSet<string> _alertedDevices = new(StringComparer.OrdinalIgnoreCase);
+    private BluetoothLEAdvertisementWatcher? watcher;
+    private readonly Co2AlertService co2Alerts = new();
+    private readonly HashSet<string> alertedDevices = new(StringComparer.OrdinalIgnoreCase);
 
     private void StartButton_Click(object sender, RoutedEventArgs e) => StartListening();
 
     private void StartListening()
     {
-        if (_watcher is not null) return;
+        if (watcher is not null)
+        {
+            return;
+        }
+
         try
         {
-            _watcher = new BluetoothLEAdvertisementWatcher { ScanningMode = BluetoothLEScanningMode.Active };
-            _watcher.Received += Watcher_Received;
-            _watcher.Stopped += Watcher_Stopped;
-            _watcher.Start();
+            watcher = new BluetoothLEAdvertisementWatcher { ScanningMode = BluetoothLEScanningMode.Active };
+            watcher.Received += Watcher_Received;
+            watcher.Stopped += Watcher_Stopped;
+            watcher.Start();
             StartMenuItem.IsEnabled = false;
             StopMenuItem.IsEnabled = true;
             SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
@@ -36,7 +40,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            _watcher = null; // allow another attempt
+            watcher = null; // allow another attempt
             SetStatus($"Could not start: {ex.Message}", StatusKind.Error);
         }
     }
@@ -46,7 +50,7 @@ public partial class MainWindow
     private void ClearButton_Click(object sender, RoutedEventArgs e)
     {
         _devicesByAddress.Clear();
-        _alertedDevices.Clear();
+        alertedDevices.Clear();
         Dashboard.Devices.Clear();
         Dashboard.SelectedDevice = null;
         ClearDetails();
@@ -54,11 +58,19 @@ public partial class MainWindow
 
     private void StopWatching()
     {
-        if (_watcher is null) return;
-        _watcher.Received -= Watcher_Received;
-        _watcher.Stopped -= Watcher_Stopped;
-        if (_watcher.Status == BluetoothLEAdvertisementWatcherStatus.Started) _watcher.Stop();
-        _watcher = null;
+        if (watcher is null)
+        {
+            return;
+        }
+
+        watcher.Received -= Watcher_Received;
+        watcher.Stopped -= Watcher_Stopped;
+        if (watcher.Status == BluetoothLEAdvertisementWatcherStatus.Started)
+        {
+            watcher.Stop();
+        }
+
+        watcher = null;
         StartMenuItem.IsEnabled = true;
         StopMenuItem.IsEnabled = false;
         SetStatus("Stopped", StatusKind.Idle);
@@ -67,11 +79,11 @@ public partial class MainWindow
     private void Watcher_Stopped(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementWatcherStoppedEventArgs args) =>
         Dispatcher.InvokeAsync(() =>
         {
-            if (_watcher == sender)
+            if (watcher == sender)
             {
                 sender.Received -= Watcher_Received;
                 sender.Stopped -= Watcher_Stopped;
-                _watcher = null; // otherwise StartListening() would think we're still running
+                watcher = null; // otherwise StartListening() would think we're still running
                 StartMenuItem.IsEnabled = true;
                 StopMenuItem.IsEnabled = false;
                 SetStatus($"Listener stopped: {args.Error}", args.Error == BluetoothError.Success ? StatusKind.Idle : StatusKind.Error);
@@ -87,13 +99,20 @@ public partial class MainWindow
             advertisement.LocalName,
             advertisement.ServiceUuids,
             manufacturerBlocks.Select(block => (block.CompanyId, block.Data.Length)));
-        if (!isAranet && !_devicesByAddress.ContainsKey(args.BluetoothAddress)) return;
+        if (!isAranet && !_devicesByAddress.ContainsKey(args.BluetoothAddress))
+        {
+            return;
+        }
 
         var packet = FormatPacket(args, manufacturerBlocks);
         var matchingBlock = manufacturerBlocks.FirstOrDefault(block => block.CompanyId == Aranet4BeaconParser.AranetCompanyId);
         Aranet4Measurement? measurement = null;
         var decodeMessage = "Waiting for an Aranet manufacturer beacon.";
-        if (matchingBlock is not null) Aranet4BeaconParser.TryParse(matchingBlock.Data, out measurement, out decodeMessage);
+        if (matchingBlock is not null)
+        {
+            Aranet4BeaconParser.TryParse(matchingBlock.Data, out measurement, out decodeMessage);
+        }
+
         Dispatcher.InvokeAsync(() => UpdateDevice(args, packet, measurement, decodeMessage));
     }
 
@@ -118,16 +137,26 @@ public partial class MainWindow
         device.LastSeen = args.Timestamp.LocalDateTime;
         device.Rssi = args.RawSignalStrengthInDBm;
         device.Packets++;
-        if (!string.IsNullOrWhiteSpace(advertisement.LocalName)) device.Name = advertisement.LocalName;
-        if (args.AdvertisementType == BluetoothLEAdvertisementType.ScanResponse) device.LastScanResponse = packet;
-        else device.LastAdvertisement = packet;
+        if (!string.IsNullOrWhiteSpace(advertisement.LocalName))
+        {
+            device.Name = advertisement.LocalName;
+        }
+
+        if (args.AdvertisementType == BluetoothLEAdvertisementType.ScanResponse)
+        {
+            device.LastScanResponse = packet;
+        }
+        else
+        {
+            device.LastAdvertisement = packet;
+        }
 
         if (measurement is not null)
         {
             device.Firmware = measurement.Firmware;
             device.Co2Ppm = measurement.Co2;
             device.TemperatureCelsius = measurement.TemperatureCelsius;
-            device.Temperature = Metrics.FormatWithUnit((double)measurement.TemperatureCelsius, MetricKind.Temperature, _preferences.TemperatureDisplayUnit);
+            device.Temperature = Metrics.FormatWithUnit((double)measurement.TemperatureCelsius, MetricKind.Temperature, preferences.TemperatureDisplayUnit);
             device.Pressure = $"{measurement.PressureHpa:0.0} hPa";
             device.Humidity = $"{measurement.HumidityPercent}%";
             device.HumidityValue = measurement.HumidityPercent;
@@ -151,7 +180,7 @@ public partial class MainWindow
             {
                 HistoryStore.Save(device.Address, device.History);
                 // Always feed the service so its sustained-high tracking stays correct, even while alerts are paused.
-                var alertDue = _co2Alerts.ShouldNotify(
+                var alertDue = co2Alerts.ShouldNotify(
                     device.Address,
                     measurement.Co2,
                     now,
@@ -159,20 +188,24 @@ public partial class MainWindow
                     TimeSpan.FromSeconds(measurement.IntervalSeconds ?? 60),
                     TimeSpan.FromMinutes(AlertDurationMinutes));
                 var alertsPaused = AlertsPaused;
-                if (alertDue && alertsPaused) _co2Alerts.DeferNotification(device.Address);
+                if (alertDue && alertsPaused)
+                {
+                    co2Alerts.DeferNotification(device.Address);
+                }
+
                 var notificationSent = alertDue && !alertsPaused;
                 if (notificationSent)
                 {
-                    _alertedDevices.Add(device.Address);
-                    _preferences.LastCo2AlertAt = now;
-                    _preferences.LastCo2AlertPpm = measurement.Co2;
-                    _preferences.Save();
+                    alertedDevices.Add(device.Address);
+                    preferences.LastCo2AlertAt = now;
+                    preferences.LastCo2AlertPpm = measurement.Co2;
+                    preferences.Save();
                     AlertStatusText.Text = $"Alert sent: {measurement.Co2:N0} ppm at {now:t}";
-                    _notifications.NotifyHighCo2(measurement.Co2);
+                    notifications.NotifyHighCo2(measurement.Co2);
                 }
                 else if (alertDue)
                 {
-                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm, but alerts are paused until {_alertsPausedUntil:t}.";
+                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm, but alerts are paused until {alertsPausedUntil:t}.";
                 }
                 else if (measurement.Co2 > AlertThreshold)
                 {
@@ -181,19 +214,28 @@ public partial class MainWindow
                 else if (measurement.Co2 <= Co2AlertService.GetResetThreshold(AlertThreshold))
                 {
                     // Air is fine again. If we had raised the alarm, celebrate with a short all-clear.
-                    if (_alertedDevices.Remove(device.Address) && !AlertsPaused)
-                        _notifications.NotifyRecovered(measurement.Co2);
+                    if (alertedDevices.Remove(device.Address) && !AlertsPaused)
+                    {
+                        notifications.NotifyRecovered(measurement.Co2);
+                    }
 
-                    AlertStatusText.Text = _preferences.LastCo2AlertAt is { } previousAlert
+                    AlertStatusText.Text = preferences.LastCo2AlertAt is { } previousAlert
                         ? $"Recovered below {Co2AlertService.GetResetThreshold(AlertThreshold):N0} ppm. Last alert {previousAlert:t}."
                         : "No active high-CO₂ alert.";
                 }
             }
         }
-        else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.") device.IntegrationState = decodeMessage;
+        else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.")
+        {
+            device.IntegrationState = decodeMessage;
+        }
 
         // Don't overwrite a sync progress/result message the user is still reading.
-        if (_syncCancellation is null && DateTime.Now >= _statusHoldUntil) SetStatus("Listening", StatusKind.Listening);
+        if (syncCancellation is null && DateTime.Now >= statusHoldUntil)
+        {
+            SetStatus("Listening", StatusKind.Listening);
+        }
+
         if (Dashboard.SelectedDevice == device)
         {
             ShowDetails(device);
@@ -203,10 +245,22 @@ public partial class MainWindow
 
     private void CopyPacket_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string which }) return;
+        if (sender is not Button { Tag: string which })
+        {
+            return;
+        }
+
         var text = which == "adv" ? AdvertisementText.Text : ScanResponseText.Text;
-        if (string.IsNullOrWhiteSpace(text)) return;
-        try { Clipboard.SetText(text); } catch (System.Runtime.InteropServices.COMException) { /* clipboard busy */ }
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        try
+        {
+            Clipboard.SetText(text);
+        }
+        catch (System.Runtime.InteropServices.COMException) { /* clipboard busy */ }
     }
 
     private static string FormatPacket(BluetoothLEAdvertisementReceivedEventArgs args, IEnumerable<ManufacturerBlock> manufacturerBlocks)
@@ -216,10 +270,26 @@ public partial class MainWindow
         builder.AppendLine($"Type: {args.AdvertisementType}");
         builder.AppendLine($"Address: {FormatAddress(args.BluetoothAddress)}");
         builder.AppendLine($"RSSI: {args.RawSignalStrengthInDBm} dBm");
-        if (!string.IsNullOrWhiteSpace(advertisement.LocalName)) builder.AppendLine($"Name: {advertisement.LocalName}");
-        if (advertisement.ServiceUuids.Count > 0) builder.AppendLine($"Services: {string.Join(", ", advertisement.ServiceUuids)}");
-        foreach (var block in manufacturerBlocks) builder.AppendLine($"Manufacturer 0x{block.CompanyId:X4}: {Convert.ToHexString(block.Data)}");
-        foreach (var section in advertisement.DataSections) builder.AppendLine($"AD 0x{section.DataType:X2}: {Convert.ToHexString(ToBytes(section.Data))}");
+        if (!string.IsNullOrWhiteSpace(advertisement.LocalName))
+        {
+            builder.AppendLine($"Name: {advertisement.LocalName}");
+        }
+
+        if (advertisement.ServiceUuids.Count > 0)
+        {
+            builder.AppendLine($"Services: {string.Join(", ", advertisement.ServiceUuids)}");
+        }
+
+        foreach (var block in manufacturerBlocks)
+        {
+            builder.AppendLine($"Manufacturer 0x{block.CompanyId:X4}: {Convert.ToHexString(block.Data)}");
+        }
+
+        foreach (var section in advertisement.DataSections)
+        {
+            builder.AppendLine($"AD 0x{section.DataType:X2}: {Convert.ToHexString(ToBytes(section.Data))}");
+        }
+
         return builder.ToString().TrimEnd();
     }
 

@@ -1,12 +1,12 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Threading.Channels;
+using Aranet4Monitor.Models;
 using Windows.Devices.Bluetooth;
-using Windows.Devices.Enumeration;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Storage.Streams;
-using Aranet4Monitor.Models;
 
 namespace Aranet4Monitor.Bluetooth;
 
@@ -47,7 +47,9 @@ public static class Aranet4HistorySync
             progress?.Report("Pairing with Aranet4...");
             var pairResult = await pairing.PairAsync();
             if (pairResult.Status is not DevicePairingResultStatus.Paired and not DevicePairingResultStatus.AlreadyPaired)
+            {
                 throw new InvalidOperationException($"Windows could not pair with the sensor ({pairResult.Status}).");
+            }
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -67,8 +69,15 @@ public static class Aranet4HistorySync
             var total = await ReadUInt16Async(totalReadingsCharacteristic);
             var interval = await ReadUInt16Async(intervalCharacteristic);
             var age = await ReadUInt16Async(ageCharacteristic);
-            if (total == 0) return new AranetHistorySyncResult([], null);
-            if (interval == 0) throw new InvalidOperationException("The sensor reported an invalid history interval.");
+            if (total == 0)
+            {
+                return new AranetHistorySyncResult([], null);
+            }
+
+            if (interval == 0)
+            {
+                throw new InvalidOperationException("The sensor reported an invalid history interval.");
+            }
 
             var now = DateTime.Now;
             var latest = Co2Sample.ToWholeSecond(now.AddSeconds(-age));
@@ -94,7 +103,10 @@ public static class Aranet4HistorySync
                     DecodeTemperature(temperature[offset]),
                     DecodeHumidity(humidity[offset]),
                     DecodePressure(pressure[offset]));
-                if (sample.HasAnyMetric) samples.Add(sample);
+                if (sample.HasAnyMetric)
+                {
+                    samples.Add(sample);
+                }
             }
 
             // If any record never arrived, don't advance the cursor: the gap would otherwise be skipped forever.
@@ -147,8 +159,14 @@ public static class Aranet4HistorySync
         {
             var result = await device.GetGattServicesForUuidAsync(serviceId, BluetoothCacheMode.Uncached);
             if (result.Status == GattCommunicationStatus.Success && result.Services.Count > 0)
+            {
                 return result.Services[0];
-            foreach (var unused in result.Services) unused.Dispose();
+            }
+
+            foreach (var unused in result.Services)
+            {
+                unused.Dispose();
+            }
         }
 
         throw new InvalidOperationException("The Aranet4 history service was not found. Check that the sensor is awake and nearby.");
@@ -174,7 +192,10 @@ public static class Aranet4HistorySync
             timeout.Token.ThrowIfCancellationRequested();
 
             byte[] packet;
-            try { packet = await ReadBytesAsync(history).WaitAsync(StallTimeout, timeout.Token); }
+            try
+            {
+                packet = await ReadBytesAsync(history).WaitAsync(StallTimeout, timeout.Token);
+            }
             catch (TimeoutException) { throw StalledTransfer(transfer); }
 
             var progressed = false;
@@ -196,7 +217,11 @@ public static class Aranet4HistorySync
             else
             {
                 // Empty, stale or repeated page. Give the sensor a moment, but never wait on it forever.
-                if (sinceProgress.Elapsed >= StallTimeout) throw StalledTransfer(transfer);
+                if (sinceProgress.Elapsed >= StallTimeout)
+                {
+                    throw StalledTransfer(transfer);
+                }
+
                 await Task.Delay(100, timeout.Token);
             }
         }
@@ -217,7 +242,10 @@ public static class Aranet4HistorySync
         var packets = Channel.CreateUnbounded<byte[]>();
         TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> handler = (_, args) =>
         {
-            try { packets.Writer.TryWrite(ToArray(args.CharacteristicValue)); }
+            try
+            {
+                packets.Writer.TryWrite(ToArray(args.CharacteristicValue));
+            }
             catch (ObjectDisposedException) { }
         };
 
@@ -240,19 +268,32 @@ public static class Aranet4HistorySync
             while (!transfer.IsComplete)
             {
                 byte[] packet;
-                try { packet = await packets.Reader.ReadAsync(timeout.Token).AsTask().WaitAsync(StallTimeout, timeout.Token); }
+                try
+                {
+                    packet = await packets.Reader.ReadAsync(timeout.Token).AsTask().WaitAsync(StallTimeout, timeout.Token);
+                }
                 catch (TimeoutException) { throw StalledTransfer(transfer); }
 
                 AranetHistoryPage page;
-                try { page = AranetHistoryProtocol.ParseV1(packet, parameter); }
+                try
+                {
+                    page = AranetHistoryProtocol.ParseV1(packet, parameter);
+                }
                 catch (FormatException)
                 {
-                    if (sinceProgress.Elapsed >= StallTimeout) throw StalledTransfer(transfer);
+                    if (sinceProgress.Elapsed >= StallTimeout)
+                    {
+                        throw StalledTransfer(transfer);
+                    }
+
                     continue;
                 }
 
                 // An empty page or an index past the end is the sensor's "no more data" marker.
-                if (page.Count == 0 || page.StartIndex > total) break;
+                if (page.Count == 0 || page.StartIndex > total)
+                {
+                    break;
+                }
 
                 if (transfer.Apply(page))
                 {
@@ -287,7 +328,11 @@ public static class Aranet4HistorySync
     private static async Task<ushort> ReadUInt16Async(GattCharacteristic characteristic)
     {
         var bytes = await ReadBytesAsync(characteristic);
-        if (bytes.Length < 2) throw new InvalidOperationException($"The sensor returned an invalid value for {characteristic.Uuid}.");
+        if (bytes.Length < 2)
+        {
+            throw new InvalidOperationException($"The sensor returned an invalid value for {characteristic.Uuid}.");
+        }
+
         return BinaryPrimitives.ReadUInt16LittleEndian(bytes);
     }
 
@@ -329,6 +374,8 @@ public static class Aranet4HistorySync
     private static void EnsureSuccess(GattCommunicationStatus status, string message)
     {
         if (status != GattCommunicationStatus.Success)
+        {
             throw new InvalidOperationException($"{message} ({status}).");
+        }
     }
 }

@@ -38,7 +38,10 @@ public static class StartupRegistration
 
             var path = Environment.ProcessPath;
             // When launched as "dotnet Aranet4Monitor.dll" the process is dotnet.exe; registering that would be wrong.
-            if (path is null || Path.GetFileNameWithoutExtension(path).Equals("dotnet", StringComparison.OrdinalIgnoreCase)) return false;
+            if (path is null || Path.GetFileNameWithoutExtension(path).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
 
             key.SetValue(ValueName, $"\"{path}\" {TrayArgument}");
             return true;

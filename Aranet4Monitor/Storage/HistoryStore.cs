@@ -1,8 +1,8 @@
-using Aranet4Monitor.Models;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Aranet4Monitor.Models;
 
 namespace Aranet4Monitor.Storage;
 
@@ -17,7 +17,10 @@ public static class HistoryStore
         var fileKey = string.Concat(address.Select(character =>
             char.IsLetterOrDigit(character) || character is '-' or '_' or '.' ? character : '-'));
         if (fileKey.Length > 120)
+        {
             fileKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(address)));
+        }
+
         return Path.Combine(Folder, fileKey + ".json");
     }
 
@@ -52,7 +55,11 @@ public static class HistoryStore
         try
         {
             var path = PathFor(address);
-            if (!File.Exists(path)) return [];
+            if (!File.Exists(path))
+            {
+                return [];
+            }
+
             return JsonSerializer.Deserialize<List<Co2Sample>>(File.ReadAllText(path)) ?? [];
         }
         catch { return []; } // corrupt or unreadable history must never break the live view

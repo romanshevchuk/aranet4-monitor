@@ -10,20 +10,33 @@ public sealed class HistoryTransfer
 
     public HistoryTransfer(ushort startIndex, ushort total)
     {
-        if (startIndex == 0 || startIndex > total) throw new ArgumentOutOfRangeException(nameof(startIndex));
+        if (startIndex == 0 || startIndex > total)
+        {
+            throw new ArgumentOutOfRangeException(nameof(startIndex));
+        }
+
         this.startIndex = startIndex;
         Total = total;
         LastIndex = startIndex - 1;
         Values = new ushort?[total - startIndex + 1];
     }
 
-    public ushort Total { get; }
+    public ushort Total
+    {
+        get;
+    }
 
     /// <summary>One slot per requested record; null means the sensor never sent it.</summary>
-    public ushort?[] Values { get; }
+    public ushort?[] Values
+    {
+        get;
+    }
 
     /// <summary>Highest record index received so far.</summary>
-    public int LastIndex { get; private set; }
+    public int LastIndex
+    {
+        get; private set;
+    }
 
     public bool IsComplete => LastIndex >= Total;
 
@@ -36,8 +49,16 @@ public sealed class HistoryTransfer
         for (var offset = 0; offset < page.Values.Count; offset++)
         {
             var index = page.StartIndex + offset;
-            if (index > Total) break;
-            if (index >= startIndex) Values[index - startIndex] = page.Values[offset];
+            if (index > Total)
+            {
+                break;
+            }
+
+            if (index >= startIndex)
+            {
+                Values[index - startIndex] = page.Values[offset];
+            }
+
             LastIndex = Math.Max(LastIndex, index);
         }
 

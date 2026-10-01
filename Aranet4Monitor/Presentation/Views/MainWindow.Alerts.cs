@@ -6,19 +6,19 @@ namespace Aranet4Monitor;
 
 public partial class MainWindow
 {
-    private bool AlertsPaused => _alertsPausedUntil is { } until && DateTime.Now < until;
+    private bool AlertsPaused => alertsPausedUntil is { } until && DateTime.Now < until;
 
     private void ToggleAlertPause()
     {
-        _alertsPausedUntil = AlertsPaused ? null : DateTime.Now.AddHours(1);
+        alertsPausedUntil = AlertsPaused ? null : DateTime.Now.AddHours(1);
         UpdatePauseUi();
     }
 
     private void UpdatePauseUi()
     {
-        _notifications.SetAlertsPaused(AlertsPaused, _alertsPausedUntil);
+        notifications.SetAlertsPaused(AlertsPaused, alertsPausedUntil);
         PauseAlertsButton.Content = AlertsPaused ? "Resume alerts" : "Pause 1 h";
-        AlertStatusText.Text = AlertsPaused ? $"Alerts paused until {_alertsPausedUntil:t}." : "Alerts are on.";
+        AlertStatusText.Text = AlertsPaused ? $"Alerts paused until {alertsPausedUntil:t}." : "Alerts are on.";
     }
 
     private void PauseAlerts_Click(object sender, RoutedEventArgs e) => ToggleAlertPause();
@@ -26,7 +26,7 @@ public partial class MainWindow
     private void SendTestAlert_Click(object sender, RoutedEventArgs e)
     {
         // Preview the real notification, using a level just above the user's threshold.
-        _notifications.NotifyHighCo2(AlertThreshold + 80);
+        notifications.NotifyHighCo2(AlertThreshold + 80);
         AlertStatusText.Text = "Test notification sent. Click it to bring this window back.";
     }
 
@@ -40,10 +40,10 @@ public partial class MainWindow
 
     private void AlertThreshold_LostFocus(object sender, RoutedEventArgs e)
     {
-        _preferences.AlertThresholdPpm = AlertThreshold;
-        _preferences.AlertDurationMinutes = AlertDurationMinutes;
-        AlertThresholdTextBox.Text = _preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
-        AlertDurationTextBox.Text = _preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
-        _preferences.Save();
+        preferences.AlertThresholdPpm = AlertThreshold;
+        preferences.AlertDurationMinutes = AlertDurationMinutes;
+        AlertThresholdTextBox.Text = preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
+        AlertDurationTextBox.Text = preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
+        preferences.Save();
     }
 }

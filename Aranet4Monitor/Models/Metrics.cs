@@ -3,7 +3,10 @@ using System.Globalization;
 namespace Aranet4Monitor.Models;
 
 /// <summary>The four measurements the sensor records; each one gets a card and a chart tab.</summary>
-public enum MetricKind { Co2, Temperature, Humidity, Pressure }
+public enum MetricKind
+{
+    Co2, Temperature, Humidity, Pressure
+}
 
 /// <summary>Per-metric facts (units, colours, formatting, summaries) shared by the cards, the chart and the stats text.</summary>
 public static class Metrics
@@ -76,7 +79,11 @@ public static class Metrics
         double min = double.MaxValue, max = double.MinValue;
         foreach (var sample in samples)
         {
-            if (sample.Time < from || Value(sample, kind, temperatureUnit) is not { } value) continue;
+            if (sample.Time < from || Value(sample, kind, temperatureUnit) is not { } value)
+            {
+                continue;
+            }
+
             any = true;
             min = Math.Min(min, value);
             max = Math.Max(max, value);
@@ -98,7 +105,11 @@ public static class Metrics
         double min = double.MaxValue, max = double.MinValue, sum = 0;
         foreach (var sample in samples)
         {
-            if (sample.Time < from || Value(sample, kind, temperatureUnit) is not { } value) continue;
+            if (sample.Time < from || Value(sample, kind, temperatureUnit) is not { } value)
+            {
+                continue;
+            }
+
             count++;
             sum += value;
             min = Math.Min(min, value);
@@ -106,9 +117,11 @@ public static class Metrics
         }
 
         if (count == 0)
+        {
             return samples.Any(sample => Value(sample, kind) is not null)
                 ? "No readings in this time range"
                 : "No readings yet — the first point arrives with the next measurement";
+        }
 
         var unit = kind == MetricKind.Humidity ? "%" : $" {Unit(kind, temperatureUnit)}";
         return $"Min {Format(min, kind)}  ·  Avg {Format(sum / count, kind)}  ·  Max {Format(max, kind)}{unit}  ·  {count:N0} reading{(count == 1 ? "" : "s")}";

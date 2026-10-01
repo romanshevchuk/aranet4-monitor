@@ -10,7 +10,11 @@ public partial class MainWindow
 {
     private void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Dashboard.SelectedDevice is { } device) ShowDetails(device);
+        if (Dashboard.SelectedDevice is { } device)
+        {
+            ShowDetails(device);
+        }
+
         UpdateTray();
     }
 
@@ -19,12 +23,12 @@ public partial class MainWindow
     {
         if (Dashboard.SelectedDevice is not { } device)
         {
-            _notifications.SetReading(0, stale: false);
+            notifications.SetReading(0, stale: false);
             return;
         }
 
         var stale = device.LastSeen != default && DateTime.Now - device.LastSeen > TimeSpan.FromMinutes(5);
-        _notifications.SetReading(device.Co2Ppm, stale);
+        notifications.SetReading(device.Co2Ppm, stale);
     }
 
     private void ShowDetails(Aranet4Device device)
@@ -74,8 +78,12 @@ public partial class MainWindow
 
     private string RangeSummary(Aranet4Device? device, MetricKind kind, DateTime now)
     {
-        if (device is null || Metrics.Range(device.History, Dashboard.HistoryRange, now, kind, _preferences.TemperatureDisplayUnit) is not { } range) return string.Empty;
-        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, _preferences.TemperatureDisplayUnit)}";
+        if (device is null || Metrics.Range(device.History, Dashboard.HistoryRange, now, kind, preferences.TemperatureDisplayUnit) is not { } range)
+        {
+            return string.Empty;
+        }
+
+        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
     }
 
     private void RefreshChart()
@@ -84,14 +92,14 @@ public partial class MainWindow
         var now = DateTime.Now;
 
         HistoryChart.Metric = Dashboard.SelectedMetric;
-        HistoryChart.TemperatureDisplayUnit = _preferences.TemperatureDisplayUnit;
+        HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
         HistoryChart.Samples = device?.History;
         HistoryChart.Range = Dashboard.HistoryRange;
         HistoryChart.InvalidateVisual();
 
         ChartTitleText.Text = $"{Metrics.Title(Dashboard.SelectedMetric).ToUpperInvariant()} HISTORY";
         ChartDot.Fill = AccentBrushes[Dashboard.SelectedMetric];
-        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, Dashboard.HistoryRange, now, Dashboard.SelectedMetric, _preferences.TemperatureDisplayUnit);
+        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, Dashboard.HistoryRange, now, Dashboard.SelectedMetric, preferences.TemperatureDisplayUnit);
 
         TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
         HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
@@ -118,9 +126,17 @@ public partial class MainWindow
 
     private void MetricTab_Checked(object sender, RoutedEventArgs e)
     {
-        if (sender is not RadioButton { Tag: string tag } || !Enum.TryParse<MetricKind>(tag, out var kind)) return;
+        if (sender is not RadioButton { Tag: string tag } || !Enum.TryParse<MetricKind>(tag, out var kind))
+        {
+            return;
+        }
+
         Dashboard.SelectedMetric = kind;
-        if (HistoryChart is null) return; // Checked fires once while the XAML is still being loaded
+        if (HistoryChart is null)
+        {
+            return; // Checked fires once while the XAML is still being loaded
+        }
+
         RefreshChart();
     }
 

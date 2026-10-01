@@ -1,6 +1,9 @@
 namespace Aranet4Monitor.Models;
 
-public enum Co2Level { Unknown, Good, Fair, Poor }
+public enum Co2Level
+{
+    Unknown, Good, Fair, Poor
+}
 
 /// <summary>Single source of truth for what a CO₂ number means (same bands as the dashboard gauge).</summary>
 public static class Co2Quality

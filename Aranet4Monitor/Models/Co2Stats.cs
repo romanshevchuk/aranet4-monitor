@@ -10,17 +10,32 @@ public static class Co2Stats
     public static (string Text, TrendKind Kind)? Trend(IReadOnlyList<Co2Sample> samples)
     {
         var co2Samples = samples.Where(sample => sample.Ppm > 0).ToArray();
-        if (co2Samples.Length < 2) return null;
+        if (co2Samples.Length < 2)
+        {
+            return null;
+        }
+
         var latest = co2Samples[^1];
 
         Co2Sample? reference = null;
         for (var i = co2Samples.Length - 2; i >= 0; i--)
         {
-            if (latest.Time - co2Samples[i].Time >= TimeSpan.FromMinutes(30)) { reference = co2Samples[i]; break; }
+            if (latest.Time - co2Samples[i].Time >= TimeSpan.FromMinutes(30))
+            {
+                reference = co2Samples[i];
+                break;
+            }
         }
         // Not 30 minutes of data yet: fall back to the oldest sample if it's at least 10 minutes back.
-        if (reference is null && latest.Time - co2Samples[0].Time >= TimeSpan.FromMinutes(10)) reference = co2Samples[0];
-        if (reference is null) return null;
+        if (reference is null && latest.Time - co2Samples[0].Time >= TimeSpan.FromMinutes(10))
+        {
+            reference = co2Samples[0];
+        }
+
+        if (reference is null)
+        {
+            return null;
+        }
 
         var delta = latest.Ppm - reference.Ppm;
         var minutes = (int)Math.Round((latest.Time - reference.Time).TotalMinutes);
@@ -33,4 +48,7 @@ public static class Co2Stats
     }
 }
 
-public enum TrendKind { Rising, Falling, Steady }
+public enum TrendKind
+{
+    Rising, Falling, Steady
+}

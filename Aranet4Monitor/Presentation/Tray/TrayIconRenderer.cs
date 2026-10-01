@@ -1,8 +1,8 @@
-using Aranet4Monitor.Models;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Aranet4Monitor.Models;
 
 namespace Aranet4Monitor.Presentation.Tray;
 
@@ -24,8 +24,15 @@ public static class TrayIconRenderer
     /// </summary>
     public static string FormatLabel(int ppm)
     {
-        if (ppm <= 0) return "--";
-        if (ppm < 1_000) return ppm.ToString(CultureInfo.InvariantCulture);
+        if (ppm <= 0)
+        {
+            return "--";
+        }
+
+        if (ppm < 1_000)
+        {
+            return ppm.ToString(CultureInfo.InvariantCulture);
+        }
 
         var tenths = (ppm + 50) / 100; // integer rounding avoids floating-point surprises like 1.95 -> 1.9
         return tenths >= 100 ? "10" : string.Create(CultureInfo.InvariantCulture, $"{tenths / 10}.{tenths % 10}");
@@ -73,7 +80,11 @@ public static class TrayIconRenderer
 
     private static (System.Drawing.Color Background, System.Drawing.Color Foreground) Colours(int ppm, bool stale)
     {
-        if (stale || ppm <= 0) return (Stale, System.Drawing.Color.White);
+        if (stale || ppm <= 0)
+        {
+            return (Stale, System.Drawing.Color.White);
+        }
+
         return Co2Quality.Classify(ppm) switch
         {
             Co2Level.Good => (Good, DarkText),
@@ -94,7 +105,10 @@ public static class TrayIconRenderer
         path.AddString(label, family, (int)System.Drawing.FontStyle.Bold, 100f, System.Drawing.PointF.Empty, format);
 
         var bounds = path.GetBounds();
-        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
 
         var margin = Math.Max(1f, size / 16f);
         var maxWidth = size - 2 * margin;

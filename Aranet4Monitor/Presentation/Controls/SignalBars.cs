@@ -22,9 +22,18 @@ public sealed class SignalBars : FrameworkElement
         nameof(InactiveBrush), typeof(Brush), typeof(SignalBars),
         new FrameworkPropertyMetadata(DefaultInactive, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    public int Bars { get => (int)GetValue(BarsProperty); set => SetValue(BarsProperty, value); }
-    public Brush ActiveBrush { get => (Brush)GetValue(ActiveBrushProperty); set => SetValue(ActiveBrushProperty, value); }
-    public Brush InactiveBrush { get => (Brush)GetValue(InactiveBrushProperty); set => SetValue(InactiveBrushProperty, value); }
+    public int Bars
+    {
+        get => (int)GetValue(BarsProperty); set => SetValue(BarsProperty, value);
+    }
+    public Brush ActiveBrush
+    {
+        get => (Brush)GetValue(ActiveBrushProperty); set => SetValue(ActiveBrushProperty, value);
+    }
+    public Brush InactiveBrush
+    {
+        get => (Brush)GetValue(InactiveBrushProperty); set => SetValue(InactiveBrushProperty, value);
+    }
 
     protected override Size MeasureOverride(Size availableSize) => new(22, 16);
 
@@ -39,5 +48,9 @@ public sealed class SignalBars : FrameworkElement
         }
     }
 
-    private static Brush Freeze(Brush brush) { brush.Freeze(); return brush; }
+    private static Brush Freeze(Brush brush)
+    {
+        brush.Freeze();
+        return brush;
+    }
 }

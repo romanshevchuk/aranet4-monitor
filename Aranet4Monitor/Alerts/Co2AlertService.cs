@@ -13,7 +13,10 @@ public sealed class Co2AlertService
 
     public void DeferNotification(string deviceId)
     {
-        if (_states.TryGetValue(deviceId, out var state)) state.Notified = false;
+        if (_states.TryGetValue(deviceId, out var state))
+        {
+            state.Notified = false;
+        }
     }
 
     public bool ShouldNotify(
@@ -55,7 +58,10 @@ public sealed class Co2AlertService
         }
 
         state.AboveThresholdSince ??= observedAt;
-        if (state.Notified || observedAt - state.AboveThresholdSince < (requiredDuration ?? RequiredDuration)) return false;
+        if (state.Notified || observedAt - state.AboveThresholdSince < (requiredDuration ?? RequiredDuration))
+        {
+            return false;
+        }
 
         state.Notified = true;
         return true;
@@ -63,9 +69,18 @@ public sealed class Co2AlertService
 
     private sealed class AlertState
     {
-        public DateTime? AboveThresholdSince { get; set; }
-        public DateTime? LastObserved { get; set; }
-        public bool Notified { get; set; }
+        public DateTime? AboveThresholdSince
+        {
+            get; set;
+        }
+        public DateTime? LastObserved
+        {
+            get; set;
+        }
+        public bool Notified
+        {
+            get; set;
+        }
 
         public void Reset()
         {

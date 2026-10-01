@@ -10,25 +10,28 @@ public sealed class Aranet4Device : INotifyPropertyChanged
 
     private const int MaxHistorySamples = 10_000;
 
-    private DateTime _lastSeen;
-    private short _rssi;
-    private string _name = "(name pending)";
-    private int _packets;
-    private string _firmware = "—";
-    private string _integrationState = "Waiting for sensor advertisement";
-    private int _co2Ppm;
-    private string _temperature = "—";
-    private string _pressure = "—";
-    private string _humidity = "—";
-    private double _humidityValue;
-    private string _battery = "—";
-    private double _batteryValue;
-    private string _measurementAge = "—";
-    private string _measurementInterval = "—";
-    private string _lastAdvertisement = "No advertisement packet captured yet.";
+    private DateTime lastSeen;
+    private short rssi;
+    private string name = "(name pending)";
+    private int packets;
+    private string firmware = "—";
+    private string integrationState = "Waiting for sensor advertisement";
+    private int co2Ppm;
+    private string temperature = "—";
+    private string pressure = "—";
+    private string humidity = "—";
+    private double humidityValue;
+    private string battery = "—";
+    private double batteryValue;
+    private string measurementAge = "—";
+    private string measurementInterval = "—";
+    private string lastAdvertisement = "No advertisement packet captured yet.";
     private string lastScanResponse = "No scan response captured yet.";
 
-    public required string Address { get; init; }
+    public required string Address
+    {
+        get; init;
+    }
 
     /// <summary>Decoded CO₂ readings, oldest first. Only touched from the UI thread.</summary>
     public List<Co2Sample> History { get; } = [];
@@ -39,7 +42,10 @@ public sealed class Aranet4Device : INotifyPropertyChanged
         History.Clear();
         History.AddRange(saved.OrderBy(sample => sample.Time).TakeLast(MaxHistorySamples));
         // Show the newest real CO₂ value until a live beacon arrives (temperature-only history rows have Ppm 0).
-        if (History.LastOrDefault(sample => sample.Ppm > 0) is { } latest) Co2Ppm = latest.Ppm;
+        if (History.LastOrDefault(sample => sample.Ppm > 0) is { } latest)
+        {
+            Co2Ppm = latest.Ppm;
+        }
     }
 
     /// <summary>
@@ -77,7 +83,11 @@ public sealed class Aranet4Device : INotifyPropertyChanged
             group.Add(sample);
         }
 
-        if (group.Count > 0) result.Add(MergeSamplesAtSameTime(group));
+        if (group.Count > 0)
+        {
+            result.Add(MergeSamplesAtSameTime(group));
+        }
+
         return result;
     }
 
@@ -93,11 +103,18 @@ public sealed class Aranet4Device : INotifyPropertyChanged
         int? humidityPercent = null,
         decimal? pressureHpa = null)
     {
-        if (History.Count > 0 && time - History[^1].Time < minGap) return false;
+        if (History.Count > 0 && time - History[^1].Time < minGap)
+        {
+            return false;
+        }
 
         History.Add(new Co2Sample(time, ppm, temperatureCelsius, humidityPercent, pressureHpa));
 
-        if (History.Count > MaxHistorySamples) History.RemoveRange(0, History.Count - MaxHistorySamples);
+        if (History.Count > MaxHistorySamples)
+        {
+            History.RemoveRange(0, History.Count - MaxHistorySamples);
+        }
+
         return true;
     }
 
@@ -114,37 +131,97 @@ public sealed class Aranet4Device : INotifyPropertyChanged
 
     public DateTime LastSeen
     {
-        get => _lastSeen;
-        set { if (SetField(ref _lastSeen, value)) Tick(); }
+        get => lastSeen;
+        set
+        {
+            if (SetField(ref lastSeen, value))
+            {
+                Tick();
+            }
+        }
     }
 
     public short Rssi
     {
-        get => _rssi;
-        set { if (SetField(ref _rssi, value)) OnPropertyChanged(nameof(SignalBars)); }
+        get => rssi;
+        set
+        {
+            if (SetField(ref rssi, value))
+            {
+                OnPropertyChanged(nameof(SignalBars));
+            }
+        }
     }
 
-    public string Name { get => _name; set => SetField(ref _name, value); }
-    public int Packets { get => _packets; set => SetField(ref _packets, value); }
-    public string Firmware { get => _firmware; set => SetField(ref _firmware, value); }
-    public string IntegrationState { get => _integrationState; set => SetField(ref _integrationState, value); }
-    public decimal? TemperatureCelsius { get; set; }
+    public string Name
+    {
+        get => name; set => SetField(ref name, value);
+    }
+    public int Packets
+    {
+        get => packets; set => SetField(ref packets, value);
+    }
+    public string Firmware
+    {
+        get => firmware; set => SetField(ref firmware, value);
+    }
+    public string IntegrationState
+    {
+        get => integrationState; set => SetField(ref integrationState, value);
+    }
+    public decimal? TemperatureCelsius
+    {
+        get; set;
+    }
 
     /// <summary>CO₂ concentration in ppm; 0 means "no reading yet".</summary>
-    public int Co2Ppm { get => _co2Ppm; set => SetField(ref _co2Ppm, value); }
-    public string Temperature { get => _temperature; set => SetField(ref _temperature, value); }
-    public string Pressure { get => _pressure; set => SetField(ref _pressure, value); }
-    public string Humidity { get => _humidity; set => SetField(ref _humidity, value); }
-    public double HumidityValue { get => _humidityValue; set => SetField(ref _humidityValue, value); }
-    public string Battery { get => _battery; set => SetField(ref _battery, value); }
-    public double BatteryValue { get => _batteryValue; set => SetField(ref _batteryValue, value); }
-    public string MeasurementAge { get => _measurementAge; set => SetField(ref _measurementAge, value); }
-    public string MeasurementInterval { get => _measurementInterval; set => SetField(ref _measurementInterval, value); }
-    public string LastAdvertisement { get => _lastAdvertisement; set => SetField(ref _lastAdvertisement, value); }
-    public string LastScanResponse { get => lastScanResponse; set => SetField(ref lastScanResponse, value); }
+    public int Co2Ppm
+    {
+        get => co2Ppm; set => SetField(ref co2Ppm, value);
+    }
+    public string Temperature
+    {
+        get => temperature; set => SetField(ref temperature, value);
+    }
+    public string Pressure
+    {
+        get => pressure; set => SetField(ref pressure, value);
+    }
+    public string Humidity
+    {
+        get => humidity; set => SetField(ref humidity, value);
+    }
+    public double HumidityValue
+    {
+        get => humidityValue; set => SetField(ref humidityValue, value);
+    }
+    public string Battery
+    {
+        get => battery; set => SetField(ref battery, value);
+    }
+    public double BatteryValue
+    {
+        get => batteryValue; set => SetField(ref batteryValue, value);
+    }
+    public string MeasurementAge
+    {
+        get => measurementAge; set => SetField(ref measurementAge, value);
+    }
+    public string MeasurementInterval
+    {
+        get => measurementInterval; set => SetField(ref measurementInterval, value);
+    }
+    public string LastAdvertisement
+    {
+        get => lastAdvertisement; set => SetField(ref lastAdvertisement, value);
+    }
+    public string LastScanResponse
+    {
+        get => lastScanResponse; set => SetField(ref lastScanResponse, value);
+    }
 
     /// <summary>0–4 bars derived from RSSI.</summary>
-    public int SignalBars => _packets == 0 ? 0 : _rssi switch
+    public int SignalBars => packets == 0 ? 0 : rssi switch
     {
         >= -60 => 4,
         >= -70 => 3,
@@ -153,14 +230,18 @@ public sealed class Aranet4Device : INotifyPropertyChanged
         _ => 0,
     };
 
-    public bool IsLive => _lastSeen != default && (DateTime.Now - _lastSeen).TotalSeconds <= LiveWindowSeconds;
+    public bool IsLive => lastSeen != default && (DateTime.Now - lastSeen).TotalSeconds <= LiveWindowSeconds;
 
     public string LastSeenAgo
     {
         get
         {
-            if (_lastSeen == default) return "—";
-            var seconds = Math.Max(0, (DateTime.Now - _lastSeen).TotalSeconds);
+            if (lastSeen == default)
+            {
+                return "—";
+            }
+
+            var seconds = Math.Max(0, (DateTime.Now - lastSeen).TotalSeconds);
             return seconds switch
             {
                 < 2 => "just now",
@@ -186,7 +267,11 @@ public sealed class Aranet4Device : INotifyPropertyChanged
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return false;
+        }
+
         field = value;
         OnPropertyChanged(propertyName);
         return true;

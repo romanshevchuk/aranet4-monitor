@@ -8,7 +8,10 @@ using System.Windows.Threading;
 
 namespace Aranet4Monitor.Presentation.Tray;
 
-public enum ToastKind { Info, Warning, Danger, Success }
+public enum ToastKind
+{
+    Info, Warning, Danger, Success
+}
 
 /// <summary>
 /// The app's own notification pop-up, shown bottom-right above the taskbar. Unlike a Windows toast its text size
@@ -20,8 +23,8 @@ public sealed class ToastWindow : Window
     private const double ShadowMargin = 16;
     private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(12);
 
-    private readonly DispatcherTimer _timer = new() { Interval = Lifetime };
-    private bool _closing;
+    private readonly DispatcherTimer timer = new() { Interval = Lifetime };
+    private bool closing;
 
     public event EventHandler? Clicked;
 
@@ -119,8 +122,8 @@ public sealed class ToastWindow : Window
             Child = grid,
         };
         card.MouseLeftButtonUp += (_, _) => { Clicked?.Invoke(this, EventArgs.Empty); Dismiss(); };
-        card.MouseEnter += (_, _) => _timer.Stop();
-        card.MouseLeave += (_, _) => { if (!_closing) _timer.Start(); };
+        card.MouseEnter += (_, _) => timer.Stop();
+        card.MouseLeave += (_, _) => { if (!closing) { timer.Start(); } };
         Content = card;
 
         // Measure now so the window can be placed in the bottom-right corner before it is shown.
@@ -131,21 +134,25 @@ public sealed class ToastWindow : Window
         Left = work.Right - Width - 8;
         Top = work.Bottom - Height - 8;
 
-        _timer.Tick += (_, _) => Dismiss();
+        timer.Tick += (_, _) => Dismiss();
         Loaded += (_, _) =>
         {
             BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
-            _timer.Start();
+            timer.Start();
         };
-        Closed += (_, _) => _timer.Stop();
+        Closed += (_, _) => timer.Stop();
     }
 
     /// <summary>Fades the pop-up out and closes it. Safe to call more than once.</summary>
     public void Dismiss()
     {
-        if (_closing) return;
-        _closing = true;
-        _timer.Stop();
+        if (closing)
+        {
+            return;
+        }
+
+        closing = true;
+        timer.Stop();
         var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(180));
         fade.Completed += (_, _) => Close();
         BeginAnimation(OpacityProperty, fade);
