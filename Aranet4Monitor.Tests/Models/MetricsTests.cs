@@ -56,4 +56,26 @@ public sealed class MetricsTests
         Assert.EndsWith("%", Metrics.FormatWithUnit(52, MetricKind.Humidity));
         Assert.EndsWith("hPa", Metrics.FormatWithUnit(997.8, MetricKind.Pressure));
     }
+
+    [Fact]
+    public void ConvertsCelsiusSamplesForFahrenheitDisplayWithoutChangingStoredValues()
+    {
+        var sample = Samples()[0];
+
+        Assert.InRange(Metrics.Value(sample, MetricKind.Temperature, TemperatureUnit.Fahrenheit)!.Value, 68.89, 68.91);
+        Assert.Equal(20.5m, sample.TemperatureCelsius);
+        Assert.InRange(Metrics.MinSpan(MetricKind.Temperature, TemperatureUnit.Fahrenheit), 3.59, 3.61);
+        Assert.EndsWith("°F", Metrics.FormatWithUnit(68.9, MetricKind.Temperature, TemperatureUnit.Fahrenheit));
+    }
+
+    [Fact]
+    public void FahrenheitRangeAndSummaryUseConvertedValues()
+    {
+        var range = Metrics.Range(Samples(), null, Now, MetricKind.Temperature, TemperatureUnit.Fahrenheit);
+        var summary = Metrics.Describe(Samples(), null, Now, MetricKind.Temperature, TemperatureUnit.Fahrenheit);
+
+        Assert.InRange(range!.Value.Min, 68.89, 68.91);
+        Assert.InRange(range.Value.Max, 71.23, 71.25);
+        Assert.Contains("°F", summary);
+    }
 }

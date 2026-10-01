@@ -1,5 +1,7 @@
 using Aranet4Monitor.Alerts;
+using Aranet4Monitor.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Aranet4Monitor.Storage;
 
@@ -10,6 +12,8 @@ public sealed class AppPreferences
 
     public int AlertThresholdPpm { get; set; } = Co2AlertService.RecommendedVentilationThresholdPpm;
     public int AlertDurationMinutes { get; set; } = 10;
+    [JsonConverter(typeof(JsonStringEnumConverter<TemperatureUnit>))]
+    public TemperatureUnit TemperatureDisplayUnit { get; set; } = TemperatureUnit.Celsius;
     public DateTime? LastCo2AlertAt { get; set; }
     public int? LastCo2AlertPpm { get; set; }
 

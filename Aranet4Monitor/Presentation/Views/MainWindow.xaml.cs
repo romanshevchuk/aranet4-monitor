@@ -56,6 +56,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = this;
         DevicesList.ItemsSource = Devices;
+        CelsiusUnitMenuItem.IsChecked = _preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
+        FahrenheitUnitMenuItem.IsChecked = _preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
+        HistoryChart.TemperatureDisplayUnit = _preferences.TemperatureDisplayUnit;
         AlertThresholdTextBox.Text = _preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
         AlertDurationTextBox.Text = _preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
         AlertStatusText.Text = _preferences.LastCo2AlertAt is { } lastAlert
@@ -250,7 +253,8 @@ public partial class MainWindow : Window
         {
             device.Firmware = measurement.Firmware;
             device.Co2Ppm = measurement.Co2;
-            device.Temperature = $"{measurement.TemperatureCelsius:0.0} °C";
+            device.TemperatureCelsius = measurement.TemperatureCelsius;
+            device.Temperature = Metrics.FormatWithUnit((double)measurement.TemperatureCelsius, MetricKind.Temperature, _preferences.TemperatureDisplayUnit);
             device.Pressure = $"{measurement.PressureHpa:0.0} hPa";
             device.Humidity = $"{measurement.HumidityPercent}%";
             device.HumidityValue = measurement.HumidityPercent;
@@ -423,8 +427,8 @@ public partial class MainWindow : Window
 
     private string RangeSummary(Aranet4Device? device, MetricKind kind, DateTime now)
     {
-        if (device is null || Metrics.Range(device.History, _range, now, kind) is not { } range) return string.Empty;
-        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind)}";
+        if (device is null || Metrics.Range(device.History, _range, now, kind, _preferences.TemperatureDisplayUnit) is not { } range) return string.Empty;
+        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, _preferences.TemperatureDisplayUnit)}";
     }
 
     private void RefreshChart()
@@ -433,13 +437,14 @@ public partial class MainWindow : Window
         var now = DateTime.Now;
 
         HistoryChart.Metric = _metric;
+        HistoryChart.TemperatureDisplayUnit = _preferences.TemperatureDisplayUnit;
         HistoryChart.Samples = device?.History;
         HistoryChart.Range = _range;
         HistoryChart.InvalidateVisual();
 
         ChartTitleText.Text = $"{Metrics.Title(_metric).ToUpperInvariant()} HISTORY";
         ChartDot.Fill = AccentBrushes[_metric];
-        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, _range, now, _metric);
+        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, _range, now, _metric, _preferences.TemperatureDisplayUnit);
 
         TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
         HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
@@ -486,6 +491,27 @@ public partial class MainWindow : Window
     {
         MoreMenu.PlacementTarget = MoreButton;
         MoreMenu.IsOpen = true;
+    }
+
+    private void TemperatureUnit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem { Tag: string tag }
+            || !Enum.TryParse<TemperatureUnit>(tag, ignoreCase: true, out var temperatureUnit)) return;
+
+        _preferences.TemperatureDisplayUnit = temperatureUnit;
+        _preferences.Save();
+        CelsiusUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Celsius;
+        FahrenheitUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Fahrenheit;
+        HistoryChart.TemperatureDisplayUnit = temperatureUnit;
+
+        foreach (var device in Devices)
+        {
+            if (device.TemperatureCelsius is { } celsius)
+                device.Temperature = Metrics.FormatWithUnit((double)celsius, MetricKind.Temperature, temperatureUnit);
+        }
+
+        if (DevicesList.SelectedItem is Aranet4Device selected) ShowDetails(selected);
+        else RefreshChart();
     }
 
     private void RangeButton_Checked(object sender, RoutedEventArgs e)

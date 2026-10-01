@@ -310,6 +310,11 @@
                             <MenuItem x:Name="StartMenuItem" Header="Start listening" Click="StartButton_Click" />
                             <MenuItem x:Name="StopMenuItem" Header="Stop listening" Click="StopButton_Click" IsEnabled="False" />
                             <Separator />
+                            <MenuItem Header="Temperature unit">
+                                <MenuItem x:Name="CelsiusUnitMenuItem" Header="Celsius (°C)" Tag="Celsius" IsCheckable="True" Click="TemperatureUnit_Click" />
+                                <MenuItem x:Name="FahrenheitUnitMenuItem" Header="Fahrenheit (°F)" Tag="Fahrenheit" IsCheckable="True" Click="TemperatureUnit_Click" />
+                            </MenuItem>
+                            <Separator />
                             <MenuItem Header="Forget detected devices" Click="ClearButton_Click" />
                         </ContextMenu>
                     </Button.ContextMenu>

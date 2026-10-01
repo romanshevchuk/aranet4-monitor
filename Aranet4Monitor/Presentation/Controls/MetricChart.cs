@@ -53,9 +53,14 @@ public sealed class MetricChart : FrameworkElement
         nameof(Metric), typeof(MetricKind), typeof(MetricChart),
         new FrameworkPropertyMetadata(MetricKind.Co2, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((MetricChart)d)._hover = -1));
 
+    public static readonly DependencyProperty TemperatureDisplayUnitProperty = DependencyProperty.Register(
+        nameof(TemperatureDisplayUnit), typeof(TemperatureUnit), typeof(MetricChart),
+        new FrameworkPropertyMetadata(TemperatureUnit.Celsius, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((MetricChart)d)._hover = -1));
+
     public IReadOnlyList<Co2Sample>? Samples { get => (IReadOnlyList<Co2Sample>?)GetValue(SamplesProperty); set => SetValue(SamplesProperty, value); }
     public TimeSpan? Range { get => (TimeSpan?)GetValue(RangeProperty); set => SetValue(RangeProperty, value); }
     public MetricKind Metric { get => (MetricKind)GetValue(MetricProperty); set => SetValue(MetricProperty, value); }
+    public TemperatureUnit TemperatureDisplayUnit { get => (TemperatureUnit)GetValue(TemperatureDisplayUnitProperty); set => SetValue(TemperatureDisplayUnitProperty, value); }
 
     private readonly record struct Pt(DateTime Time, double Value);
 
@@ -106,7 +111,7 @@ public sealed class MetricChart : FrameworkElement
         var accent = Metrics.Accent(kind);
         _plot = new Rect(52, 8, w - 52 - 16, h - 8 - 28);
         var pts = (Samples ?? Array.Empty<Co2Sample>())
-            .Select(sample => (sample.Time, Value: Metrics.Value(sample, kind)))
+            .Select(sample => (sample.Time, Value: Metrics.Value(sample, kind, TemperatureDisplayUnit)))
             .Where(p => p.Value.HasValue)
             .Select(p => new Pt(p.Time, p.Value!.Value))
             .ToArray();
@@ -138,13 +143,13 @@ public sealed class MetricChart : FrameworkElement
             (min, max) = kind switch
             {
                 MetricKind.Co2 => (400.0, 1600.0),
-                MetricKind.Temperature => (18.0, 26.0),
+                MetricKind.Temperature => TemperatureDisplayUnit == TemperatureUnit.Fahrenheit ? (64.4, 78.8) : (18.0, 26.0),
                 MetricKind.Humidity => (30.0, 70.0),
                 _ => (990.0, 1030.0),
             };
         }
 
-        var minSpan = Metrics.MinSpan(kind);
+        var minSpan = Metrics.MinSpan(kind, TemperatureDisplayUnit);
         if (max - min < minSpan)
         {
             // Flat data: centre it instead of pinning it to an edge.
@@ -310,7 +315,7 @@ public sealed class MetricChart : FrameworkElement
         dc.DrawLine(CursorPen, new Point(px, _plot.Top), new Point(px, _plot.Bottom));
         dc.DrawEllipse(Solid(PointColor(kind, point.Value, accent)), new Pen(Brushes.White, 2.5), new Point(px, py), 6, 6);
 
-        var value = Text(Metrics.FormatWithUnit(point.Value, kind), 15, InkText, bold: true);
+        var value = Text(Metrics.FormatWithUnit(point.Value, kind, TemperatureDisplayUnit), 15, InkText, bold: true);
         var when = point.Time.ToString(includeDay ? "ddd HH:mm" : "HH:mm", CultureInfo.CurrentCulture);
         var detail = Text(kind == MetricKind.Co2 ? $"{Co2Quality.Describe(Co2Quality.Classify((int)Math.Round(point.Value)))}  ·  {when}" : when, 12, MutedText);
 

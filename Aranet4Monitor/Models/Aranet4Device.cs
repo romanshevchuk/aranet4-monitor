@@ -128,6 +128,7 @@ public sealed class Aranet4Device : INotifyPropertyChanged
     public int Packets { get => _packets; set => SetField(ref _packets, value); }
     public string Firmware { get => _firmware; set => SetField(ref _firmware, value); }
     public string IntegrationState { get => _integrationState; set => SetField(ref _integrationState, value); }
+    public decimal? TemperatureCelsius { get; set; }
 
     /// <summary>CO₂ concentration in ppm; 0 means "no reading yet".</summary>
     public int Co2Ppm { get => _co2Ppm; set => SetField(ref _co2Ppm, value); }
