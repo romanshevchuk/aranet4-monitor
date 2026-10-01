@@ -18,8 +18,16 @@ public partial class MainWindow : Window
     private readonly Dictionary<ulong, Aranet4Device> _devicesByAddress = new();
     private BluetoothLEAdvertisementWatcher? _watcher;
     private readonly DispatcherTimer _tickTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly AppPreferences _preferences = AppPreferences.Load();
+    private readonly Co2AlertService _co2Alerts = new();
+    private readonly TrayIconService _notifications = new();
+    private readonly HashSet<string> _alertedDevices = new(StringComparer.OrdinalIgnoreCase);
+    private bool _startHiddenInTray = Environment.GetCommandLineArgs().Contains(StartupRegistration.TrayArgument);
+    private DateTime? _alertsPausedUntil;
+    private CancellationTokenSource? _syncCancellation;
     private TimeSpan? _range = TimeSpan.FromHours(6); // null = show all recorded history
     private int _tickCount;
+    private bool _allowClose;
 
     private static readonly Brush ChipLive = Frozen(Color.FromRgb(0x2C, 0x56, 0x8B));
     private static readonly Brush ChipStale = Frozen(Color.FromRgb(0x6B, 0x55, 0x2A));
@@ -35,7 +43,33 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = this;
-        Closed += (_, _) => { _tickTimer.Stop(); StopWatching(); };
+        AlertThresholdTextBox.Text = _preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
+        AlertDurationTextBox.Text = _preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
+        AlertStatusText.Text = _preferences.LastCo2AlertAt is { } lastAlert
+            ? $"Last notification: {_preferences.LastCo2AlertPpm:N0} ppm at {lastAlert:t}"
+            : "No high-CO₂ alerts sent yet.";
+        _notifications.RestoreRequested += (_, _) => RestoreFromTray();
+        _notifications.ExitRequested += (_, _) => ExitFromTray();
+        _notifications.PauseToggleRequested += (_, _) => ToggleAlertPause();
+        _notifications.StartWithWindowsToggled += (_, enabled) =>
+        {
+            // If Windows refuses the change, put the menu check mark back to the real state.
+            if (!StartupRegistration.SetEnabled(enabled)) _notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
+        };
+        _notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
+
+        if (_startHiddenInTray)
+        {
+            // Started by Windows: come up minimized so no window flashes; Loaded then hides it in the tray.
+            ShowInTaskbar = false;
+            WindowState = WindowState.Minimized;
+        }
+        Closing += MainWindow_Closing;
+        Closed += (_, _) => { _tickTimer.Stop(); _syncCancellation?.Cancel(); StopWatching(); _notifications.Dispose(); };
+        StateChanged += (_, _) =>
+        {
+            if (WindowState == WindowState.Minimized && !_startHiddenInTray) HideToTray();
+        };
 
         Devices.CollectionChanged += (_, _) =>
         {
@@ -48,12 +82,48 @@ public partial class MainWindow : Window
         {
             foreach (var device in Devices) device.Tick();
             if (DevicesList.SelectedItem is Aranet4Device selected) ShowLastSeen(selected);
-            if (++_tickCount % 10 == 0) RefreshChart(); // the window "now" keeps moving even without new data
+            if (_alertsPausedUntil is { } until && DateTime.Now >= until)
+            {
+                _alertsPausedUntil = null;
+                UpdatePauseUi();
+            }
+
+            if (++_tickCount % 10 == 0)
+            {
+                RefreshChart(); // the window "now" keeps moving even without new data
+                UpdateTray();   // turns the tray icon grey if the sensor has gone quiet
+            }
         };
         _tickTimer.Start();
 
         // The app exists to listen, so start right away (Stop still works as before).
-        Loaded += (_, _) => StartListening();
+        Loaded += (_, _) =>
+        {
+            StartListening();
+            if (!_startHiddenInTray) return;
+            Hide();
+            ShowInTaskbar = true;
+            WindowState = WindowState.Normal;
+            _startHiddenInTray = false; // from now on minimizing hides to the tray as usual
+        };
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_allowClose) return;
+        e.Cancel = true;
+        HideToTray();
+    }
+
+    /// <summary>Hides the window; the first time ever, explains where the app went.</summary>
+    private void HideToTray()
+    {
+        Hide();
+        if (_preferences.TrayHintShown) return;
+
+        _preferences.TrayHintShown = true;
+        _preferences.Save();
+        _notifications.NotifyHint("🫧 Still here, in the tray", "I'll keep listening quietly. Click the number to open me, right-click for options.");
     }
 
     private void StartButton_Click(object sender, RoutedEventArgs e) => StartListening();
@@ -84,6 +154,7 @@ public partial class MainWindow : Window
     private void ClearButton_Click(object sender, RoutedEventArgs e)
     {
         _devicesByAddress.Clear();
+        _alertedDevices.Clear();
         Devices.Clear();
         ClearDetails();
     }
@@ -172,19 +243,107 @@ public partial class MainWindow : Window
             device.IntegrationState = "Live Smart Home beacon decoded";
 
             // The same measurement is repeated in many packets; TryAddSample keeps one point per measurement.
-            var measuredAt = args.Timestamp.LocalDateTime - TimeSpan.FromSeconds(measurement.AgeSeconds ?? 0);
+            var now = args.Timestamp.LocalDateTime;
+            var measuredAt = now - TimeSpan.FromSeconds(measurement.AgeSeconds ?? 0);
             var minGap = TimeSpan.FromSeconds(Math.Max(10, (measurement.IntervalSeconds ?? 60) * 0.5));
-            if (device.TryAddSample(measuredAt, measurement.Co2, minGap)) HistoryStore.Save(device.Address, device.History);
+            if (device.TryAddSample(
+                measuredAt,
+                measurement.Co2,
+                minGap,
+                measurement.TemperatureCelsius,
+                measurement.HumidityPercent,
+                measurement.PressureHpa))
+            {
+                HistoryStore.Save(device.Address, device.History);
+                // Always feed the service so its sustained-high tracking stays correct, even while alerts are paused.
+                var alertDue = _co2Alerts.ShouldNotify(
+                    device.Address,
+                    measurement.Co2,
+                    now,
+                    AlertThreshold,
+                    TimeSpan.FromSeconds(measurement.IntervalSeconds ?? 60),
+                    TimeSpan.FromMinutes(AlertDurationMinutes));
+                var notificationSent = alertDue && !AlertsPaused;
+                if (notificationSent)
+                {
+                    _alertedDevices.Add(device.Address);
+                    _preferences.LastCo2AlertAt = now;
+                    _preferences.LastCo2AlertPpm = measurement.Co2;
+                    _preferences.Save();
+                    AlertStatusText.Text = $"Alert sent: {measurement.Co2:N0} ppm at {now:t}";
+                    _notifications.NotifyHighCo2(measurement.Co2);
+                }
+                else if (alertDue)
+                {
+                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm, but alerts are paused until {_alertsPausedUntil:t}.";
+                }
+                else if (measurement.Co2 > AlertThreshold)
+                {
+                    AlertStatusText.Text = $"Above {AlertThreshold:N0} ppm; waiting for {AlertDurationMinutes} minutes of sustained readings.";
+                }
+                else if (measurement.Co2 <= Co2AlertService.GetResetThreshold(AlertThreshold))
+                {
+                    // Air is fine again. If we had raised the alarm, celebrate with a short all-clear.
+                    if (_alertedDevices.Remove(device.Address) && !AlertsPaused)
+                        _notifications.NotifyRecovered(measurement.Co2);
+
+                    AlertStatusText.Text = _preferences.LastCo2AlertAt is { } previousAlert
+                        ? $"Recovered below {Co2AlertService.GetResetThreshold(AlertThreshold):N0} ppm. Last alert {previousAlert:t}."
+                        : "No active high-CO₂ alert.";
+                }
+            }
         }
         else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.") device.IntegrationState = decodeMessage;
 
         SetStatus($"Listening — {Devices.Count} Aranet4 device(s), last packet {device.Name}", StatusKind.Listening);
-        if (DevicesList.SelectedItem == device) ShowDetails(device);
+        if (DevicesList.SelectedItem == device)
+        {
+            ShowDetails(device);
+            UpdateTray();
+        }
     }
 
     private void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (DevicesList.SelectedItem is Aranet4Device device) ShowDetails(device);
+        UpdateTray();
+    }
+
+    /// <summary>The tray icon follows the selected sensor and turns grey if it hasn't been heard from for 5 minutes.</summary>
+    private void UpdateTray()
+    {
+        if (DevicesList.SelectedItem is not Aranet4Device device)
+        {
+            _notifications.SetReading(0, stale: false);
+            return;
+        }
+
+        var stale = device.LastSeen != default && DateTime.Now - device.LastSeen > TimeSpan.FromMinutes(5);
+        _notifications.SetReading(device.Co2Ppm, stale);
+    }
+
+    private bool AlertsPaused => _alertsPausedUntil is { } until && DateTime.Now < until;
+
+    private void ToggleAlertPause()
+    {
+        _alertsPausedUntil = AlertsPaused ? null : DateTime.Now.AddHours(1);
+        UpdatePauseUi();
+    }
+
+    private void UpdatePauseUi()
+    {
+        _notifications.SetAlertsPaused(AlertsPaused, _alertsPausedUntil);
+        PauseAlertsButton.Content = AlertsPaused ? "Resume alerts" : "Pause 1 h";
+        AlertStatusText.Text = AlertsPaused ? $"Alerts paused until {_alertsPausedUntil:t}." : "Alerts are on.";
+    }
+
+    private void PauseAlerts_Click(object sender, RoutedEventArgs e) => ToggleAlertPause();
+
+    private void SendTestAlert_Click(object sender, RoutedEventArgs e)
+    {
+        // Preview the real notification, using a level just above the user's threshold.
+        _notifications.NotifyHighCo2(AlertThreshold + 80);
+        AlertStatusText.Text = "Test notification sent. Click it to bring this window back.";
     }
 
     private enum StatusKind { Idle, Listening, Error }
@@ -246,6 +405,7 @@ public partial class MainWindow : Window
         HistoryChart.Range = _range;
         HistoryChart.InvalidateVisual();
         ChartStatsText.Text = device is null ? "No readings yet" : Co2Stats.Describe(device.History, _range, DateTime.Now);
+        AdditionalHistoryStatsText.Text = device is null ? string.Empty : DescribeAdditionalMetrics(device.History);
 
         if (device is not null && Co2Stats.Trend(device.History) is { } trend)
         {
@@ -262,6 +422,21 @@ public partial class MainWindow : Window
         {
             TrendText.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private string DescribeAdditionalMetrics(IReadOnlyList<Co2Sample> samples)
+    {
+        var from = _range is { } range ? DateTime.Now - range : DateTime.MinValue;
+        var visible = samples.Where(sample => sample.Time >= from).ToArray();
+        var temperatures = visible.Where(sample => sample.TemperatureCelsius.HasValue).Select(sample => sample.TemperatureCelsius!.Value).ToArray();
+        var humidities = visible.Where(sample => sample.HumidityPercent.HasValue).Select(sample => sample.HumidityPercent!.Value).ToArray();
+        var pressures = visible.Where(sample => sample.PressureHpa.HasValue).Select(sample => sample.PressureHpa!.Value).ToArray();
+
+        static string DecimalRange(decimal[] values, string unit) => values.Length == 0
+            ? "—"
+            : $"{values.Min():0.0}–{values.Max():0.0} {unit}";
+        var humidityRange = humidities.Length == 0 ? "—" : $"{humidities.Min()}–{humidities.Max()} %";
+        return $"Temperature {DecimalRange(temperatures, "°C")}  ·  Humidity {humidityRange}  ·  Pressure {DecimalRange(pressures, "hPa")}";
     }
 
     private void RangeButton_Checked(object sender, RoutedEventArgs e)
@@ -288,11 +463,103 @@ public partial class MainWindow : Window
         };
         if (dialog.ShowDialog(this) != true) return;
 
-        var csv = new StringBuilder("time,co2_ppm\n");
+        var csv = new StringBuilder("time,co2_ppm,temperature_c,humidity_percent,pressure_hpa\n");
         foreach (var sample in device.History)
-            csv.Append(sample.Time.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).Append(',').Append(sample.Ppm).Append('\n');
+        {
+            csv.Append(sample.Time.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).Append(',')
+                .Append(sample.Ppm > 0 ? sample.Ppm.ToString(CultureInfo.InvariantCulture) : string.Empty).Append(',')
+                .Append(sample.TemperatureCelsius?.ToString("0.0", CultureInfo.InvariantCulture) ?? string.Empty).Append(',')
+                .Append(sample.HumidityPercent?.ToString(CultureInfo.InvariantCulture) ?? string.Empty).Append(',')
+                .Append(sample.PressureHpa?.ToString("0.0", CultureInfo.InvariantCulture) ?? string.Empty).Append('\n');
+        }
         try { File.WriteAllText(dialog.FileName, csv.ToString()); }
         catch (IOException ex) { MessageBox.Show(this, ex.Message, "Export CSV", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    private async void SyncHistory_Click(object sender, RoutedEventArgs e)
+    {
+        if (DevicesList.SelectedItem is not Aranet4Device device) return;
+
+        var bluetoothAddress = _devicesByAddress.FirstOrDefault(entry => ReferenceEquals(entry.Value, device)).Key;
+        if (bluetoothAddress == 0)
+        {
+            SetStatus("Could not identify the selected sensor.", StatusKind.Error);
+            return;
+        }
+
+        SyncHistoryButton.IsEnabled = false;
+        CancelHistorySyncButton.IsEnabled = true;
+        var cancellation = new CancellationTokenSource();
+        _syncCancellation = cancellation;
+        try
+        {
+            var progress = new Progress<string>(message => SetStatus(message, _watcher is null ? StatusKind.Idle : StatusKind.Listening));
+            var cursor = HistoryStore.LoadSyncCursor(device.Address);
+            var result = await Aranet4HistorySync.SyncAsync(bluetoothAddress, cursor, progress, cancellation.Token);
+            var added = device.MergeHistory(result.Samples);
+            if (!HistoryStore.Save(device.Address, device.History))
+                throw new IOException("Downloaded history could not be saved locally. The sync cursor was not advanced; retry after checking disk space.");
+            if (result.SyncedThrough is { } syncedThrough && !HistoryStore.SaveSyncCursor(device.Address, syncedThrough))
+                throw new IOException("The sync cursor could not be saved. Retrying will safely import the overlap again.");
+            if (DevicesList.SelectedItem == device) ShowDetails(device);
+            var statusKind = _watcher is null ? StatusKind.Idle : StatusKind.Listening;
+            SetStatus(result.MissingRecords > 0
+                ? $"History sync incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received. Sync again to fill the gap."
+                : $"History sync complete: {added:N0} new readings.", statusKind);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            SetStatus("History sync cancelled. Retry to resume from the last completed sync.", _watcher is null ? StatusKind.Idle : StatusKind.Listening);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"History sync failed: {ex.Message}", StatusKind.Error);
+            MessageBox.Show(this, ex.Message, "History sync", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            _syncCancellation = null;
+            cancellation.Dispose();
+            SyncHistoryButton.IsEnabled = true;
+            CancelHistorySyncButton.IsEnabled = false;
+        }
+    }
+
+    private void CancelHistorySync_Click(object sender, RoutedEventArgs e)
+    {
+        CancelHistorySyncButton.IsEnabled = false;
+        _syncCancellation?.Cancel();
+    }
+
+    private int AlertThreshold => int.TryParse(AlertThresholdTextBox.Text, out var value)
+        ? Math.Clamp(value, 800, 5_000)
+        : Co2AlertService.RecommendedVentilationThresholdPpm;
+
+    private int AlertDurationMinutes => int.TryParse(AlertDurationTextBox.Text, out var value)
+        ? Math.Clamp(value, 1, 60)
+        : 10;
+
+    private void AlertThreshold_LostFocus(object sender, RoutedEventArgs e)
+    {
+        _preferences.AlertThresholdPpm = AlertThreshold;
+        _preferences.AlertDurationMinutes = AlertDurationMinutes;
+        AlertThresholdTextBox.Text = _preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
+        AlertDurationTextBox.Text = _preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
+        _preferences.Save();
+    }
+
+    private void RestoreFromTray()
+    {
+        Show();
+        ShowInTaskbar = true;
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void ExitFromTray()
+    {
+        _allowClose = true;
+        Close();
     }
 
     /// <summary>Colours the badge and moves the gauge marker (scale: 400–2000 ppm).</summary>
@@ -342,6 +609,7 @@ public partial class MainWindow : Window
         HistoryChart.Samples = null;
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();
+        UpdateTray();
     }
 
     private void CopyPacket_Click(object sender, RoutedEventArgs e)

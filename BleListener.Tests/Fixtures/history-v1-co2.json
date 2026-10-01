@@ -1,0 +1,6 @@
+{
+  "Parameter": 4,
+  "PacketHex": "040100032003DC050080",
+  "ExpectedStartIndex": 1,
+  "ExpectedValues": [800, 1500, 32768]
+}

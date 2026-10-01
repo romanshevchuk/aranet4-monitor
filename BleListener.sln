@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BleListener", "BleListener.csproj", "{4D64E2C6-6077-4762-A3EC-C0E057F02D21}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BleListener.Tests", "BleListener.Tests\BleListener.Tests.csproj", "{81E9A868-C6BB-4D5C-B75C-6FE4A9AC9C2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{4D64E2C6-6077-4762-A3EC-C0E057F02D21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D64E2C6-6077-4762-A3EC-C0E057F02D21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D64E2C6-6077-4762-A3EC-C0E057F02D21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81E9A868-C6BB-4D5C-B75C-6FE4A9AC9C2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81E9A868-C6BB-4D5C-B75C-6FE4A9AC9C2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81E9A868-C6BB-4D5C-B75C-6FE4A9AC9C2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81E9A868-C6BB-4D5C-B75C-6FE4A9AC9C2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

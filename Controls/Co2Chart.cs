@@ -92,13 +92,13 @@ public sealed class Co2Chart : FrameworkElement
         if (w < 120 || h < 80) return;
 
         _plot = new Rect(46, 8, w - 46 - 14, h - 8 - 26);
-        var samples = Samples ?? Array.Empty<Co2Sample>();
+        var samples = (Samples ?? Array.Empty<Co2Sample>()).Where(sample => sample.Ppm > 0).ToArray();
         var now = DateTime.Now;
 
         // ---- time domain ----
         DateTime t0, t1;
         if (Range is { } range) { t1 = now; t0 = now - range; }
-        else if (samples.Count >= 2) { t0 = samples[0].Time; t1 = samples[^1].Time; }
+        else if (samples.Length >= 2) { t0 = samples[0].Time; t1 = samples[^1].Time; }
         else { t1 = now; t0 = now - TimeSpan.FromHours(1); }
         if (t1 - t0 < TimeSpan.FromMinutes(1)) t1 = t0 + TimeSpan.FromMinutes(1);
 
@@ -142,7 +142,7 @@ public sealed class Co2Chart : FrameworkElement
 
         if (end == first)
         {
-            var msg = Text(samples.Count == 0
+            var msg = Text(samples.Length == 0
                 ? "No readings yet — the first point appears once a measurement is decoded."
                 : "No readings in this time range.", 12.5, MutedText);
             dc.DrawText(msg, new Point(_plot.Left + (_plot.Width - msg.Width) / 2, _plot.Top + (_plot.Height - msg.Height) / 2));
@@ -226,7 +226,8 @@ public sealed class Co2Chart : FrameworkElement
         var tick = t0.Date + TimeSpan.FromSeconds(n * step.TotalSeconds);
         var format = step >= TimeSpan.FromDays(1) ? "d MMM" : span.TotalHours > 36 ? "ddd HH:mm" : "HH:mm";
 
-        for (; tick <= t1; tick += step)
+        // The cap guards against a corrupt, far-away timestamp turning the axis into millions of ticks.
+        for (var drawn = 0; tick <= t1 && drawn < 200; tick += step, drawn++)
         {
             var px = Math.Round(x(tick)) + 0.5;
             dc.DrawLine(GridPen, new Point(px, _plot.Top), new Point(px, _plot.Bottom));
@@ -303,7 +304,7 @@ public sealed class Co2Chart : FrameworkElement
     }
 
     private FormattedText Text(string text, double size, Brush brush, bool bold = false) =>
-        new(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, bold ? Bold : Regular, size, brush,
+        new(text, CultureInfo.CurrentCulture, System.Windows.FlowDirection.LeftToRight, bold ? Bold : Regular, size, brush,
             VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
     private static SolidColorBrush Solid(Color color, byte alpha = 255)
