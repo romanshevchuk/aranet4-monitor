@@ -309,7 +309,7 @@
                     <StackPanel VerticalAlignment="Center">
                         <WrapPanel VerticalAlignment="Center">
                             <TextBlock Text="CO₂ alert: notify above" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBox x:Name="AlertThresholdTextBox" Text="1000" Width="60" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
+                            <TextBox x:Name="AlertThresholdTextBox" Text="1500" Width="60" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
                                      LostFocus="AlertThreshold_LostFocus" ToolTip="Ventilation alert threshold in ppm" />
                             <TextBlock Text="ppm for" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="6,0,4,0" />
                             <TextBox x:Name="AlertDurationTextBox" Text="10" Width="40" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
