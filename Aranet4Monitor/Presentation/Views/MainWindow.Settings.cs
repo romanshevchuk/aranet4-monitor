@@ -33,13 +33,13 @@ public partial class MainWindow
         FahrenheitUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Fahrenheit;
         HistoryChart.TemperatureDisplayUnit = temperatureUnit;
 
-        foreach (var device in Devices)
+        foreach (var device in Dashboard.Devices)
         {
             if (device.TemperatureCelsius is { } celsius)
                 device.Temperature = Metrics.FormatWithUnit((double)celsius, MetricKind.Temperature, temperatureUnit);
         }
 
-        if (DevicesList.SelectedItem is Aranet4Device selected) ShowDetails(selected);
+        if (Dashboard.SelectedDevice is { } selected) ShowDetails(selected);
         else RefreshChart();
     }
 
@@ -47,7 +47,7 @@ public partial class MainWindow
     {
         if (sender is not RadioButton { Tag: string tag }) return;
         var hours = int.Parse(tag, CultureInfo.InvariantCulture);
-        _range = hours == 0 ? null : TimeSpan.FromHours(hours);
+        Dashboard.HistoryRange = hours == 0 ? null : TimeSpan.FromHours(hours);
         if (HistoryChart is null) return; // Checked fires once while the XAML is still being loaded
         RefreshChart();
     }

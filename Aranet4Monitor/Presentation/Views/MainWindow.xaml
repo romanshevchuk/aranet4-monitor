@@ -86,7 +86,9 @@
                                     <TextBlock x:Name="DevicesCountText" Text="0" Foreground="#2F6FDD" FontWeight="Bold" FontSize="12" />
                                 </Border>
                             </Grid>
-                            <ListBox x:Name="DevicesList" SelectionChanged="DevicesList_SelectionChanged" MaxHeight="230"
+                            <ListBox x:Name="DevicesList" ItemsSource="{Binding Devices}"
+                                     SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                                     SelectionChanged="DevicesList_SelectionChanged" MaxHeight="230"
                                      BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>

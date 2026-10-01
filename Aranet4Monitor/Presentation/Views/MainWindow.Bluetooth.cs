@@ -47,7 +47,8 @@ public partial class MainWindow
     {
         _devicesByAddress.Clear();
         _alertedDevices.Clear();
-        Devices.Clear();
+        Dashboard.Devices.Clear();
+        Dashboard.SelectedDevice = null;
         ClearDetails();
     }
 
@@ -103,12 +104,12 @@ public partial class MainWindow
             device = new Aranet4Device { Address = FormatAddress(args.BluetoothAddress) };
             device.LoadHistory(HistoryStore.Load(device.Address));
             _devicesByAddress.Add(args.BluetoothAddress, device);
-            Devices.Add(device);
+            Dashboard.Devices.Add(device);
 
             // The dashboard is designed around the primary sensor; keep the first one in focus.
-            if (DevicesList.SelectedItem is null)
+            if (Dashboard.SelectedDevice is null)
             {
-                DevicesList.SelectedItem = device;
+                Dashboard.SelectedDevice = device;
                 DevicesList.ScrollIntoView(device);
             }
         }
@@ -193,7 +194,7 @@ public partial class MainWindow
 
         // Don't overwrite a sync progress/result message the user is still reading.
         if (_syncCancellation is null && DateTime.Now >= _statusHoldUntil) SetStatus("Listening", StatusKind.Listening);
-        if (DevicesList.SelectedItem == device)
+        if (Dashboard.SelectedDevice == device)
         {
             ShowDetails(device);
             UpdateTray();

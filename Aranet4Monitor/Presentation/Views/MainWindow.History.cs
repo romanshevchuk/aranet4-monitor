@@ -11,7 +11,7 @@ public partial class MainWindow
 {
     private void ExportCsv_Click(object sender, RoutedEventArgs e)
     {
-        if (DevicesList.SelectedItem is not Aranet4Device { History.Count: > 0 } device)
+        if (Dashboard.SelectedDevice is not { History.Count: > 0 } device)
         {
             MessageBox.Show(this, "There are no readings to export yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
@@ -39,7 +39,7 @@ public partial class MainWindow
 
     private async void SyncHistory_Click(object sender, RoutedEventArgs e)
     {
-        if (DevicesList.SelectedItem is not Aranet4Device device) return;
+        if (Dashboard.SelectedDevice is not { } device) return;
 
         var bluetoothAddress = _devicesByAddress.FirstOrDefault(entry => ReferenceEquals(entry.Value, device)).Key;
         if (bluetoothAddress == 0)
@@ -62,7 +62,7 @@ public partial class MainWindow
                 throw new IOException("Downloaded history could not be saved locally. The sync cursor was not advanced; retry after checking disk space.");
             if (result.SyncedThrough is { } syncedThrough && !HistoryStore.SaveSyncCursor(device.Address, syncedThrough))
                 throw new IOException("The sync cursor could not be saved. Retrying will safely import the overlap again.");
-            if (DevicesList.SelectedItem == device) ShowDetails(device);
+            if (Dashboard.SelectedDevice == device) ShowDetails(device);
             var statusKind = _watcher is null ? StatusKind.Idle : StatusKind.Listening;
             _statusHoldUntil = DateTime.Now.AddSeconds(12);
             SetStatus(result.MissingRecords > 0

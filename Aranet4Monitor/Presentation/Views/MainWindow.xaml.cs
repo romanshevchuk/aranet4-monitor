@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -6,6 +5,7 @@ using System.Windows.Threading;
 using Aranet4Monitor.Presentation.Tray;
 using Aranet4Monitor.Storage;
 using Aranet4Monitor.Models;
+using Aranet4Monitor.Presentation.ViewModels;
 
 namespace Aranet4Monitor;
 
@@ -14,11 +14,10 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _tickTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly AppPreferences _preferences = AppPreferences.Load();
     private readonly TrayIconService _notifications = new();
+    public DashboardViewModel Dashboard { get; } = new();
     private bool _startHiddenInTray = Environment.GetCommandLineArgs().Contains(StartupRegistration.TrayArgument);
     private DateTime? _alertsPausedUntil;
     private CancellationTokenSource? _syncCancellation;
-    private TimeSpan? _range = TimeSpan.FromHours(6); // null = show all recorded history
-    private MetricKind _metric = MetricKind.Co2;          // which metric the chart shows
     private DateTime _devicePopupClosedAt;
     private DateTime _statusHoldUntil;
     private int _tickCount;
@@ -37,13 +36,10 @@ public partial class MainWindow : Window
 
     private static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
 
-    public ObservableCollection<Aranet4Device> Devices { get; } = [];
-
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = this;
-        DevicesList.ItemsSource = Devices;
+        DataContext = Dashboard;
         CelsiusUnitMenuItem.IsChecked = _preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
         FahrenheitUnitMenuItem.IsChecked = _preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
         HistoryChart.TemperatureDisplayUnit = _preferences.TemperatureDisplayUnit;
@@ -79,17 +75,17 @@ public partial class MainWindow : Window
             if (WindowState == WindowState.Minimized && !_startHiddenInTray) HideToTray();
         };
 
-        Devices.CollectionChanged += (_, _) =>
+        Dashboard.Devices.CollectionChanged += (_, _) =>
         {
-            DevicesCountText.Text = Devices.Count.ToString(CultureInfo.InvariantCulture);
-            EmptyHintText.Visibility = Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            DevicesCountText.Text = Dashboard.Devices.Count.ToString(CultureInfo.InvariantCulture);
+            EmptyHintText.Visibility = Dashboard.Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         };
 
         // Keeps "3s ago" labels and the live dots fresh between packets.
         _tickTimer.Tick += (_, _) =>
         {
-            foreach (var device in Devices) device.Tick();
-            if (DevicesList.SelectedItem is Aranet4Device selected) ShowLastSeen(selected);
+            foreach (var device in Dashboard.Devices) device.Tick();
+            if (Dashboard.SelectedDevice is { } selected) ShowLastSeen(selected);
             if (_alertsPausedUntil is { } until && DateTime.Now >= until)
             {
                 _alertsPausedUntil = null;
