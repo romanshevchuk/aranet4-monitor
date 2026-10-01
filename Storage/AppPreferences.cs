@@ -15,6 +15,12 @@ public sealed class AppPreferences
     /// <summary>True once the "I live in the tray now" hint has been shown.</summary>
     public bool TrayHintShown { get; set; }
 
+    /// <summary>Draw the CO₂ number on the tray icon (otherwise the icon is just a coloured disc).</summary>
+    public bool TrayShowNumber { get; set; } = true;
+
+    /// <summary>Show alerts as the app's own large pop-up instead of the small Windows notification.</summary>
+    public bool LargePopups { get; set; } = true;
+
     public static AppPreferences Load()
     {
         try

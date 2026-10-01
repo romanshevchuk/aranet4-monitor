@@ -26,11 +26,19 @@ public partial class MainWindow : Window
     private DateTime? _alertsPausedUntil;
     private CancellationTokenSource? _syncCancellation;
     private TimeSpan? _range = TimeSpan.FromHours(6); // null = show all recorded history
+    private MetricKind _metric = MetricKind.Co2;          // which metric the chart shows
+    private DateTime _devicePopupClosedAt;
+    private DateTime _statusHoldUntil;
     private int _tickCount;
     private bool _allowClose;
 
-    private static readonly Brush ChipLive = Frozen(Color.FromRgb(0x2C, 0x56, 0x8B));
-    private static readonly Brush ChipStale = Frozen(Color.FromRgb(0x6B, 0x55, 0x2A));
+    private static readonly Brush DotLive = Frozen(Color.FromRgb(0x2E, 0xC2, 0x7E));
+    private static readonly Brush DotStale = Frozen(Color.FromRgb(0xF5, 0xB9, 0x42));
+    private static readonly Brush DotIdle = Frozen(Color.FromRgb(0x8F, 0xA3, 0xBF));
+    private static readonly Brush SeenLive = Frozen(Color.FromRgb(0x9D, 0xB8, 0xE0));
+    private static readonly Brush SeenStale = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
+    private static readonly Dictionary<MetricKind, Brush> AccentBrushes =
+        Enum.GetValues<MetricKind>().ToDictionary(kind => kind, kind => Frozen(Metrics.Accent(kind)));
     private static readonly Brush TrendRising = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
     private static readonly Brush TrendFalling = Frozen(Color.FromRgb(0x7B, 0xE0, 0xAE));
     private static readonly Brush TrendSteady = Frozen(Color.FromRgb(0x9D, 0xB8, 0xE0));
@@ -43,6 +51,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = this;
+        DevicesList.ItemsSource = Devices;
         AlertThresholdTextBox.Text = _preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
         AlertDurationTextBox.Text = _preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
         AlertStatusText.Text = _preferences.LastCo2AlertAt is { } lastAlert
@@ -57,6 +66,10 @@ public partial class MainWindow : Window
             if (!StartupRegistration.SetEnabled(enabled)) _notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
         };
         _notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
+        _notifications.SetShowNumber(_preferences.TrayShowNumber);
+        _notifications.SetLargePopups(_preferences.LargePopups);
+        _notifications.ShowNumberToggled += (_, enabled) => { _preferences.TrayShowNumber = enabled; _preferences.Save(); };
+        _notifications.LargePopupsToggled += (_, enabled) => { _preferences.LargePopups = enabled; _preferences.Save(); };
 
         if (_startHiddenInTray)
         {
@@ -74,7 +87,7 @@ public partial class MainWindow : Window
         Devices.CollectionChanged += (_, _) =>
         {
             DevicesCountText.Text = Devices.Count.ToString(CultureInfo.InvariantCulture);
-            EmptyState.Visibility = Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            EmptyHintText.Visibility = Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         };
 
         // Keeps "3s ago" labels and the live dots fresh between packets.
@@ -123,7 +136,7 @@ public partial class MainWindow : Window
 
         _preferences.TrayHintShown = true;
         _preferences.Save();
-        _notifications.NotifyHint("🫧 Still here, in the tray", "I'll keep listening quietly. Click the number to open me, right-click for options.");
+        _notifications.NotifyHint("🫧 Still here, in the tray", "I'll keep listening quietly. Click the tray icon to open me, right-click for options.");
     }
 
     private void StartButton_Click(object sender, RoutedEventArgs e) => StartListening();
@@ -137,8 +150,8 @@ public partial class MainWindow : Window
             _watcher.Received += Watcher_Received;
             _watcher.Stopped += Watcher_Stopped;
             _watcher.Start();
-            StartButton.IsEnabled = false;
-            StopButton.IsEnabled = true;
+            StartMenuItem.IsEnabled = false;
+            StopMenuItem.IsEnabled = true;
             SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
             EmptyHintText.Text = "Listening… power-cycle or move the sensor closer if nothing shows up.";
         }
@@ -166,8 +179,8 @@ public partial class MainWindow : Window
         _watcher.Stopped -= Watcher_Stopped;
         if (_watcher.Status == BluetoothLEAdvertisementWatcherStatus.Started) _watcher.Stop();
         _watcher = null;
-        StartButton.IsEnabled = true;
-        StopButton.IsEnabled = false;
+        StartMenuItem.IsEnabled = true;
+        StopMenuItem.IsEnabled = false;
         SetStatus("Stopped", StatusKind.Idle);
     }
 
@@ -179,8 +192,8 @@ public partial class MainWindow : Window
                 sender.Received -= Watcher_Received;
                 sender.Stopped -= Watcher_Stopped;
                 _watcher = null; // otherwise StartListening() would think we're still running
-                StartButton.IsEnabled = true;
-                StopButton.IsEnabled = false;
+                StartMenuItem.IsEnabled = true;
+                StopMenuItem.IsEnabled = false;
                 SetStatus($"Listener stopped: {args.Error}", args.Error == BluetoothError.Success ? StatusKind.Idle : StatusKind.Error);
             }
         });
@@ -295,7 +308,8 @@ public partial class MainWindow : Window
         }
         else if (decodeMessage != "Waiting for an Aranet manufacturer beacon.") device.IntegrationState = decodeMessage;
 
-        SetStatus($"Listening — {Devices.Count} Aranet4 device(s), last packet {device.Name}", StatusKind.Listening);
+        // Don't overwrite a sync progress/result message the user is still reading.
+        if (_syncCancellation is null && DateTime.Now >= _statusHoldUntil) SetStatus("Listening", StatusKind.Listening);
         if (DevicesList.SelectedItem == device)
         {
             ShowDetails(device);
@@ -351,6 +365,7 @@ public partial class MainWindow : Window
     private void SetStatus(string text, StatusKind kind)
     {
         StatusText.Text = text;
+        StatusText.ToolTip = text;
         StatusDot.Tag = kind switch { StatusKind.Listening => "on", StatusKind.Error => "error", _ => null };
     }
 
@@ -380,12 +395,9 @@ public partial class MainWindow : Window
         IntervalText.Text = device.MeasurementInterval;
         RssiText.Text = device.Packets == 0 ? "—" : $"{device.Rssi} dBm";
         DetailSignal.Bars = device.SignalBars;
+        ChipNameText.Text = device.Name;
         ShowLastSeen(device);
 
-        InfoNameText.Text = device.Name;
-        InfoAddressText.Text = device.Address;
-        InfoFirmwareText.Text = $"Firmware {device.Firmware}";
-        InfoPacketsText.Text = device.Packets == 1 ? "1 packet" : $"{device.Packets:N0} packets";
         AdvertisementText.Text = device.LastAdvertisement;
         ScanResponseText.Text = device.LastScanResponse;
         RefreshChart();
@@ -393,19 +405,38 @@ public partial class MainWindow : Window
 
     private void ShowLastSeen(Aranet4Device device)
     {
-        LastSeenText.Text = device.LastSeen == default ? "No data yet" : $"Seen {device.LastSeenAgo}";
+        var hasData = device.LastSeen != default;
+        LastSeenText.Text = hasData ? device.LastSeenAgo : "no data yet";
         // Amber when we haven't heard from the sensor for a while, so stale numbers aren't mistaken for live ones.
-        LastSeenChip.Background = device.LastSeen == default || device.IsLive ? ChipLive : ChipStale;
+        DeviceDot.Fill = !hasData ? DotIdle : device.IsLive ? DotLive : DotStale;
+        LastSeenText.Foreground = hasData && !device.IsLive ? SeenStale : SeenLive;
+    }
+
+    private string RangeLabel => _range is { } range ? $"{range.TotalHours:0}h" : "All";
+
+    private string RangeSummary(Aranet4Device? device, MetricKind kind, DateTime now)
+    {
+        if (device is null || Metrics.Range(device.History, _range, now, kind) is not { } range) return string.Empty;
+        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind)}";
     }
 
     private void RefreshChart()
     {
         var device = DevicesList.SelectedItem as Aranet4Device;
+        var now = DateTime.Now;
+
+        HistoryChart.Metric = _metric;
         HistoryChart.Samples = device?.History;
         HistoryChart.Range = _range;
         HistoryChart.InvalidateVisual();
-        ChartStatsText.Text = device is null ? "No readings yet" : Co2Stats.Describe(device.History, _range, DateTime.Now);
-        AdditionalHistoryStatsText.Text = device is null ? string.Empty : DescribeAdditionalMetrics(device.History);
+
+        ChartTitleText.Text = $"{Metrics.Title(_metric).ToUpperInvariant()} HISTORY";
+        ChartDot.Fill = AccentBrushes[_metric];
+        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, _range, now, _metric);
+
+        TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
+        HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
+        PressureRangeText.Text = RangeSummary(device, MetricKind.Pressure, now);
 
         if (device is not null && Co2Stats.Trend(device.History) is { } trend)
         {
@@ -417,26 +448,37 @@ public partial class MainWindow : Window
                 _ => TrendSteady,
             };
             TrendText.Visibility = Visibility.Visible;
+            Co2CaptionText.Visibility = Visibility.Collapsed;
         }
         else
         {
             TrendText.Visibility = Visibility.Collapsed;
+            Co2CaptionText.Visibility = Visibility.Visible;
         }
     }
 
-    private string DescribeAdditionalMetrics(IReadOnlyList<Co2Sample> samples)
+    private void MetricTab_Checked(object sender, RoutedEventArgs e)
     {
-        var from = _range is { } range ? DateTime.Now - range : DateTime.MinValue;
-        var visible = samples.Where(sample => sample.Time >= from).ToArray();
-        var temperatures = visible.Where(sample => sample.TemperatureCelsius.HasValue).Select(sample => sample.TemperatureCelsius!.Value).ToArray();
-        var humidities = visible.Where(sample => sample.HumidityPercent.HasValue).Select(sample => sample.HumidityPercent!.Value).ToArray();
-        var pressures = visible.Where(sample => sample.PressureHpa.HasValue).Select(sample => sample.PressureHpa!.Value).ToArray();
+        if (sender is not RadioButton { Tag: string tag } || !Enum.TryParse<MetricKind>(tag, out var kind)) return;
+        _metric = kind;
+        if (HistoryChart is null) return; // Checked fires once while the XAML is still being loaded
+        RefreshChart();
+    }
 
-        static string DecimalRange(decimal[] values, string unit) => values.Length == 0
-            ? "—"
-            : $"{values.Min():0.0}–{values.Max():0.0} {unit}";
-        var humidityRange = humidities.Length == 0 ? "—" : $"{humidities.Min()}–{humidities.Max()} %";
-        return $"Temperature {DecimalRange(temperatures, "°C")}  ·  Humidity {humidityRange}  ·  Pressure {DecimalRange(pressures, "hPa")}";
+    private void DeviceChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (DevicePopup.IsOpen) { DevicePopup.IsOpen = false; return; }
+        // The same click that dismissed the popup (it closes on any outside press) must not reopen it.
+        if ((DateTime.UtcNow - _devicePopupClosedAt).TotalMilliseconds < 250) return;
+        DevicePopup.IsOpen = true;
+    }
+
+    private void DevicePopup_Closed(object? sender, EventArgs e) => _devicePopupClosedAt = DateTime.UtcNow;
+
+    private void MoreButton_Click(object sender, RoutedEventArgs e)
+    {
+        MoreMenu.PlacementTarget = MoreButton;
+        MoreMenu.IsOpen = true;
     }
 
     private void RangeButton_Checked(object sender, RoutedEventArgs e)
@@ -452,7 +494,7 @@ public partial class MainWindow : Window
     {
         if (DevicesList.SelectedItem is not Aranet4Device { History.Count: > 0 } device)
         {
-            MessageBox.Show(this, "There are no CO₂ readings to export yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "There are no readings to export yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -503,16 +545,19 @@ public partial class MainWindow : Window
                 throw new IOException("The sync cursor could not be saved. Retrying will safely import the overlap again.");
             if (DevicesList.SelectedItem == device) ShowDetails(device);
             var statusKind = _watcher is null ? StatusKind.Idle : StatusKind.Listening;
+            _statusHoldUntil = DateTime.Now.AddSeconds(12);
             SetStatus(result.MissingRecords > 0
                 ? $"History sync incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received. Sync again to fill the gap."
                 : $"History sync complete: {added:N0} new readings.", statusKind);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
+            _statusHoldUntil = DateTime.Now.AddSeconds(12);
             SetStatus("History sync cancelled. Retry to resume from the last completed sync.", _watcher is null ? StatusKind.Idle : StatusKind.Listening);
         }
         catch (Exception ex)
         {
+            _statusHoldUntil = DateTime.Now.AddSeconds(12);
             SetStatus($"History sync failed: {ex.Message}", StatusKind.Error);
             MessageBox.Show(this, ex.Message, "History sync", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -593,19 +638,18 @@ public partial class MainWindow : Window
         Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = AgeText.Text = IntervalText.Text = RssiText.Text = "—";
         Co2UnitText.Visibility = Visibility.Collapsed;
         Co2CaptionText.Text = "Waiting for a live beacon";
-        LastSeenText.Text = "No data yet";
+        Co2CaptionText.Visibility = Visibility.Visible;
         HumidityBar.Value = BatteryBar.Value = 0;
         DetailSignal.Bars = 0;
         ShowQuality(0);
-        InfoNameText.Text = "No device selected";
-        InfoAddressText.Text = "Address —";
-        InfoFirmwareText.Text = "Firmware —";
-        InfoPacketsText.Text = "0 packets";
+        ChipNameText.Text = "Searching for sensor…";
+        LastSeenText.Text = string.Empty;
+        DeviceDot.Fill = DotIdle;
+        TemperatureRangeText.Text = HumidityRangeText.Text = PressureRangeText.Text = string.Empty;
         AdvertisementText.Clear();
         ScanResponseText.Clear();
         Title = "Aranet4 Home";
         TrendText.Visibility = Visibility.Collapsed;
-        LastSeenChip.Background = ChipLive;
         HistoryChart.Samples = null;
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();

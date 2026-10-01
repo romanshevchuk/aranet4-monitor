@@ -3,28 +3,8 @@ namespace BleListener;
 /// <summary>Small helpers that turn a history into the texts shown around the chart.</summary>
 public static class Co2Stats
 {
-    public static string Describe(IReadOnlyList<Co2Sample> samples, TimeSpan? range, DateTime now)
-    {
-        var from = range is null ? DateTime.MinValue : now - range.Value;
-        int count = 0, min = int.MaxValue, max = int.MinValue;
-        long sum = 0;
-        foreach (var sample in samples)
-        {
-            if (sample.Time < from || sample.Ppm <= 0) continue;
-            count++;
-            sum += sample.Ppm;
-            min = Math.Min(min, sample.Ppm);
-            max = Math.Max(max, sample.Ppm);
-        }
-
-        if (count == 0)
-            return samples.Count == 0
-                ? "No readings yet — the first point arrives with the next measurement"
-                : "No readings in this time range";
-
-        var avg = (int)Math.Round(sum / (double)count);
-        return $"Min {min:N0}  ·  Avg {avg:N0}  ·  Max {max:N0} ppm  ·  {count:N0} reading{(count == 1 ? "" : "s")}";
-    }
+    public static string Describe(IReadOnlyList<Co2Sample> samples, TimeSpan? range, DateTime now) =>
+        Metrics.Describe(samples, range, now, MetricKind.Co2);
 
     /// <summary>Compares the newest reading with one from ~30 minutes earlier. Null when there isn't enough history.</summary>
     public static (string Text, TrendKind Kind)? Trend(IReadOnlyList<Co2Sample> samples)
