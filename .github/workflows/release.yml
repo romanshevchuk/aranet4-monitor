@@ -16,10 +16,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Publish self-contained Windows x64 app
-        run: dotnet publish BleListener/BleListener.csproj --configuration Release --runtime win-x64 --self-contained true
+        run: dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime win-x64 --self-contained true
       - name: Create ZIP
         shell: pwsh
-        run: Compress-Archive -Path "BleListener\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\*" -DestinationPath "Aranet4Home-win-x64.zip" -CompressionLevel Optimal
+        run: Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\*" -DestinationPath "Aranet4Monitor-win-x64.zip" -CompressionLevel Optimal
       - name: Create or update GitHub release
         shell: pwsh
         env:
@@ -28,7 +28,7 @@ jobs:
           $tag = $env:GITHUB_REF_NAME
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag "Aranet4Home-win-x64.zip" --clobber
+            gh release upload $tag "Aranet4Monitor-win-x64.zip" --clobber
           } else {
-            gh release create $tag "Aranet4Home-win-x64.zip" --title $tag --generate-notes --verify-tag
+            gh release create $tag "Aranet4Monitor-win-x64.zip" --title $tag --generate-notes --verify-tag
           }

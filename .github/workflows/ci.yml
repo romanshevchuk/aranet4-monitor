@@ -16,4 +16,4 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Build and test
-        run: dotnet test BleListener.sln --configuration Release
+        run: dotnet test Aranet4Monitor.sln --configuration Release

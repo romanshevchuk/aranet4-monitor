@@ -1,6 +1,6 @@
-# Aranet4 Home
+# Aranet4 Monitor
 
-[![CI](https://github.com/romanshevchuk/aranet-home-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/romanshevchuk/aranet-home-desktop/actions/workflows/ci.yml)
+[![CI](https://github.com/romanshevchuk/aranet4-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/romanshevchuk/aranet4-monitor/actions/workflows/ci.yml)
 
 An unofficial Windows tray app for live Aranet4 monitoring, local history, and ventilation alerts. It reads Smart Home Integration BLE broadcasts and can connect to a sensor to import its stored measurements.
 
@@ -15,7 +15,7 @@ An unofficial Windows tray app for live Aranet4 monitoring, local history, and v
 
 ## Download
 
-Version-tagged GitHub releases include a self-contained Windows x64 ZIP. Extract the ZIP and run `BleListener.exe`; the .NET SDK and .NET Desktop Runtime are not required. The release workflow creates the ZIP when a `v*` tag is pushed.
+Version-tagged GitHub releases include a self-contained Windows x64 ZIP. Extract the ZIP and run `Aranet4Monitor.exe`; the .NET SDK and .NET Desktop Runtime are not required. The release workflow creates the ZIP when a `v*` tag is pushed.
 
 The app is not code-signed, so Windows may show a SmartScreen warning. Only run software you trust and have obtained from the project’s official repository.
 
@@ -32,17 +32,17 @@ The Windows 10 edition limitation follows [.NET 10’s supported Windows version
 Building and running from source requires the .NET 10 SDK on Windows. From the repository root:
 
 ```powershell
-dotnet run --project BleListener/BleListener.csproj
-dotnet test BleListener.sln
+dotnet run --project Aranet4Monitor/Aranet4Monitor.csproj
+dotnet test Aranet4Monitor.sln
 ```
 
 To create a self-contained x64 publish locally:
 
 ```powershell
-dotnet publish BleListener/BleListener.csproj --configuration Release --runtime win-x64 --self-contained true
+dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime win-x64 --self-contained true
 ```
 
-The publish folder is `BleListener/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/`. For a different processor architecture, publish with its Windows runtime identifier and distribute a matching build.
+The publish folder is `Aranet4Monitor/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/`. For a different processor architecture, publish with its Windows runtime identifier and distribute a matching build.
 
 ## Privacy
 

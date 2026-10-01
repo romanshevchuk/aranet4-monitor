@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Presentation\Assets\AppIcon.ico</ApplicationIcon>
+
+    <!-- Shown by Windows in notifications and Task Manager instead of the raw assembly name. -->
+    <AssemblyTitle>Aranet4 Monitor</AssemblyTitle>
+    <Product>Aranet4 Monitor</Product>
+    <Description>Unofficial Aranet4 live CO2 monitor</Description>
+  </PropertyGroup>
+</Project>
