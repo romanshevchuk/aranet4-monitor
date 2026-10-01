@@ -9,7 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build and test
+        run: dotnet test Aranet4Monitor.sln --configuration Release
+
   publish:
+    needs: verify
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -24,11 +35,17 @@ jobs:
         run: dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true
       - name: Create ZIP
         shell: pwsh
-        run: Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\${{ matrix.rid }}\publish\*" -DestinationPath "Aranet4Monitor-${{ matrix.rid }}.zip" -CompressionLevel Optimal
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RUNTIME_IDENTIFIER: ${{ matrix.rid }}
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart('v')
+          $archiveName = "Aranet4Monitor-$version-$env:RUNTIME_IDENTIFIER.zip"
+          Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\$env:RUNTIME_IDENTIFIER\publish\*" -DestinationPath $archiveName -CompressionLevel Optimal
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.rid }}
-          path: Aranet4Monitor-${{ matrix.rid }}.zip
+          path: Aranet4Monitor-*.zip
           if-no-files-found: error
 
   release:
@@ -54,7 +71,7 @@ jobs:
             gh release create $tag --title $tag --generate-notes --verify-tag
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          Get-ChildItem artifacts -Filter "Aranet4Monitor-win-*.zip" -File | ForEach-Object {
+          Get-ChildItem artifacts -Filter "Aranet4Monitor-*-win-*.zip" -File | ForEach-Object {
             gh release upload $tag $_.FullName --clobber
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
