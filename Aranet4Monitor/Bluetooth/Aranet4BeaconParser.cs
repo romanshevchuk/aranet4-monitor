@@ -6,11 +6,13 @@ namespace Aranet4Monitor.Bluetooth;
 public static class Aranet4BeaconParser
 {
     public const ushort AranetCompanyId = 0x0702;
+
     public const int MinimumMeasurementPayloadLength = 15;
 
     public static bool TryParse(byte[] payload, out Aranet4Measurement? measurement, out string message)
     {
         measurement = null;
+
         if (payload.Length < MinimumMeasurementPayloadLength)
         {
             message = $"Aranet manufacturer payload is {payload.Length} byte(s); {MinimumMeasurementPayloadLength} are needed for core measurements.";
@@ -27,6 +29,7 @@ public static class Aranet4BeaconParser
         var temperature = BinaryPrimitives.ReadInt16LittleEndian(payload.AsSpan(10, 2)) / 20m;
         var pressure = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(12, 2)) / 10m;
         var humidity = payload[14];
+
         if (co2 is < 1 or > 10_000 || temperature is < -40 or > 60 || pressure is < 300 or > 1_200 || humidity > 100)
         {
             message = "The Aranet manufacturer block has values outside expected measurement ranges.";
@@ -37,14 +40,18 @@ public static class Aranet4BeaconParser
         var status = payload.Length > 16 ? payload[16] : (byte?)null;
         var intervalSeconds = payload.Length >= 19 ? BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(17, 2)) : (ushort?)null;
         var ageSeconds = payload.Length >= 21 ? BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(19, 2)) : (ushort?)null;
+
         measurement = new Aranet4Measurement(
             payload.Length >= 4 ? $"{payload[3]}.{payload[2]}.{payload[1]}" : "—", co2, temperature, pressure, humidity,
             battery, status, intervalSeconds, ageSeconds);
+
         message = "Measurement decoded from Smart Home Integrations beacon.";
+
         return true;
     }
 }
 
-public sealed record Aranet4Measurement(string Firmware, ushort Co2, decimal TemperatureCelsius,
+public sealed record Aranet4Measurement(
+    string Firmware, ushort Co2, decimal TemperatureCelsius,
     decimal PressureHpa, byte HumidityPercent, byte? BatteryPercent, byte? Status,
     ushort? IntervalSeconds, ushort? AgeSeconds);

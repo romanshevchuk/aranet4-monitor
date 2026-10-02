@@ -11,23 +11,18 @@ public sealed class AppPreferences
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AranetHome", "settings.json");
 
     public int AlertThresholdPpm { get; set; } = Co2AlertService.RecommendedVentilationThresholdPpm;
+
     public int AlertDurationMinutes { get; set; } = 10;
+
     [JsonConverter(typeof(JsonStringEnumConverter<TemperatureUnit>))]
     public TemperatureUnit TemperatureDisplayUnit { get; set; } = TemperatureUnit.Celsius;
-    public DateTime? LastCo2AlertAt
-    {
-        get; set;
-    }
-    public int? LastCo2AlertPpm
-    {
-        get; set;
-    }
+
+    public DateTime? LastCo2AlertAt { get; set; }
+
+    public int? LastCo2AlertPpm { get; set; }
 
     /// <summary>True once the "I live in the tray now" hint has been shown.</summary>
-    public bool TrayHintShown
-    {
-        get; set;
-    }
+    public bool TrayHintShown { get; set; }
 
     /// <summary>Draw the CO₂ number on the tray icon (otherwise the icon is just a coloured disc).</summary>
     public bool TrayShowNumber { get; set; } = true;

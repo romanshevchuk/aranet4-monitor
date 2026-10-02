@@ -41,6 +41,7 @@ public static class AranetHistoryProtocol
 
         var start = BinaryPrimitives.ReadUInt16LittleEndian(packet.Slice(1, 2));
         var count = packet[3];
+
         return new AranetHistoryPage(packet[0], start, ParseValues(packet[4..], count, expectedParameter));
     }
 
@@ -55,6 +56,7 @@ public static class AranetHistoryProtocol
 
         var start = BinaryPrimitives.ReadUInt16LittleEndian(packet.Slice(7, 2));
         var count = packet[9];
+
         return new AranetHistoryPage(packet[0], start, ParseValues(packet[10..], count, expectedParameter));
     }
 

@@ -3,7 +3,9 @@ namespace Aranet4Monitor.Alerts;
 public sealed class Co2AlertService
 {
     public const int RecommendedVentilationThresholdPpm = 1_500;
+
     public const int ResetThresholdPpm = 1_400;
+
     public static readonly TimeSpan RequiredDuration = TimeSpan.FromMinutes(10);
 
     /// <summary>The level CO₂ must fall to (or below) before an alert can fire again.</summary>
@@ -33,6 +35,7 @@ public sealed class Co2AlertService
             ? TimeSpan.FromTicks(interval.Ticks * 2)
             : normalSampleGap;
         var maximumSampleGap = intervalGap > normalSampleGap ? intervalGap : normalSampleGap;
+
         if (!_states.TryGetValue(deviceId, out var state))
         {
             state = new AlertState();
@@ -69,18 +72,11 @@ public sealed class Co2AlertService
 
     private sealed class AlertState
     {
-        public DateTime? AboveThresholdSince
-        {
-            get; set;
-        }
-        public DateTime? LastObserved
-        {
-            get; set;
-        }
-        public bool Notified
-        {
-            get; set;
-        }
+        public DateTime? AboveThresholdSince { get; set; }
+
+        public DateTime? LastObserved { get; set; }
+
+        public bool Notified { get; set; }
 
         public void Reset()
         {

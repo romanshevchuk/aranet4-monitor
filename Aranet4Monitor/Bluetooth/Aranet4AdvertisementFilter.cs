@@ -3,6 +3,7 @@ namespace Aranet4Monitor.Bluetooth;
 public static class Aranet4AdvertisementFilter
 {
     public static readonly Guid CurrentServiceUuid = Guid.Parse("0000fce0-0000-1000-8000-00805f9b34fb");
+
     public static readonly Guid LegacyServiceUuid = Guid.Parse("f0cd1400-95da-4f4b-9ac8-aa55d312af0c");
 
     public static bool IsCandidate(
@@ -22,6 +23,7 @@ public static class Aranet4AdvertisementFilter
         var aranetManufacturerData = manufacturerData
             .Where(block => block.CompanyId == Aranet4BeaconParser.AranetCompanyId)
             .ToArray();
+
         if (aranetManufacturerData.Length > 0)
         {
             // Match the upstream Aranet4-Python heuristic for advertisements without a usable name.

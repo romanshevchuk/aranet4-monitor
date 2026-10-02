@@ -17,11 +17,17 @@ public sealed record AranetHistorySyncResult(IReadOnlyList<Co2Sample> Samples, D
 public static class Aranet4HistorySync
 {
     private static readonly Guid CommandCharacteristic = Guid.Parse("f0cd1402-95da-4f4b-9ac8-aa55d312af0c");
+
     private static readonly Guid TotalReadingsCharacteristic = Guid.Parse("f0cd2001-95da-4f4b-9ac8-aa55d312af0c");
+
     private static readonly Guid IntervalCharacteristic = Guid.Parse("f0cd2002-95da-4f4b-9ac8-aa55d312af0c");
+
     private static readonly Guid HistoryV1Characteristic = Guid.Parse("f0cd2003-95da-4f4b-9ac8-aa55d312af0c");
+
     private static readonly Guid SecondsSinceUpdateCharacteristic = Guid.Parse("f0cd2004-95da-4f4b-9ac8-aa55d312af0c");
+
     private static readonly Guid HistoryV2Characteristic = Guid.Parse("f0cd2005-95da-4f4b-9ac8-aa55d312af0c");
+
     /// <summary>Hard cap for one metric download.</summary>
     private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(2);
 
@@ -55,6 +61,7 @@ public static class Aranet4HistorySync
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report("Connecting to Aranet4...");
         var service = await GetAranetServiceAsync(device);
+
         using (service)
         {
             var characteristicsResult = await service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
@@ -93,6 +100,7 @@ public static class Aranet4HistorySync
             var pressure = await ReadMetricAsync(command, historyV2, characteristics, (byte)AranetHistoryParameter.Pressure, total, startIndex, progress, cancellationToken);
 
             var samples = new List<Co2Sample>(downloadCount);
+
             for (var index = startIndex; index <= total; index++)
             {
                 var offset = index - startIndex;
@@ -103,6 +111,7 @@ public static class Aranet4HistorySync
                     DecodeTemperature(temperature[offset]),
                     DecodeHumidity(humidity[offset]),
                     DecodePressure(pressure[offset]));
+
                 if (sample.HasAnyMetric)
                 {
                     samples.Add(sample);
@@ -111,6 +120,7 @@ public static class Aranet4HistorySync
 
             // If any record never arrived, don't advance the cursor: the gap would otherwise be skipped forever.
             var missingRecords = new[] { co2, temperature, humidity, pressure }.Max(values => values.Count(value => value is null));
+
             return new AranetHistorySyncResult(samples, missingRecords == 0 ? latest : null, missingRecords);
         }
     }
@@ -187,6 +197,7 @@ public static class Aranet4HistorySync
 
         using var timeout = CreateTransferToken(cancellationToken);
         var sinceProgress = Stopwatch.StartNew();
+
         while (!transfer.IsComplete)
         {
             timeout.Token.ThrowIfCancellationRequested();
@@ -313,8 +324,7 @@ public static class Aranet4HistorySync
             // Best effort: if the sensor already disconnected this must not hide the real error.
             try
             {
-                await history.WriteClientCharacteristicConfigurationDescriptorAsync(
-                    GattClientCharacteristicConfigurationDescriptorValue.None);
+                await history.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.None);
             }
             catch (Exception) { }
         }

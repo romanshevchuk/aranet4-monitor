@@ -21,22 +21,13 @@ public sealed class HistoryTransfer
         Values = new ushort?[total - startIndex + 1];
     }
 
-    public ushort Total
-    {
-        get;
-    }
+    public ushort Total { get; }
 
     /// <summary>One slot per requested record; null means the sensor never sent it.</summary>
-    public ushort?[] Values
-    {
-        get;
-    }
+    public ushort?[] Values { get; }
 
     /// <summary>Highest record index received so far.</summary>
-    public int LastIndex
-    {
-        get; private set;
-    }
+    public int LastIndex { get; private set; }
 
     public bool IsComplete => LastIndex >= Total;
 

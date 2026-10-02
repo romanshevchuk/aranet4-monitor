@@ -28,10 +28,7 @@ public sealed class Aranet4Device : INotifyPropertyChanged
     private string lastAdvertisement = "No advertisement packet captured yet.";
     private string lastScanResponse = "No scan response captured yet.";
 
-    public required string Address
-    {
-        get; init;
-    }
+    public required string Address { get; init; }
 
     /// <summary>Decoded CO₂ readings, oldest first. Only touched from the UI thread.</summary>
     public List<Co2Sample> History { get; } = [];
@@ -169,10 +166,7 @@ public sealed class Aranet4Device : INotifyPropertyChanged
     {
         get => integrationState; set => SetField(ref integrationState, value);
     }
-    public decimal? TemperatureCelsius
-    {
-        get; set;
-    }
+    public decimal? TemperatureCelsius { get; set; }
 
     /// <summary>CO₂ concentration in ppm; 0 means "no reading yet".</summary>
     public int Co2Ppm
