@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Aranet4Monitor.Models;
+using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor;
 
@@ -15,6 +16,7 @@ public partial class MainWindow
             ShowDetails(device);
         }
 
+        UpdateDevicePopover();
         UpdateTray();
     }
 
@@ -27,7 +29,10 @@ public partial class MainWindow
             return;
         }
 
-        var stale = device.LastSeen != default && DateTime.Now - device.LastSeen > TimeSpan.FromMinutes(5);
+        var stale = SensorFreshness.IsStale(
+            device.LastSeen,
+            measurementIntervals.GetValueOrDefault(device),
+            DateTime.Now);
         notifications.SetReading(device.Co2Ppm, stale);
     }
 
@@ -38,6 +43,9 @@ public partial class MainWindow
         Co2UnitText.Visibility = hasReading ? Visibility.Visible : Visibility.Collapsed;
         Co2CaptionText.Text = device.IntegrationState;
         SyncHistoryButton.IsEnabled = syncCancellation is null;
+        SyncHistoryButton.ToolTip = syncCancellation is null
+            ? "Sync stored CO₂, temperature, humidity and pressure history for the selected sensor"
+            : "A history sync is already in progress.";
         ShowQuality(device.Co2Ppm);
         Title = hasReading ? $"{device.Co2Ppm:N0} ppm · Aranet4 Monitor" : "Aranet4 Monitor";
 
@@ -63,16 +71,13 @@ public partial class MainWindow
 
         AdvertisementText.Text = device.LastAdvertisement;
         ScanResponseText.Text = device.LastScanResponse;
+        UpdateDevicePopover();
         RefreshChart();
     }
 
     private void ShowLastSeen(Aranet4Device device)
     {
-        var hasData = device.LastSeen != default;
-        LastSeenText.Text = hasData ? device.LastSeenAgo : "no data yet";
-        // Amber when we haven't heard from the sensor for a while, so stale numbers aren't mistaken for live ones.
-        DeviceDot.Fill = !hasData ? DotIdle : device.IsLive ? DotLive : DotStale;
-        LastSeenText.Foreground = hasData && !device.IsLive ? SeenStale : SeenLive;
+        UpdateHeaderSensorState();
     }
 
     private string RangeLabel => Dashboard.HistoryRange is { } range ? $"{range.TotalHours:0}h" : "All";
@@ -153,8 +158,8 @@ public partial class MainWindow
 
         var (label, color) = ppm switch
         {
-            < 1000 => ("Good air", Color.FromRgb(0x2E, 0xC2, 0x7E)),
-            < 1400 => ("Getting stuffy", Color.FromRgb(0xF5, 0xB9, 0x42)),
+            < Co2Quality.FairFromPpm => ("Good air", Color.FromRgb(0x2E, 0xC2, 0x7E)),
+            < Co2Quality.PoorFromPpm => ("Getting stuffy", Color.FromRgb(0xF5, 0xB9, 0x42)),
             _ => ("High CO₂ · ventilate", Color.FromRgb(0xEF, 0x5B, 0x5B)),
         };
         QualityText.Text = label;
@@ -177,8 +182,8 @@ public partial class MainWindow
         DetailSignal.Bars = 0;
         ShowQuality(0);
         SyncHistoryButton.IsEnabled = false;
+        SyncHistoryButton.ToolTip = "Select a sensor to sync its stored history.";
         ChipNameText.Text = "Searching for sensor…";
-        LastSeenText.Text = string.Empty;
         DeviceDot.Fill = DotIdle;
         TemperatureRangeText.Text = HumidityRangeText.Text = PressureRangeText.Text = string.Empty;
         AdvertisementText.Clear();
@@ -188,6 +193,7 @@ public partial class MainWindow
         HistoryChart.Samples = null;
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();
+        UpdateDevicePopover();
         UpdateTray();
     }
 }

@@ -18,8 +18,6 @@ public partial class MainWindow
     private readonly Co2AlertService co2Alerts = new();
     private readonly HashSet<string> alertedDevices = new(StringComparer.OrdinalIgnoreCase);
 
-    private void StartButton_Click(object sender, RoutedEventArgs e) => StartListening();
-
     private void StartListening()
     {
         if (watcher is not null)
@@ -27,29 +25,55 @@ public partial class MainWindow
             return;
         }
 
+        listenerHasBeenStarted = true;
         try
         {
             watcher = new BluetoothLEAdvertisementWatcher { ScanningMode = BluetoothLEScanningMode.Active };
             watcher.Received += Watcher_Received;
             watcher.Stopped += Watcher_Stopped;
             watcher.Start();
-            StartMenuItem.IsEnabled = false;
-            StopMenuItem.IsEnabled = true;
+            ListenMenuItem.IsChecked = true;
             SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
-            EmptyHintText.Text = "Listening… power-cycle or move the sensor closer if nothing shows up.";
+            EmptyHintText.Text = "Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app.";
         }
         catch (Exception ex)
         {
             watcher = null; // allow another attempt
-            SetStatus($"Could not start: {ex.Message}", StatusKind.Error);
+            ListenMenuItem.IsChecked = false;
+            if (ex is UnauthorizedAccessException
+                || ex.Message.Contains("Bluetooth", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("radio", StringComparison.OrdinalIgnoreCase))
+            {
+                SetStatus("Bluetooth unavailable", StatusKind.BluetoothUnavailable, ex.ToString());
+            }
+            else
+            {
+                SetStatus($"Could not start: {ex.Message}", StatusKind.Error, ex.ToString());
+            }
         }
     }
 
-    private void StopButton_Click(object sender, RoutedEventArgs e) => StopWatching();
-
     private void ClearButton_Click(object sender, RoutedEventArgs e)
     {
+        if (Dashboard.Devices.Count == 0)
+        {
+            return;
+        }
+
+        var answer = MessageBox.Show(
+            this,
+            "Forget all detected sensors? Saved history and settings will be kept.",
+            "Forget detected devices",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+        if (answer != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         _devicesByAddress.Clear();
+        measurementIntervals.Clear();
         alertedDevices.Clear();
         Dashboard.Devices.Clear();
         Dashboard.SelectedDevice = null;
@@ -71,8 +95,7 @@ public partial class MainWindow
         }
 
         watcher = null;
-        StartMenuItem.IsEnabled = true;
-        StopMenuItem.IsEnabled = false;
+        ListenMenuItem.IsChecked = false;
         SetStatus("Stopped", StatusKind.Idle);
     }
 
@@ -84,9 +107,19 @@ public partial class MainWindow
                 sender.Received -= Watcher_Received;
                 sender.Stopped -= Watcher_Stopped;
                 watcher = null; // otherwise StartListening() would think we're still running
-                StartMenuItem.IsEnabled = true;
-                StopMenuItem.IsEnabled = false;
-                SetStatus($"Listener stopped: {args.Error}", args.Error == BluetoothError.Success ? StatusKind.Idle : StatusKind.Error);
+                ListenMenuItem.IsChecked = false;
+                if (args.Error == BluetoothError.RadioNotAvailable)
+                {
+                    SetStatus("Bluetooth radio unavailable", StatusKind.BluetoothUnavailable, args.Error.ToString());
+                }
+                else if (args.Error == BluetoothError.Success)
+                {
+                    SetStatus("Listener stopped", StatusKind.Idle);
+                }
+                else
+                {
+                    SetStatus($"Listener stopped: {args.Error}", StatusKind.Error, args.Error.ToString());
+                }
             }
         });
 
@@ -153,6 +186,7 @@ public partial class MainWindow
 
         if (measurement is not null)
         {
+            measurementIntervals[device] = measurement.IntervalSeconds;
             device.Firmware = measurement.Firmware;
             device.Co2Ppm = measurement.Co2;
             device.TemperatureCelsius = measurement.TemperatureCelsius;

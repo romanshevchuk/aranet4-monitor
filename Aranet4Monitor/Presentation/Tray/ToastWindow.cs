@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
 namespace Aranet4Monitor.Presentation.Tray;
@@ -19,8 +18,6 @@ public enum ToastKind
 /// </summary>
 public sealed class ToastWindow : Window
 {
-    private const double CardWidth = 400;
-    private const double ShadowMargin = 12;
     private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(12);
 
     private readonly DispatcherTimer timer = new() { Interval = Lifetime };
@@ -132,14 +129,8 @@ public sealed class ToastWindow : Window
 
         var card = new Border
         {
-            Width = CardWidth,
-            Margin = new Thickness(ShadowMargin),
-            CornerRadius = new CornerRadius(8),
-            Background = new SolidColorBrush(Color.FromRgb(0x0F, 0x1B, 0x2E)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x36, 0x50, 0x7A)),
-            BorderThickness = new Thickness(1),
+            Style = (Style)System.Windows.Application.Current.FindResource("ToastCard"),
             Cursor = System.Windows.Input.Cursors.Hand,
-            Effect = new DropShadowEffect { BlurRadius = 16, ShadowDepth = 3, Opacity = 0.3, Color = Colors.Black },
             Child = grid,
         };
         card.MouseLeftButtonUp += (_, _) =>

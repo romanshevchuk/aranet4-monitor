@@ -17,6 +17,19 @@ public partial class MainWindow
             return;
         }
 
+        IEnumerable<Co2Sample> samples = device.History;
+        if (sender is System.Windows.Controls.MenuItem { Tag: "visible" }
+            && Dashboard.HistoryRange is { } visibleRange)
+        {
+            var earliest = DateTime.Now - visibleRange;
+            samples = samples.Where(sample => sample.Time >= earliest);
+            if (!samples.Any())
+            {
+                MessageBox.Show(this, "There are no readings in the visible range yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+        }
+
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV file (*.csv)|*.csv",
@@ -28,7 +41,7 @@ public partial class MainWindow
         }
 
         var csv = new StringBuilder("time,co2_ppm,temperature_c,humidity_percent,pressure_hpa\n");
-        foreach (var sample in device.History)
+        foreach (var sample in samples)
         {
             csv.Append(sample.Time.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).Append(',')
                 .Append(sample.Ppm > 0 ? sample.Ppm.ToString(CultureInfo.InvariantCulture) : string.Empty).Append(',')
@@ -53,15 +66,20 @@ public partial class MainWindow
         var bluetoothAddress = _devicesByAddress.FirstOrDefault(entry => ReferenceEquals(entry.Value, device)).Key;
         if (bluetoothAddress == 0)
         {
-            SetSyncStatus("Sensor unavailable", "Could not identify the selected sensor.");
+            ShowSyncProblem("Sensor unavailable – move closer and try again.", "Could not identify the selected sensor.");
             return;
         }
 
+        SyncProblemBanner.Visibility = Visibility.Collapsed;
+        SyncToast.Visibility = Visibility.Collapsed;
+        syncToastTimer.Stop();
         SetSyncStatus(string.Empty);
         SyncHistoryButton.IsEnabled = false;
         SyncHistoryButton.Content = "Syncing…";
+        SyncHistoryButton.ToolTip = "History is being downloaded from the selected sensor.";
         CancelHistorySyncButton.IsEnabled = true;
         CancelHistorySyncButton.Visibility = Visibility.Visible;
+        CancelHistorySyncButton.Content = "Cancel";
         var cancellation = new CancellationTokenSource();
         syncCancellation = cancellation;
         try
@@ -84,40 +102,57 @@ public partial class MainWindow
             {
                 ShowDetails(device);
             }
+            UpdateDevicePopover();
 
             if (result.MissingRecords > 0)
             {
-                SetSyncStatus(
-                    "Incomplete · retry needed",
-                    $"History sync incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received. Sync again to fill the gap.");
+                ShowSyncProblem(
+                    "Incomplete – retry needed",
+                    $"History sync was incomplete: {added:N0} new readings saved, {result.MissingRecords:N0} records weren't received.");
             }
             else if (added > 0)
             {
-                SetSyncStatus($"Synced {added:N0} readings");
+                ShowSyncToast($"Synced {added:N0} readings");
             }
             else
             {
-                SetSyncStatus("No new readings");
+                ShowSyncToast("No new readings");
             }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            SetSyncStatus("Sync cancelled", "History sync cancelled. Retry to resume from the last completed sync.");
+            ShowSyncToast("Sync cancelled");
         }
         catch (Exception ex)
         {
-            SetSyncStatus("Sync failed", ex.Message);
-            MessageBox.Show(this, ex.Message, "History sync", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (ex.Message.Contains("nearby", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("took too long", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("not connected", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("DeviceNotConnected", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowSyncProblem("Sensor unavailable – move closer and try again.", ex.Message);
+                return;
+            }
+
+            var reason = ex is IOException
+                ? "History could not be saved locally. Check available disk space and try again."
+                : "The history transfer did not complete. Move closer to the sensor and try again.";
+            ShowSyncProblem($"Sync failed: {reason}", ex.Message);
         }
         finally
         {
             syncCancellation = null;
             cancellation.Dispose();
-            SyncHistoryButton.Content = "Sync now";
+            SetSyncStatus(string.Empty);
+            SyncHistoryButton.Content = "Sync history";
             SyncHistoryButton.IsEnabled = Dashboard.SelectedDevice is not null;
-            CancelHistorySyncButton.Content = "Cancel sync";
+            SyncHistoryButton.ToolTip = Dashboard.SelectedDevice is null
+                ? "Select a sensor to sync its stored history."
+                : "Sync stored CO₂, temperature, humidity and pressure history for the selected sensor";
+            CancelHistorySyncButton.Content = "Cancel";
             CancelHistorySyncButton.IsEnabled = false;
             CancelHistorySyncButton.Visibility = Visibility.Collapsed;
+            UpdateDevicePopover();
         }
     }
 
