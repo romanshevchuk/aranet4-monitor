@@ -60,17 +60,21 @@ public partial class MainWindow
         }
 
         DeviceDetailsPanel.Visibility = Visibility.Visible;
-        DeviceStatusText.Text = device.LastSeen == default
+        var lastReading = GetLastReadingTime(device);
+        var stale = SensorFreshness.IsStale(lastReading, measurementIntervals.GetValueOrDefault(device), DateTime.Now);
+        DeviceStatusText.Text = lastReading == default
             ? "Waiting for live readings"
-            : SensorFreshness.IsStale(device.LastSeen, measurementIntervals.GetValueOrDefault(device), DateTime.Now)
+            : stale
                 ? "No recent readings"
                 : "Receiving live data";
-        DeviceStatusDot.Fill = device.LastSeen == default
+        DeviceStatusDot.Fill = lastReading == default
             ? DotIdle
-            : SensorFreshness.IsStale(device.LastSeen, measurementIntervals.GetValueOrDefault(device), DateTime.Now)
+            : stale
                 ? DotStale
                 : DotLive;
-        DeviceLastMeasurementText.Text = device.LastSeen == default ? "No measurement yet" : device.LastSeenAgo;
+        DeviceLastMeasurementText.Text = lastReading == default
+            ? "No measurement yet"
+            : lastReading.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
         DeviceAddressText.Text = device.Address;
         DeviceLastSyncedText.Text = HistoryStore.LoadSyncCursor(device.Address) is { } syncedThrough
             ? syncedThrough.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)

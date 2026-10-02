@@ -269,7 +269,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (Dashboard.SelectedDevice is not { } device || device.LastSeen == default)
+        if (Dashboard.SelectedDevice is not { } device || GetLastReadingTime(device) == default)
         {
             DeviceDot.Fill = DotIdle;
             DeviceChipButton.ToolTip = "Looking for your Aranet4. Make sure Smart Home Integration is enabled in the Aranet Home app.";
@@ -277,7 +277,7 @@ public partial class MainWindow : Window
         }
 
         var stale = SensorFreshness.IsStale(
-            device.LastSeen,
+            GetLastReadingTime(device),
             measurementIntervals.GetValueOrDefault(device),
             DateTime.Now);
         DeviceDot.Fill = stale ? DotStale : DotLive;

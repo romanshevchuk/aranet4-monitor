@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -20,7 +21,7 @@ public partial class MainWindow
         UpdateTray();
     }
 
-    /// <summary>The tray icon follows the selected sensor and turns grey if it hasn't been heard from for 5 minutes.</summary>
+    /// <summary>The tray icon follows the selected sensor and uses the shared freshness threshold.</summary>
     private void UpdateTray()
     {
         if (Dashboard.SelectedDevice is not { } device)
@@ -30,7 +31,7 @@ public partial class MainWindow
         }
 
         var stale = SensorFreshness.IsStale(
-            device.LastSeen,
+            GetLastReadingTime(device),
             measurementIntervals.GetValueOrDefault(device),
             DateTime.Now);
         notifications.SetReading(device.Co2Ppm, stale);
@@ -41,18 +42,20 @@ public partial class MainWindow
         var hasReading = device.Co2Ppm > 0;
         Co2Text.Text = hasReading ? device.Co2Ppm.ToString("N0", CultureInfo.CurrentCulture) : "—";
         Co2UnitText.Visibility = hasReading ? Visibility.Visible : Visibility.Collapsed;
-        Co2CaptionText.Text = device.IntegrationState;
+        UpdateCo2Hero(device);
         SyncHistoryButton.IsEnabled = syncCancellation is null;
         SyncHistoryButton.ToolTip = syncCancellation is null
             ? "Sync stored CO₂, temperature, humidity and pressure history for the selected sensor"
             : "A history sync is already in progress.";
-        ShowQuality(device.Co2Ppm);
         Title = hasReading ? $"{device.Co2Ppm:N0} ppm · Aranet4 Monitor" : "Aranet4 Monitor";
 
-        TemperatureText.Text = device.Temperature;
-        HumidityText.Text = device.Humidity;
-        HumidityBar.Value = device.HumidityValue;
-        PressureText.Text = device.Pressure;
+        SetMetricValueAndUnit(TemperatureText, TemperatureUnitText, device.Temperature, MetricKind.Temperature);
+        SetMetricValueAndUnit(HumidityText, HumidityUnitText, device.Humidity, MetricKind.Humidity);
+        SetMetricValueAndUnit(PressureText, PressureUnitText, device.Pressure, MetricKind.Pressure);
+        AutomationProperties.SetName(TemperatureTab, $"Temperature, {device.Temperature}, show history");
+        AutomationProperties.SetName(HumidityTab, $"Humidity, {device.Humidity}, show history");
+        AutomationProperties.SetName(PressureTab, $"Pressure, {device.Pressure}, show history");
+        AutomationProperties.SetName(Co2Tab, $"CO₂, {(hasReading ? $"{device.Co2Ppm:N0} ppm" : "no reading")}, show history");
         BatteryText.Text = device.Battery;
         BatteryBar.Value = device.BatteryValue;
         BatteryBar.Foreground = new SolidColorBrush(device.BatteryValue switch
@@ -78,18 +81,109 @@ public partial class MainWindow
     private void ShowLastSeen(Aranet4Device device)
     {
         UpdateHeaderSensorState();
+        UpdateCo2Hero(device);
     }
 
-    private string RangeLabel => Dashboard.HistoryRange is { } range ? $"{range.TotalHours:0}h" : "All";
+    private DateTime GetLastReadingTime(Aranet4Device device) =>
+        device.LastSeen != default
+            ? device.LastSeen
+            : device.History.LastOrDefault(sample => sample.Ppm > 0)?.Time ?? default;
+
+    private void UpdateCo2Hero(Aranet4Device device)
+    {
+        if (device.Co2Ppm <= 0)
+        {
+            Co2Text.Text = "–";
+            Co2Text.Opacity = 1;
+            Co2UnitText.Visibility = Visibility.Collapsed;
+            Co2CaptionText.Text = "Waiting for your first live reading, or sync history to download stored readings.";
+            Co2CaptionText.Visibility = Visibility.Visible;
+            Co2AdviceText.Visibility = Visibility.Collapsed;
+            TrendText.Visibility = Visibility.Collapsed;
+            ShowQuality(0);
+            AutomationProperties.SetName(Co2Tab, "CO₂, no reading, show history");
+            return;
+        }
+
+        var lastReading = GetLastReadingTime(device);
+        var stale = SensorFreshness.IsStale(lastReading, measurementIntervals.GetValueOrDefault(device), DateTime.Now);
+        Co2Text.Text = device.Co2Ppm.ToString("N0", CultureInfo.CurrentCulture);
+        Co2Text.Opacity = stale ? 0.6 : 1;
+        Co2UnitText.Visibility = Visibility.Visible;
+        ShowQuality(device.Co2Ppm);
+
+        if (stale)
+        {
+            var elapsed = DateTime.Now - lastReading;
+            var age = elapsed.TotalHours >= 1
+                ? $"{(int)elapsed.TotalHours} hr ago"
+                : $"{Math.Max(1, (int)elapsed.TotalMinutes)} min ago";
+            TrendText.Text = $"Last reading {age}";
+            TrendText.Foreground = SeenStale;
+            TrendText.Visibility = Visibility.Visible;
+            Co2CaptionText.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var co2Samples = device.History.Where(sample => sample.Ppm > 0).ToArray();
+        if (co2Samples.Length >= 2
+            && co2Samples[^1].Time - co2Samples[0].Time >= TimeSpan.FromMinutes(30)
+            && Co2Stats.Trend(device.History) is { } trend)
+        {
+            TrendText.Text = trend.Kind == TrendKind.Steady ? "Steady" : trend.Text;
+            TrendText.Foreground = trend.Kind switch
+            {
+                TrendKind.Rising => TrendRising,
+                TrendKind.Falling => TrendFalling,
+                _ => TrendSteady,
+            };
+            TrendText.Visibility = Visibility.Visible;
+            Co2CaptionText.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            TrendText.Visibility = Visibility.Collapsed;
+            Co2CaptionText.Text = "Live readings";
+            Co2CaptionText.Visibility = Visibility.Visible;
+        }
+
+        AutomationProperties.SetName(Co2Tab, $"CO₂, {device.Co2Ppm:N0} ppm, show history");
+    }
+
+    private void SetMetricValueAndUnit(TextBlock valueText, TextBlock unitText, string display, MetricKind kind)
+    {
+        var unit = Metrics.Unit(kind, preferences.TemperatureDisplayUnit);
+        valueText.Text = display.EndsWith(unit, StringComparison.Ordinal)
+            ? display[..^unit.Length].TrimEnd()
+            : display;
+        unitText.Text = unit;
+    }
 
     private string RangeSummary(Aranet4Device? device, MetricKind kind, DateTime now)
     {
         if (device is null || Metrics.Range(device.History, Dashboard.HistoryRange, now, kind, preferences.TemperatureDisplayUnit) is not { } range)
         {
-            return string.Empty;
+            return "No readings yet";
         }
 
-        return $"{RangeLabel}: {Metrics.Format(range.Min, kind)} – {Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
+        var label = Dashboard.HistoryRange is { } selectedRange
+            ? $"Last {selectedRange.TotalHours:0} h"
+            : "All";
+        var summary = kind == MetricKind.Humidity
+            ? $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)}%"
+            : $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
+
+        if (kind == MetricKind.Humidity)
+        {
+            var from = Dashboard.HistoryRange is { } rangeWindow ? now - rangeWindow : DateTime.MinValue;
+            var latestHumidity = device.History.LastOrDefault(sample => sample.Time >= from && sample.HumidityPercent.HasValue)?.HumidityPercent;
+            if (latestHumidity is { } humidity)
+            {
+                summary += humidity < 40 ? " · Dry" : humidity <= 60 ? " · Comfortable" : " · Humid";
+            }
+        }
+
+        return summary;
     }
 
     private void RefreshChart()
@@ -110,24 +204,6 @@ public partial class MainWindow
         TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
         HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
         PressureRangeText.Text = RangeSummary(device, MetricKind.Pressure, now);
-
-        if (device is not null && Co2Stats.Trend(device.History) is { } trend)
-        {
-            TrendText.Text = trend.Text;
-            TrendText.Foreground = trend.Kind switch
-            {
-                TrendKind.Rising => TrendRising,
-                TrendKind.Falling => TrendFalling,
-                _ => TrendSteady,
-            };
-            TrendText.Visibility = Visibility.Visible;
-            Co2CaptionText.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            TrendText.Visibility = Visibility.Collapsed;
-            Co2CaptionText.Visibility = Visibility.Visible;
-        }
     }
 
     private void MetricTab_Checked(object sender, RoutedEventArgs e)
@@ -156,15 +232,22 @@ public partial class MainWindow
             return;
         }
 
-        var (label, color) = ppm switch
+        var (label, icon, color) = ppm switch
         {
-            < Co2Quality.FairFromPpm => ("Good air", Color.FromRgb(0x2E, 0xC2, 0x7E)),
-            < Co2Quality.PoorFromPpm => ("Getting stuffy", Color.FromRgb(0xF5, 0xB9, 0x42)),
-            _ => ("High CO₂ · ventilate", Color.FromRgb(0xEF, 0x5B, 0x5B)),
+            < Co2Quality.FairFromPpm => ("Good air", "✓", (Color)FindResource("Co2GoodColor")),
+            < Co2Quality.PoorFromPpm => ("Getting stuffy", "!", (Color)FindResource("Co2FairColor")),
+            _ => ("High · ventilate", "!", (Color)FindResource("Co2PoorColor")),
         };
+        QualityIcon.Text = icon;
         QualityText.Text = label;
         QualityBadge.Background = new SolidColorBrush(color);
         QualityBadge.Visibility = Visibility.Visible;
+        Co2AdviceText.Text = ppm < Co2Quality.FairFromPpm
+            ? string.Empty
+            : ppm < Co2Quality.PoorFromPpm
+                ? "Consider opening a window"
+                : "Ventilate now";
+        Co2AdviceText.Visibility = ppm < Co2Quality.FairFromPpm ? Visibility.Collapsed : Visibility.Visible;
 
         var fraction = Math.Clamp((ppm - 400) / 1600.0, 0.0, 1.0);
         GaugeLeft.Width = new GridLength(Math.Max(fraction, 0.001), GridUnitType.Star);
@@ -176,23 +259,35 @@ public partial class MainWindow
     {
         Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = AgeText.Text = IntervalText.Text = RssiText.Text = "—";
         Co2UnitText.Visibility = Visibility.Collapsed;
-        Co2CaptionText.Text = "Waiting for a live beacon";
+        Co2CaptionText.Text = "Waiting for your first live reading, or sync history to download stored readings.";
         Co2CaptionText.Visibility = Visibility.Visible;
-        HumidityBar.Value = BatteryBar.Value = 0;
+        Co2AdviceText.Visibility = Visibility.Collapsed;
+        Co2Text.Text = "–";
+        Co2Text.Opacity = 1;
+        TemperatureUnitText.Text = Metrics.Unit(MetricKind.Temperature, preferences.TemperatureDisplayUnit);
+        HumidityUnitText.Text = Metrics.Unit(MetricKind.Humidity, preferences.TemperatureDisplayUnit);
+        PressureUnitText.Text = Metrics.Unit(MetricKind.Pressure, preferences.TemperatureDisplayUnit);
+        HumidityRangeText.Text = string.Empty;
+        BatteryBar.Value = 0;
         DetailSignal.Bars = 0;
         ShowQuality(0);
         SyncHistoryButton.IsEnabled = false;
         SyncHistoryButton.ToolTip = "Select a sensor to sync its stored history.";
         ChipNameText.Text = "Searching for sensor…";
         DeviceDot.Fill = DotIdle;
-        TemperatureRangeText.Text = HumidityRangeText.Text = PressureRangeText.Text = string.Empty;
+        TemperatureRangeText.Text = HumidityRangeText.Text = PressureRangeText.Text = "No readings yet";
         AdvertisementText.Clear();
         ScanResponseText.Clear();
         Title = "Aranet4 Monitor";
         TrendText.Visibility = Visibility.Collapsed;
+        AutomationProperties.SetName(Co2Tab, "CO₂, no reading, show history");
+        AutomationProperties.SetName(TemperatureTab, "Temperature, no reading, show history");
+        AutomationProperties.SetName(HumidityTab, "Humidity, no reading, show history");
+        AutomationProperties.SetName(PressureTab, "Pressure, no reading, show history");
         HistoryChart.Samples = null;
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();
+        UpdateHeaderSensorState();
         UpdateDevicePopover();
         UpdateTray();
     }

@@ -227,41 +227,45 @@
             </Grid.RowDefinitions>
 
             <!-- Metric cards: always visible; click one to chart it -->
-            <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid Grid.Row="0" Margin="0,0,0,14" AutomationProperties.Name="Chart shows">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1.6*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <!-- CO2 hero -->
                 <RadioButton x:Name="Co2Tab" Grid.Column="0" GroupName="Metric" Tag="Co2" IsChecked="True" Style="{StaticResource HeroTab}"
-                             Checked="MetricTab_Checked" ToolTip="Show the CO₂ chart">
+                             Checked="MetricTab_Checked" ToolTip="Show CO₂ history" AutomationProperties.Name="CO₂, no reading, show history">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="CARBON DIOXIDE" Foreground="#BFD5F7" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Border x:Name="QualityBadge" CornerRadius="12" Padding="12,4" Visibility="Collapsed" HorizontalAlignment="Right">
-                                <TextBlock x:Name="QualityText" FontWeight="Bold" FontSize="12" Foreground="#0F1B2E" />
+                            <TextBlock Text="Carbon dioxide" Foreground="#BFD5F7" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <Border x:Name="QualityBadge" CornerRadius="8" Padding="10,4" Visibility="Collapsed" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="QualityIcon" FontSize="13" FontWeight="Bold" Foreground="#0F1B2E" Margin="0,0,6,0" />
+                                    <TextBlock x:Name="QualityText" FontWeight="Bold" FontSize="12" Foreground="#0F1B2E" />
+                                </StackPanel>
                             </Border>
                         </Grid>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                            <TextBlock x:Name="Co2Text" Text="—" Foreground="White" FontSize="50" FontWeight="SemiBold" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="Co2Text" Text="–" Foreground="White" FontSize="60" FontWeight="SemiBold" />
                             <TextBlock x:Name="Co2UnitText" Text="ppm" Foreground="#9DB8E0" FontSize="20" FontWeight="SemiBold"
                                        VerticalAlignment="Bottom" Margin="8,0,0,12" Visibility="Collapsed" />
                         </StackPanel>
-                        <TextBlock x:Name="TrendText" FontSize="13" FontWeight="SemiBold" Margin="2,0,0,0" Visibility="Collapsed" />
-                        <TextBlock x:Name="Co2CaptionText" Text="Waiting for a live beacon" Foreground="#9DB8E0" FontSize="13" Margin="2,0,0,0"
-                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="TrendText" FontSize="13" FontWeight="SemiBold" Margin="2,0,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+                        <TextBlock x:Name="Co2CaptionText" Text="Waiting for your first live reading, or sync history to download stored readings."
+                                   Foreground="#D4E1F2" FontSize="13" Margin="2,0,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="Co2AdviceText" FontSize="13" FontWeight="SemiBold" Foreground="White" Margin="2,4,0,0" Visibility="Collapsed" />
 
                         <!-- Gauge: 400 - 2000 ppm -->
                         <Grid Margin="0,12,0,0" Height="16">
                             <Border Height="8" CornerRadius="4" VerticalAlignment="Center">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2EC27E" Offset="0" />
-                                        <GradientStop Color="#2EC27E" Offset="0.33" />
-                                        <GradientStop Color="#F5B942" Offset="0.45" />
-                                        <GradientStop Color="#F5B942" Offset="0.58" />
-                                        <GradientStop Color="#EF5B5B" Offset="0.70" />
-                                        <GradientStop Color="#EF5B5B" Offset="1" />
+                                        <GradientStop Color="{StaticResource Co2GoodColor}" Offset="0" />
+                                        <GradientStop Color="{StaticResource Co2GoodColor}" Offset="0.375" />
+                                        <GradientStop Color="{StaticResource Co2FairColor}" Offset="0.375" />
+                                        <GradientStop Color="{StaticResource Co2FairColor}" Offset="0.625" />
+                                        <GradientStop Color="{StaticResource Co2PoorColor}" Offset="0.625" />
+                                        <GradientStop Color="{StaticResource Co2PoorColor}" Offset="1" />
                                     </LinearGradientBrush>
                                 </Border.Background>
                             </Border>
@@ -273,74 +277,74 @@
                                 <Ellipse Width="16" Height="16" Fill="White" Stroke="#16294A" StrokeThickness="3"
                                          HorizontalAlignment="Right" Margin="0,0,-8,0" />
                             </Grid>
+                            <Grid IsHitTestVisible="False">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="1" Background="#16294A" HorizontalAlignment="Right" />
+                                <Border Grid.Column="1" Width="1" Background="#16294A" HorizontalAlignment="Right" />
+                            </Grid>
                         </Grid>
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="400" Foreground="#8FA9D0" FontSize="11" />
-                            <TextBlock Text="1000" Foreground="#8FA9D0" FontSize="11" HorizontalAlignment="Right" />
-                            <TextBlock Grid.Column="1" Text="1400" Foreground="#8FA9D0" FontSize="11" HorizontalAlignment="Right" />
-                            <TextBlock Grid.Column="2" Text="2000+" Foreground="#8FA9D0" FontSize="11" HorizontalAlignment="Right" />
+                            <TextBlock Text="400" Foreground="#BFD5F7" FontSize="12" />
+                            <TextBlock Text="1,000" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="1" Text="1,400" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="2,000+" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Good" Foreground="#BFD5F7" FontSize="12" />
+                            <TextBlock Grid.Column="1" Text="Getting stuffy" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="High" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
                         </Grid>
                     </StackPanel>
                 </RadioButton>
 
                 <!-- Temperature -->
                 <RadioButton x:Name="TemperatureTab" Grid.Column="1" GroupName="Metric" Tag="Temperature" Foreground="#F97316"
-                             Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the temperature chart">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="#F97316" Margin="0,0,8,0" VerticalAlignment="Center" />
-                            <TextBlock Text="TEMPERATURE" Style="{StaticResource SectionLabel}" />
+                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
+                             ToolTip="Show temperature history" AutomationProperties.Name="Temperature, no reading, show history">
+                    <StackPanel>
+                        <TextBlock Text="Temperature" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
+                            <TextBlock x:Name="TemperatureText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
+                            <TextBlock x:Name="TemperatureUnitText" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" x:Name="TemperatureText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
-                        <TextBlock Grid.Row="2" x:Name="TemperatureRangeText" Style="{StaticResource SubText}" />
-                    </Grid>
+                        <TextBlock x:Name="TemperatureRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                 </RadioButton>
 
                 <!-- Humidity -->
                 <RadioButton x:Name="HumidityTab" Grid.Column="2" GroupName="Metric" Tag="Humidity" Foreground="#06B6D4"
-                             Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the humidity chart">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="#06B6D4" Margin="0,0,8,0" VerticalAlignment="Center" />
-                            <TextBlock Text="HUMIDITY" Style="{StaticResource SectionLabel}" />
+                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
+                             ToolTip="Show humidity history" AutomationProperties.Name="Humidity, no reading, show history">
+                    <StackPanel>
+                        <TextBlock Text="Humidity" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
+                            <TextBlock x:Name="HumidityText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
+                            <TextBlock x:Name="HumidityUnitText" Text="%" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" x:Name="HumidityText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
-                        <StackPanel Grid.Row="2">
-                            <TextBlock x:Name="HumidityRangeText" Style="{StaticResource SubText}" />
-                            <ProgressBar x:Name="HumidityBar" Style="{StaticResource ThinBar}" Foreground="#06B6D4" Margin="0,8,0,0" />
-                        </StackPanel>
-                    </Grid>
+                        <TextBlock x:Name="HumidityRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                 </RadioButton>
 
                 <!-- Pressure -->
                 <RadioButton x:Name="PressureTab" Grid.Column="3" GroupName="Metric" Tag="Pressure" Foreground="#8B5CF6" Margin="0"
-                             Style="{StaticResource MetricTab}" Checked="MetricTab_Checked" ToolTip="Show the pressure chart">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="#8B5CF6" Margin="0,0,8,0" VerticalAlignment="Center" />
-                            <TextBlock Text="PRESSURE" Style="{StaticResource SectionLabel}" />
+                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
+                             ToolTip="Show pressure history" AutomationProperties.Name="Pressure, no reading, show history">
+                    <StackPanel>
+                        <TextBlock Text="Pressure" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
+                            <TextBlock x:Name="PressureText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
+                            <TextBlock x:Name="PressureUnitText" Text="hPa" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
                         </StackPanel>
-                        <TextBlock Grid.Row="1" x:Name="PressureText" Text="—" Style="{StaticResource MetricValue}" VerticalAlignment="Center" />
-                        <TextBlock Grid.Row="2" x:Name="PressureRangeText" Style="{StaticResource SubText}" />
-                    </Grid>
+                        <TextBlock x:Name="PressureRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                 </RadioButton>
             </Grid>
 
