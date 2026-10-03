@@ -17,7 +17,7 @@ Monitor your Aranet4 in real time, view historical measurements, export data to 
 
 > **Independent project:** Aranet and Aranet4 are referenced only to identify compatible hardware. This project is not affiliated with or endorsed by the manufacturer.
 
-![Screenshot](docs\screenshots\main-screen.png)
+![Screenshot](docs/screenshots/main-screen.png)
 
 ## Download
 
