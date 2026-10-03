@@ -544,25 +544,30 @@
         <Grid Grid.Row="1"
               Margin="22,18,22,18">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="376"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
             <!-- Metric cards: always visible; click one to chart it -->
             <Grid Grid.Row="0"
-                  Margin="0,0,0,14"
+                  Grid.Column="0"
+                  Margin="0,0,16,14"
                   AutomationProperties.Name="Chart shows">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.6*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="60"/>
+                    <RowDefinition Height="*" MinHeight="60"/>
+                    <RowDefinition Height="*" MinHeight="60"/>
+                </Grid.RowDefinitions>
 
                 <!-- CO2 hero -->
                 <RadioButton x:Name="Co2Tab"
-                             Grid.Column="0"
+                             Grid.Row="0"
+                             Margin="0,0,0,12"
                              GroupName="Metric"
                              Tag="Co2"
                              IsChecked="True"
@@ -750,24 +755,35 @@
 
                 <!-- Temperature -->
                 <RadioButton x:Name="TemperatureTab"
-                             Grid.Column="1"
+                             Grid.Row="1"
                              GroupName="Metric"
                              Tag="Temperature"
                              Foreground="#F97316"
                              Style="{StaticResource MetricTab}"
-                             Height="100"
-                             VerticalAlignment="Top"
+                             Margin="0,0,0,12"
                              Checked="MetricTab_Checked"
                              ToolTip="Show temperature history"
                              AutomationProperties.Name="Temperature, no reading, show history">
-                    <StackPanel>
-                        <TextBlock Text="Temperature"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"/>
-                        <StackPanel Orientation="Horizontal"
-                                    VerticalAlignment="Bottom"
-                                    Margin="0,4,0,0">
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Temperature"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TemperatureRangeText"
+                                           Margin="0,2,0,0"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0">
                             <TextBlock x:Name="TemperatureText"
                                        Text="—"
                                        Foreground="{StaticResource TextPrimary}"
@@ -778,33 +794,40 @@
                                        FontSize="14"
                                        Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="TemperatureRangeText"
-                                   Foreground="{StaticResource TextSecondary}"
-                                   FontSize="12"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
+                    </Grid>
                 </RadioButton>
 
                 <!-- Humidity -->
                 <RadioButton x:Name="HumidityTab"
-                             Grid.Column="2"
+                             Grid.Row="2"
                              GroupName="Metric"
                              Tag="Humidity"
                              Foreground="#06B6D4"
                              Style="{StaticResource MetricTab}"
-                             Height="100"
-                             VerticalAlignment="Top"
+                             Margin="0,0,0,12"
                              Checked="MetricTab_Checked"
                              ToolTip="Show humidity history"
                              AutomationProperties.Name="Humidity, no reading, show history">
-                    <StackPanel>
-                        <TextBlock Text="Humidity"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"/>
-                        <StackPanel Orientation="Horizontal"
-                                    VerticalAlignment="Bottom"
-                                    Margin="0,4,0,0">
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Humidity"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="HumidityRangeText"
+                                           Margin="0,2,0,0"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0">
                             <TextBlock x:Name="HumidityText"
                                        Text="—"
                                        Foreground="{StaticResource TextPrimary}"
@@ -816,34 +839,40 @@
                                        FontSize="14"
                                        Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="HumidityRangeText"
-                                   Foreground="{StaticResource TextSecondary}"
-                                   FontSize="12"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
+                    </Grid>
                 </RadioButton>
 
                 <!-- Pressure -->
                 <RadioButton x:Name="PressureTab"
-                             Grid.Column="3"
+                             Grid.Row="3"
                              GroupName="Metric"
                              Tag="Pressure"
                              Foreground="#8B5CF6"
                              Margin="0"
                              Style="{StaticResource MetricTab}"
-                             Height="100"
-                             VerticalAlignment="Top"
                              Checked="MetricTab_Checked"
                              ToolTip="Show pressure history"
                              AutomationProperties.Name="Pressure, no reading, show history">
-                    <StackPanel>
-                        <TextBlock Text="Pressure"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"/>
-                        <StackPanel Orientation="Horizontal"
-                                    VerticalAlignment="Bottom"
-                                    Margin="0,4,0,0">
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Pressure"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="PressureRangeText"
+                                           Margin="0,2,0,0"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,0,0">
                             <TextBlock x:Name="PressureText"
                                        Text="—"
                                        Foreground="{StaticResource TextPrimary}"
@@ -855,16 +884,13 @@
                                        FontSize="14"
                                        Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="PressureRangeText"
-                                   Foreground="{StaticResource TextSecondary}"
-                                   FontSize="12"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
+                    </Grid>
                 </RadioButton>
             </Grid>
 
             <!-- One chart at a time -->
-            <Border Grid.Row="1"
+            <Border Grid.Row="0"
+                    Grid.Column="1"
                     Style="{StaticResource CardStyle}"
                     Padding="20,14,20,10"
                     Margin="0,0,0,14">
@@ -937,7 +963,8 @@
             </Border>
 
             <!-- Bottom strip: alert settings and sensor/system details -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="1"
+                  Grid.ColumnSpan="2">
                 <Border Style="{StaticResource CardStyle}"
                         Padding="20,10">
                     <StackPanel Orientation="Horizontal"

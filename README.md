@@ -1,69 +1,69 @@
 # Aranet4 Monitor
 
-[![CI](https://github.com/romanshevchuk/aranet4-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/romanshevchuk/aranet4-monitor/actions/workflows/ci.yml)
+**An unofficial Windows system-tray app for [Aranet4](https://aranet.com/products/aranet4-home/) sensors.**
 
-An unofficial Windows system-tray app for Aranet4 sensors. Monitor live readings, review sensor history, export measurements, and receive configurable ventilation alerts. The app listens for Smart Home Integration BLE broadcasts and connects to a sensor when you sync its stored history.
+Monitor your Aranet4 in real time, view historical measurements, export data to CSV, and receive configurable CO₂ ventilation alerts.
 
-> **Independent project:** Aranet and Aranet4 are referenced only to identify compatible hardware. This project is not affiliated with or endorsed by the manufacturer.
+**[⬇️ Download the latest release](../../releases/latest)**
 
 ## Features
 
-- **Live readings** — CO₂, temperature, humidity, pressure, battery, and signal strength.
-- **Sensor history** — Download stored readings; later syncs are incremental and safely overlap the previous cursor.
-- **Charts and export** — Chart one metric at a time, view range summaries, and export history to CSV.
-- **Temperature units** — Display temperature in Celsius or Fahrenheit; history and CSV remain in Celsius.
-- **Ventilation alerts** — Configure the CO₂ threshold and duration, pause alerts, and use the live-reading tray icon.
-- **Local storage** — History and settings stay on your PC. No account or cloud service.
+* **Live readings** — CO₂, temperature, humidity, pressure, battery, and signal strength
+* **Sensor history** — Download and synchronize stored measurements
+* **Charts & CSV export** — Explore historical data and export measurements
+* **Ventilation alerts** — Configure CO₂ thresholds and alert duration
+* **System tray** — Monitor your sensor without keeping a window open
+* **Local storage** — Your history and settings stay on your PC; no account or cloud service
+
+> **Independent project:** Aranet and Aranet4 are referenced only to identify compatible hardware. This project is not affiliated with or endorsed by the manufacturer.
 
 ## Download
 
-No release has been published yet. When a `v*` tag is pushed, GitHub Actions creates self-contained ZIPs for x64, ARM64, and x86 Windows on the [Releases page](https://github.com/romanshevchuk/aranet4-monitor/releases).
+**Latest release: [v1.0.0](../../releases/latest)**
 
-When a release is available:
+Download the ZIP matching your Windows processor architecture:
 
-1. Download the ZIP matching your Windows device's processor architecture (`win-x64`, `win-arm64`, or `win-x86`).
-2. Extract it to a folder of your choice.
-3. Run `Aranet4Monitor.exe`.
+* **win-x64** — 64-bit Intel/AMD Windows PCs
+* **win-arm64** — Windows on ARM devices
+* **win-x86** — 32-bit Windows
 
-The .NET SDK and .NET Desktop Runtime are not required. The app is unsigned, so Windows may display a SmartScreen warning. Only run software you trust and download releases from this repository.
+Extract the downloaded ZIP to a folder and run:
 
-## Requirements
+```text
+Aranet4Monitor.exe
+```
 
-- A Windows 10 Enterprise/LTSC release supported by .NET 10 (the app's minimum target is build 17763 / version 1809), or a supported Windows 11 release. Standard Windows 10 Home/Pro editions are not supported by .NET 10.
-- Bluetooth Low Energy support and an Aranet4 nearby.
-- History sync may prompt Windows to pair with the sensor; live beacon readings do not require history sync.
+The application is self-contained, so you **do not need to install the .NET SDK or .NET Desktop Runtime**.
 
-The Windows 10 edition limitation follows [.NET 10’s supported Windows versions](https://learn.microsoft.com/dotnet/core/install/windows#supported-versions). The app targets Windows build 17763 or later.
+> **Windows SmartScreen:** The application is currently unsigned, so Windows may display a SmartScreen warning when you first run it. Only download releases from this repository and run software you trust.
 
-## Build from source
+### Building from source
 
-Building and running from source requires the .NET 10 SDK on Windows. From the repository root:
+If you prefer to build the application yourself, you can use the `.NET 10 SDK` on Windows:
 
 ```powershell
 dotnet run --project Aranet4Monitor/Aranet4Monitor.csproj
 dotnet test Aranet4Monitor.sln
 ```
 
-To create a self-contained x64 publish locally:
+To create a self-contained x64 release:
 
 ```powershell
 dotnet publish Aranet4Monitor/Aranet4Monitor.csproj `
-	--configuration Release `
-	--runtime win-x64 `
-	--self-contained true
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained true
 ```
-
-The publish folder is `Aranet4Monitor/bin/Release/net10.0-windows10.0.19041.0/<runtime-id>/publish/`, where `<runtime-id>` is `win-x64`, `win-arm64`, or `win-x86`.
 
 ## Privacy and data storage
 
 The app communicates with the nearby sensor over Bluetooth LE. There is no analytics, telemetry, account, or cloud-upload feature in this repository.
 
-- Sensor history and sync cursors are stored as JSON in `%LOCALAPPDATA%\AranetHome\history\`, with files keyed by the sensor's Bluetooth address.
-- Preferences, including alert settings and last-alert details, are stored in `%LOCALAPPDATA%\AranetHome\settings.json`.
-- These files are not encrypted by the app. History is retained when you clear the detected-device list and when you remove the application. Delete `%LOCALAPPDATA%\AranetHome` to remove the saved data.
-- **Start with Windows** creates a per-user Windows startup entry. Turn it off from the tray menu before deleting the application if you no longer want it to start automatically.
-- CSV exports are written to the location you choose.
+* Sensor history and sync cursors are stored as JSON in `%LOCALAPPDATA%\AranetHome\history\`, with files keyed by the sensor's Bluetooth address.
+* Preferences, including alert settings and last-alert details, are stored in `%LOCALAPPDATA%\AranetHome\settings.json`.
+* These files are not encrypted by the app. History is retained when you clear the detected-device list and when you remove the application. Delete `%LOCALAPPDATA%\AranetHome\` to remove the saved data.
+* **Start with Windows** creates a per-user Windows startup entry. Turn it off from the tray menu before deleting the application if you no longer want it to start automatically.
+* CSV exports are written to the location you choose.
 
 ## CO₂ readings and safety
 
@@ -73,14 +73,14 @@ The default alert is 1,500 ppm sustained for 10 minutes, and it rearms at or bel
 
 ## Troubleshooting
 
-- **No sensor detected:** Enable Bluetooth, keep the sensor nearby, and check that your Windows adapter supports Bluetooth LE.
-- **No live measurements:** Live readings require the sensor's Smart Home Integration BLE broadcasts. Check the sensor's broadcast setting and battery.
-- **History sync fails:** Keep the sensor nearby and complete any Windows pairing prompt. If a sync is cancelled or interrupted, retry it; the cursor advances only after a complete transfer is saved.
-- **Stale tray reading:** The tray icon turns grey after the sensor has not been heard from for five minutes. Check distance, battery, and Bluetooth.
+* **No sensor detected:** Enable Bluetooth, keep the sensor nearby, and check that your Windows adapter supports Bluetooth LE.
+* **No live measurements:** Live readings require the sensor's Smart Home Integration BLE broadcasts. Check the sensor's broadcast setting and battery.
+* **History sync fails:** Keep the sensor nearby and complete any Windows pairing prompt. If a sync is cancelled or interrupted, retry it; the cursor advances only after a complete transfer is saved.
+* **Stale tray reading:** The tray icon turns grey after the sensor has not been heard from for five minutes. Check distance, battery, and Bluetooth.
 
 ## Acknowledgements
 
-The [Aranet4-Python project](https://github.com/Anrijs/Aranet4-Python) is a protocol research reference. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the specific sources and attribution. The app’s protocol and sync tests use local fixtures and do not require a sensor.
+The [Aranet4-Python project](https://github.com/Anrijs/Aranet4-Python) is a protocol research reference. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the specific sources and attribution. The app's protocol and sync tests use local fixtures and do not require a sensor.
 
 ## License
 
