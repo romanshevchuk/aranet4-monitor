@@ -6,6 +6,8 @@ Monitor your Aranet4 in real time, view historical measurements, export data to 
 
 **[⬇️ Download the latest release](../../releases/latest)**
 
+![Screenshot](docs/screenshots/main-screen.png)
+
 ## Features
 
 * **Live readings** — CO₂, temperature, humidity, pressure, battery, and signal strength
@@ -16,8 +18,6 @@ Monitor your Aranet4 in real time, view historical measurements, export data to 
 * **Local storage** — Your history and settings stay on your PC; no account or cloud service
 
 > **Independent project:** Aranet and Aranet4 are referenced only to identify compatible hardware. This project is not affiliated with or endorsed by the manufacturer.
-
-![Screenshot](docs/screenshots/main-screen.png)
 
 ## Download
 
