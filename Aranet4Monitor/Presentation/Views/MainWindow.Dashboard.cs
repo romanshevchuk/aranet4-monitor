@@ -173,16 +173,6 @@ public partial class MainWindow
             ? $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)}%"
             : $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
 
-        if (kind == MetricKind.Humidity)
-        {
-            var from = Dashboard.HistoryRange is { } rangeWindow ? now - rangeWindow : DateTime.MinValue;
-            var latestHumidity = device.History.LastOrDefault(sample => sample.Time >= from && sample.HumidityPercent.HasValue)?.HumidityPercent;
-            if (latestHumidity is { } humidity)
-            {
-                summary += humidity < 40 ? " · Dry" : humidity <= 60 ? " · Comfortable" : " · Humid";
-            }
-        }
-
         return summary;
     }
 
@@ -197,13 +187,31 @@ public partial class MainWindow
         HistoryChart.Range = Dashboard.HistoryRange;
         HistoryChart.InvalidateVisual();
 
-        ChartTitleText.Text = $"{Metrics.Title(Dashboard.SelectedMetric).ToUpperInvariant()} HISTORY";
+        ChartTitleText.Text = $"{Metrics.Title(Dashboard.SelectedMetric)} history";
         ChartDot.Fill = AccentBrushes[Dashboard.SelectedMetric];
         ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, Dashboard.HistoryRange, now, Dashboard.SelectedMetric, preferences.TemperatureDisplayUnit);
 
         TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
         HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
         PressureRangeText.Text = RangeSummary(device, MetricKind.Pressure, now);
+        UpdateHumidityComfort(device);
+    }
+
+    /// <summary>Comfort word and badge next to the humidity label (Dry under 40%, Comfortable 40–60%, Humid above 60%).</summary>
+    private void UpdateHumidityComfort(Aranet4Device? device)
+    {
+        var latest = device?.History.LastOrDefault(sample => sample.HumidityPercent.HasValue)?.HumidityPercent;
+        if (latest is not { } humidity)
+        {
+            HumidityComfortBadge.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var comfortable = humidity >= 40 && humidity <= 60;
+        HumidityComfortText.Text = humidity < 40 ? "Dry" : comfortable ? "Comfortable" : "Humid";
+        HumidityComfortText.Foreground = new SolidColorBrush(comfortable ? Color.FromRgb(0x1A, 0x7A, 0x45) : Color.FromRgb(0x7A, 0x4B, 0x00));
+        HumidityComfortBadge.Background = new SolidColorBrush(comfortable ? Color.FromRgb(0xE3, 0xF6, 0xEA) : Color.FromRgb(0xFF, 0xF4, 0xDC));
+        HumidityComfortBadge.Visibility = Visibility.Visible;
     }
 
     private void MetricTab_Checked(object sender, RoutedEventArgs e)
@@ -312,6 +320,7 @@ public partial class MainWindow
         AutomationProperties.SetName(HumidityTab, "Humidity, no reading, show history");
         AutomationProperties.SetName(PressureTab, "Pressure, no reading, show history");
         HistoryChart.Samples = null;
+        UpdateHumidityComfort(null);
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();
         UpdateHeaderSensorState();
