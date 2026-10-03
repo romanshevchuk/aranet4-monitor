@@ -232,14 +232,15 @@ public partial class MainWindow
             return;
         }
 
-        var (label, icon, color) = ppm switch
+        var level = Co2Quality.Classify(ppm);
+        var (icon, color) = level switch
         {
-            < Co2Quality.FairFromPpm => ("Good air", "✓", (Color)FindResource("Co2GoodColor")),
-            < Co2Quality.PoorFromPpm => ("Getting stuffy", "!", (Color)FindResource("Co2FairColor")),
-            _ => ("High · ventilate", "!", (Color)FindResource("Co2PoorColor")),
+            Co2Level.Good => ("✓", (Color)FindResource("Co2GoodColor")),
+            Co2Level.Fair => ("!", (Color)FindResource("Co2FairColor")),
+            _ => ("!", (Color)FindResource("Co2PoorColor")),
         };
         QualityIcon.Text = icon;
-        QualityText.Text = label;
+        QualityText.Text = Co2Quality.Describe(level);
         QualityBadge.Background = new SolidColorBrush(color);
         QualityBadge.Visibility = Visibility.Visible;
         Co2AdviceText.Text = ppm < Co2Quality.FairFromPpm
@@ -253,6 +254,32 @@ public partial class MainWindow
         GaugeLeft.Width = new GridLength(Math.Max(fraction, 0.001), GridUnitType.Star);
         GaugeRight.Width = new GridLength(Math.Max(1 - fraction, 0.001), GridUnitType.Star);
         GaugeMarkerGrid.Visibility = Visibility.Visible;
+    }
+
+    private void GaugeNumberCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => PositionGaugeNumberLabels();
+
+    private void GaugeNumberLabel_SizeChanged(object sender, SizeChangedEventArgs e) => PositionGaugeNumberLabels();
+
+    private void PositionGaugeNumberLabels()
+    {
+        var canvasWidth = GaugeNumberCanvas.ActualWidth;
+        if (canvasWidth <= 0)
+        {
+            return;
+        }
+
+        foreach (var (label, value) in new[]
+        {
+            (Gauge400Label, 400),
+            (Gauge1000Label, 1000),
+            (Gauge1400Label, 1400),
+            (Gauge2000Label, 2000),
+        })
+        {
+            var x = (value - 400) / 1600.0 * canvasWidth;
+            var left = Math.Clamp(x - label.ActualWidth / 2, 0, canvasWidth - label.ActualWidth);
+            Canvas.SetLeft(label, left);
+        }
     }
 
     private void ClearDetails()

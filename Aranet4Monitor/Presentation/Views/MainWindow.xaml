@@ -3,412 +3,1006 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aranet4Monitor"
         xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls"
-        Title="Aranet4 Monitor" Height="740" Width="1180" MinHeight="640" MinWidth="940"
-        Background="#F3F6FB" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" UseLayoutRounding="True">
+        Title="Aranet4 Monitor"
+        Height="740"
+        Width="1180"
+        MinHeight="640"
+        MinWidth="940"
+        Background="#F3F6FB"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        FontSize="13"
+        UseLayoutRounding="True">
     <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
         <!-- Header: brand, device chip, status, menu -->
         <Grid Grid.Row="0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-        <Border Grid.Row="0" Padding="22,12">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#0F1B2E" Offset="0" />
-                    <GradientStop Color="#1B3354" Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Grid Width="30" Height="30" Margin="0,0,12,0">
-                        <Ellipse Stroke="#4386F5" StrokeThickness="2.5" />
-                        <Ellipse Width="10" Height="10" Fill="#89B4FF" />
-                    </Grid>
-                    <TextBlock Text="Aranet4 Monitor" Foreground="White" FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-
-                <Button x:Name="DeviceChipButton" Grid.Column="1" Style="{StaticResource DeviceChip}" Margin="20,0,0,0" VerticalAlignment="Center"
-                        Click="DeviceChip_Click" ToolTip="Sensor details and device list">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="DeviceDot" Width="9" Height="9" Fill="#8FA3BF" Margin="0,0,9,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="ChipNameText" Text="Searching for sensor…" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center" />
-                        <TextBlock Text="▾" Foreground="#9DB8E0" Margin="9,0,0,0" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-
-                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                    <Button x:Name="SyncHistoryButton" Content="Sync history" Style="{StaticResource HeaderActionButton}"
-                        Click="SyncHistory_Click" IsEnabled="False" ToolTipService.ShowOnDisabled="True"
-                        ToolTip="Sync stored CO₂, temperature, humidity and pressure history for the selected sensor" />
-                    <StackPanel x:Name="SyncProgressPanel" Orientation="Horizontal" VerticalAlignment="Center" Visibility="Collapsed" Margin="8,0,0,0">
-                        <ProgressBar Width="24" Height="4" IsIndeterminate="True" Foreground="#89B4FF" Background="#36507A" />
-                        <TextBlock x:Name="SyncStatusText" FontSize="12" Foreground="#DDEBFF" Margin="8,0,0,0"
-                                   VerticalAlignment="Center" MaxWidth="190" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                    <Button x:Name="CancelHistorySyncButton" Content="Cancel" Style="{StaticResource HeaderActionButton}"
-                        Click="CancelHistorySync_Click" IsEnabled="False" Visibility="Collapsed" Margin="6,0,0,0" />
-                </StackPanel>
-
-                <Button x:Name="MoreButton" Grid.Column="5" Style="{StaticResource IconButton}" Content="⋯"
-                        VerticalAlignment="Center" Click="MoreButton_Click" ToolTip="Settings and options"
-                        AutomationProperties.Name="Settings and options">
-                    <Button.ContextMenu>
-                        <ContextMenu x:Name="MoreMenu" Placement="Bottom">
-                            <MenuItem Header="Alert settings…" Click="OpenAlertSettings_Click" />
-                            <MenuItem Header="Export CSV">
-                                <MenuItem Header="Visible range" Tag="visible" Click="ExportCsv_Click" />
-                                <MenuItem Header="All" Tag="all" Click="ExportCsv_Click" />
-                            </MenuItem>
-                            <Separator />
-                            <MenuItem Header="Temperature unit">
-                                <MenuItem x:Name="CelsiusUnitMenuItem" Header="Celsius (°C)" Tag="Celsius" IsCheckable="True" Click="TemperatureUnit_Click" />
-                                <MenuItem x:Name="FahrenheitUnitMenuItem" Header="Fahrenheit (°F)" Tag="Fahrenheit" IsCheckable="True" Click="TemperatureUnit_Click" />
-                            </MenuItem>
-                            <MenuItem x:Name="ListenMenuItem" Header="Listen for live readings" IsCheckable="True" Click="ListenMenuItem_Click" />
-                            <MenuItem x:Name="ShowNumberMenuItem" Header="Show number in tray icon" IsCheckable="True" Click="ShowNumberMenuItem_Click" />
-                            <MenuItem x:Name="LargePopupsMenuItem" Header="Large pop-ups" IsCheckable="True" Click="LargePopupsMenuItem_Click" />
-                            <MenuItem x:Name="StartWithWindowsMenuItem" Header="Start with Windows" IsCheckable="True" Click="StartWithWindowsMenuItem_Click" />
-                            <MenuItem Header="Bluetooth diagnostics" Click="BluetoothDiagnostics_Click" />
-                            <Separator />
-                            <MenuItem Header="Forget detected devices…" Foreground="{StaticResource Danger}" Click="ClearButton_Click" />
-                            <MenuItem Header="Exit Aranet4 Monitor" ToolTip="Closing the window keeps the app running in the tray." Click="ExitMenuItem_Click" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-
-                <!-- Device list + Bluetooth diagnostics: out of the way until wanted -->
-                <Popup x:Name="DevicePopup" PlacementTarget="{Binding ElementName=DeviceChipButton}" Placement="Bottom"
-                      DataContext="{Binding DataContext, ElementName=DeviceChipButton}"
-                      StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" Closed="DevicePopup_Closed">
-                    <Border Width="420" Margin="12,4,18,18" Style="{StaticResource PopoverCard}" Padding="16"
-                            PreviewKeyDown="DevicePopup_PreviewKeyDown">
-                        <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.25" /></Border.Effect>
-                        <StackPanel>
-                            <Grid Margin="2,0,2,10">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock x:Name="DevicesTitleText" Text="SENSOR" Foreground="{StaticResource Ink}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center" />
-                                <Border Grid.Column="1" Background="#EAF2FF" CornerRadius="10" Padding="9,2">
-                                    <TextBlock x:Name="DevicesCountText" Text="0" Foreground="#2F6FDD" FontWeight="Bold" FontSize="12" />
-                                </Border>
-                            </Grid>
-                            <ListBox x:Name="DevicesList" ItemsSource="{Binding Devices}"
-                                     SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
-                                     SelectionChanged="DevicesList_SelectionChanged" MaxHeight="230"
-                                     BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Ellipse Width="10" Height="10" Margin="0,5,10,0" VerticalAlignment="Top">
-                                                <Ellipse.Style>
-                                                    <Style TargetType="Ellipse">
-                                                        <Setter Property="Fill" Value="#B6C2D3" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsLive}" Value="True"><Setter Property="Fill" Value="#2EC27E" /></DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Ellipse.Style>
-                                            </Ellipse>
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{StaticResource Ink}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <StackPanel x:Name="DeviceDetailsPanel" Margin="0,8,0,8">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse x:Name="DeviceStatusDot" Width="8" Height="8" Fill="{StaticResource Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="DeviceStatusText" Text="Waiting for a sensor" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
-                                    </StackPanel>
-                                    <TextBlock Text="Last measurement" Foreground="{StaticResource TextSecondary}" Margin="0,10,0,0" />
-                                    <TextBlock x:Name="DeviceLastMeasurementText" Text="—" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="Battery" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <TextBlock Text="{Binding SelectedDevice.Battery}" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="Signal" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}" />
-                                        <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}" Foreground="{StaticResource TextPrimary}" Margin="8,0,0,0" />
-                                    </StackPanel>
-                                    <TextBlock Text="Measurement interval" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <TextBlock Text="{Binding SelectedDevice.MeasurementInterval}" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="Firmware" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <TextBlock Text="{Binding SelectedDevice.Firmware}" Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="Address" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <DockPanel LastChildFill="False">
-                                        <TextBlock x:Name="DeviceAddressText" Text="—" FontFamily="Cascadia Mono, Consolas" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
-                                        <Button DockPanel.Dock="Right" Content="Copy" Click="CopyAddress_Click" Style="{StaticResource SmallLinkButton}" ToolTip="Copy address" />
-                                    </DockPanel>
-                                    <TextBlock Text="Last synced" Foreground="{StaticResource TextSecondary}" Margin="0,8,0,0" />
-                                    <TextBlock x:Name="DeviceLastSyncedText" Text="Not synced yet" Foreground="{StaticResource TextPrimary}" />
-                                    <Button Content="Sync history" Style="{StaticResource HeaderActionButton}" HorizontalAlignment="Left"
-                                            Click="SyncHistory_Click" Margin="0,12,0,0" />
-                            </StackPanel>
-                            <TextBlock x:Name="EmptyHintText" Text="Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app."
-                                       Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,2,2,8" />
-                            <Expander x:Name="DiagnosticsExpander" Header="Advanced · Bluetooth diagnostics" Foreground="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,4,0,0">
-                                <StackPanel Margin="0,8,0,0">
-                                    <TextBlock x:Name="PacketCountText" Text="0 packets received" Foreground="{StaticResource Muted}" Margin="0,0,0,8" />
-                                    <DockPanel Margin="0,0,0,4" LastChildFill="False">
-                                        <TextBlock Text="ADVERTISEMENT" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" />
-                                        <Button DockPanel.Dock="Right" Content="Copy" Tag="adv" Click="CopyPacket_Click" Style="{StaticResource SmallLinkButton}" ToolTip="Copy advertisement packet" />
-                                    </DockPanel>
-                                    <TextBox x:Name="AdvertisementText" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="88"
-                                             FontFamily="Cascadia Mono, Consolas" FontSize="12" BorderThickness="0" Background="#F7F9FC" Padding="8" Foreground="{StaticResource Ink}" />
-                                    <DockPanel Margin="0,10,0,4" LastChildFill="False">
-                                        <TextBlock Text="SCAN RESPONSE" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" />
-                                        <Button DockPanel.Dock="Right" Content="Copy" Tag="scan" Click="CopyPacket_Click" Style="{StaticResource SmallLinkButton}" ToolTip="Copy scan response packet" />
-                                    </DockPanel>
-                                    <TextBox x:Name="ScanResponseText" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="88"
-                                             FontFamily="Cascadia Mono, Consolas" FontSize="12" BorderThickness="0" Background="#F7F9FC" Padding="8" Foreground="{StaticResource Ink}" />
-                                </StackPanel>
-                            </Expander>
-                        </StackPanel>
-                    </Border>
-                </Popup>
-
-                <Popup x:Name="AlertSettingsPopup" PlacementTarget="{Binding ElementName=MoreButton}" Placement="Bottom"
-                       StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
-                    <Border Width="360" Margin="8" Style="{StaticResource PopoverCard}">
-                        <StackPanel>
-                            <TextBlock Text="Alert settings" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
-                            <WrapPanel VerticalAlignment="Center" Margin="0,12,0,0">
-                                <TextBlock Text="Notify above" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                <TextBox x:Name="AlertThresholdTextBox" Text="1500" Width="64" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
-                                         LostFocus="AlertThreshold_LostFocus" ToolTip="Ventilation alert threshold in ppm" />
-                                <TextBlock Text="ppm for" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,4,0" />
-                                <TextBox x:Name="AlertDurationTextBox" Text="10" Width="44" Padding="4,2" HorizontalContentAlignment="Right" VerticalAlignment="Center"
-                                         LostFocus="AlertThreshold_LostFocus" ToolTip="Required sustained alert duration in minutes" />
-                                <TextBlock Text="min" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="4,0,0,0" />
-                            </WrapPanel>
-                            <WrapPanel Margin="0,8,0,0">
-                                <Button Content="Send test" Style="{StaticResource SmallLinkButton}" Click="SendTestAlert_Click" ToolTip="Preview the notification" />
-                                <Button x:Name="PauseAlertsButton" Content="Pause 1 h" Style="{StaticResource SmallLinkButton}" Click="PauseAlerts_Click"
-                                        ToolTip="Silence ventilation alerts for one hour" />
-                            </WrapPanel>
-                            <TextBlock x:Name="AlertStatusText" Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-                </Popup>
-            </Grid>
-        </Border>
-            <Border x:Name="NoticeBar" Grid.Row="1" Style="{StaticResource StatusBanner}" Margin="22,0,22,10" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0"
+                    Padding="22,12">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,0">
+                        <GradientStop Color="#0F1B2E"
+                                      Offset="0"/>
+                        <GradientStop Color="#1B3354"
+                                      Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock x:Name="NoticeText" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                        <Button x:Name="NoticeActionButton" Content="Start listening" Style="{StaticResource SmallLinkButton}" Click="NoticeAction_Click" />
-                        <Button x:Name="BluetoothSettingsButton" Content="Bluetooth settings" Style="{StaticResource SmallLinkButton}"
-                                Click="BluetoothSettings_Click" Visibility="Collapsed" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Grid Width="30"
+                              Height="30"
+                              Margin="0,0,12,0">
+                            <Ellipse Stroke="#4386F5"
+                                     StrokeThickness="2.5"/>
+                            <Ellipse Width="10"
+                                     Height="10"
+                                     Fill="#89B4FF"/>
+                        </Grid>
+                        <TextBlock Text="Aranet4 Monitor"
+                                   Foreground="White"
+                                   FontSize="19"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button x:Name="DeviceChipButton"
+                            Grid.Column="1"
+                            Style="{StaticResource DeviceChip}"
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            Click="DeviceChip_Click"
+                            ToolTip="Sensor details and device list">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="DeviceDot"
+                                     Width="9"
+                                     Height="9"
+                                     Fill="#8FA3BF"
+                                     Margin="0,0,9,0"
+                                     VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ChipNameText"
+                                       Text="Searching for sensor…"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="▾"
+                                       Foreground="#9DB8E0"
+                                       Margin="9,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <StackPanel Grid.Column="3"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,10,0">
+                        <Button x:Name="SyncHistoryButton"
+                                Content="Sync history"
+                                Style="{StaticResource HeaderActionButton}"
+                                Click="SyncHistory_Click"
+                                IsEnabled="False"
+                                ToolTipService.ShowOnDisabled="True"
+                                ToolTip="Sync stored CO₂, temperature, humidity and pressure history for the selected sensor"/>
+                        <StackPanel x:Name="SyncProgressPanel"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed"
+                                    Margin="8,0,0,0">
+                            <ProgressBar Width="24"
+                                         Height="4"
+                                         IsIndeterminate="True"
+                                         Foreground="#89B4FF"
+                                         Background="#36507A"/>
+                            <TextBlock x:Name="SyncStatusText"
+                                       FontSize="12"
+                                       Foreground="#DDEBFF"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       MaxWidth="190"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <Button x:Name="CancelHistorySyncButton"
+                                Content="Cancel"
+                                Style="{StaticResource HeaderActionButton}"
+                                Click="CancelHistorySync_Click"
+                                IsEnabled="False"
+                                Visibility="Collapsed"
+                                Margin="6,0,0,0"/>
+                    </StackPanel>
+
+                    <Button x:Name="MoreButton"
+                            Grid.Column="5"
+                            Style="{StaticResource IconButton}"
+                            Content="⋯"
+                            VerticalAlignment="Center"
+                            Click="MoreButton_Click"
+                            ToolTip="Settings and options"
+                            AutomationProperties.Name="Settings and options">
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="MoreMenu"
+                                         Placement="Bottom">
+                                <MenuItem Header="Alert settings…"
+                                          Click="OpenAlertSettings_Click"/>
+                                <MenuItem Header="Export CSV">
+                                    <MenuItem Header="Visible range"
+                                              Tag="visible"
+                                              Click="ExportCsv_Click"/>
+                                    <MenuItem Header="All"
+                                              Tag="all"
+                                              Click="ExportCsv_Click"/>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Temperature unit">
+                                    <MenuItem x:Name="CelsiusUnitMenuItem"
+                                              Header="Celsius (°C)"
+                                              Tag="Celsius"
+                                              IsCheckable="True"
+                                              Click="TemperatureUnit_Click"/>
+                                    <MenuItem x:Name="FahrenheitUnitMenuItem"
+                                              Header="Fahrenheit (°F)"
+                                              Tag="Fahrenheit"
+                                              IsCheckable="True"
+                                              Click="TemperatureUnit_Click"/>
+                                </MenuItem>
+                                <MenuItem x:Name="ListenMenuItem"
+                                          Header="Listen for live readings"
+                                          IsCheckable="True"
+                                          Click="ListenMenuItem_Click"/>
+                                <MenuItem x:Name="ShowNumberMenuItem"
+                                          Header="Show number in tray icon"
+                                          IsCheckable="True"
+                                          Click="ShowNumberMenuItem_Click"/>
+                                <MenuItem x:Name="LargePopupsMenuItem"
+                                          Header="Large pop-ups"
+                                          IsCheckable="True"
+                                          Click="LargePopupsMenuItem_Click"/>
+                                <MenuItem x:Name="StartWithWindowsMenuItem"
+                                          Header="Start with Windows"
+                                          IsCheckable="True"
+                                          Click="StartWithWindowsMenuItem_Click"/>
+                                <MenuItem Header="Bluetooth diagnostics"
+                                          Click="BluetoothDiagnostics_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Forget detected devices…"
+                                          Foreground="{StaticResource Danger}"
+                                          Click="ClearButton_Click"/>
+                                <MenuItem Header="Exit Aranet4 Monitor"
+                                          ToolTip="Closing the window keeps the app running in the tray."
+                                          Click="ExitMenuItem_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+
+                    <!-- Device list + Bluetooth diagnostics: out of the way until wanted -->
+                    <Popup x:Name="DevicePopup"
+                           PlacementTarget="{Binding ElementName=DeviceChipButton}"
+                           Placement="Bottom"
+                           DataContext="{Binding DataContext, ElementName=DeviceChipButton}"
+                           StaysOpen="False"
+                           AllowsTransparency="True"
+                           PopupAnimation="Fade"
+                           Closed="DevicePopup_Closed">
+                        <Border Width="420"
+                                Margin="12,4,18,18"
+                                Style="{StaticResource PopoverCard}"
+                                Padding="16"
+                                PreviewKeyDown="DevicePopup_PreviewKeyDown">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="18"
+                                                  ShadowDepth="3"
+                                                  Opacity="0.25"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Grid Margin="2,0,2,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="DevicesTitleText"
+                                               Text="SENSOR"
+                                               Foreground="{StaticResource Ink}"
+                                               FontSize="13"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1"
+                                            Background="#EAF2FF"
+                                            CornerRadius="10"
+                                            Padding="9,2">
+                                        <TextBlock x:Name="DevicesCountText"
+                                                   Text="0"
+                                                   Foreground="#2F6FDD"
+                                                   FontWeight="Bold"
+                                                   FontSize="12"/>
+                                    </Border>
+                                </Grid>
+                                <ListBox x:Name="DevicesList"
+                                         ItemsSource="{Binding Devices}"
+                                         SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                                         SelectionChanged="DevicesList_SelectionChanged"
+                                         MaxHeight="230"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Ellipse Width="10"
+                                                         Height="10"
+                                                         Margin="0,5,10,0"
+                                                         VerticalAlignment="Top">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill"
+                                                                    Value="#B6C2D3"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsLive}"
+                                                                             Value="True">
+                                                                    <Setter Property="Fill"
+                                                                            Value="#2EC27E"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Name}"
+                                                           Foreground="{StaticResource Ink}"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel x:Name="DeviceDetailsPanel"
+                                            Margin="0,8,0,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse x:Name="DeviceStatusDot"
+                                                 Width="8"
+                                                 Height="8"
+                                                 Fill="{StaticResource Muted}"
+                                                 Margin="0,0,8,0"
+                                                 VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="DeviceStatusText"
+                                                   Text="Waiting for a sensor"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Last measurement"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,10,0,0"/>
+                                    <TextBlock x:Name="DeviceLastMeasurementText"
+                                               Text="—"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Battery"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding SelectedDevice.Battery}"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Signal"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"/>
+                                        <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Measurement interval"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding SelectedDevice.MeasurementInterval}"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Firmware"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding SelectedDevice.Firmware}"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Address"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <DockPanel LastChildFill="False">
+                                        <TextBlock x:Name="DeviceAddressText"
+                                                   Text="—"
+                                                   FontFamily="Cascadia Mono, Consolas"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   VerticalAlignment="Center"/>
+                                        <Button DockPanel.Dock="Right"
+                                                Content="Copy"
+                                                Click="CopyAddress_Click"
+                                                Style="{StaticResource SmallLinkButton}"
+                                                ToolTip="Copy address"/>
+                                    </DockPanel>
+                                    <TextBlock Text="Last synced"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <TextBlock x:Name="DeviceLastSyncedText"
+                                               Text="Not synced yet"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <Button Content="Sync history"
+                                            Style="{StaticResource HeaderActionButton}"
+                                            HorizontalAlignment="Left"
+                                            Click="SyncHistory_Click"
+                                            Margin="0,12,0,0"/>
+                                </StackPanel>
+                                <TextBlock x:Name="EmptyHintText"
+                                           Text="Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app."
+                                           Foreground="{StaticResource Muted}"
+                                           TextWrapping="Wrap"
+                                           Margin="2,2,2,8"/>
+                                <Expander x:Name="DiagnosticsExpander"
+                                          Header="Advanced · Bluetooth diagnostics"
+                                          Foreground="{StaticResource Muted}"
+                                          FontWeight="SemiBold"
+                                          Margin="0,4,0,0">
+                                    <StackPanel Margin="0,8,0,0">
+                                        <TextBlock x:Name="PacketCountText"
+                                                   Text="0 packets received"
+                                                   Foreground="{StaticResource Muted}"
+                                                   Margin="0,0,0,8"/>
+                                        <DockPanel Margin="0,0,0,4"
+                                                   LastChildFill="False">
+                                            <TextBlock Text="ADVERTISEMENT"
+                                                       Style="{StaticResource SectionLabel}"
+                                                       VerticalAlignment="Center"/>
+                                            <Button DockPanel.Dock="Right"
+                                                    Content="Copy"
+                                                    Tag="adv"
+                                                    Click="CopyPacket_Click"
+                                                    Style="{StaticResource SmallLinkButton}"
+                                                    ToolTip="Copy advertisement packet"/>
+                                        </DockPanel>
+                                        <TextBox x:Name="AdvertisementText"
+                                                 IsReadOnly="True"
+                                                 TextWrapping="Wrap"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 Height="88"
+                                                 FontFamily="Cascadia Mono, Consolas"
+                                                 FontSize="12"
+                                                 BorderThickness="0"
+                                                 Background="#F7F9FC"
+                                                 Padding="8"
+                                                 Foreground="{StaticResource Ink}"/>
+                                        <DockPanel Margin="0,10,0,4"
+                                                   LastChildFill="False">
+                                            <TextBlock Text="SCAN RESPONSE"
+                                                       Style="{StaticResource SectionLabel}"
+                                                       VerticalAlignment="Center"/>
+                                            <Button DockPanel.Dock="Right"
+                                                    Content="Copy"
+                                                    Tag="scan"
+                                                    Click="CopyPacket_Click"
+                                                    Style="{StaticResource SmallLinkButton}"
+                                                    ToolTip="Copy scan response packet"/>
+                                        </DockPanel>
+                                        <TextBox x:Name="ScanResponseText"
+                                                 IsReadOnly="True"
+                                                 TextWrapping="Wrap"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 Height="88"
+                                                 FontFamily="Cascadia Mono, Consolas"
+                                                 FontSize="12"
+                                                 BorderThickness="0"
+                                                 Background="#F7F9FC"
+                                                 Padding="8"
+                                                 Foreground="{StaticResource Ink}"/>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <Popup x:Name="AlertSettingsPopup"
+                           PlacementTarget="{Binding ElementName=MoreButton}"
+                           Placement="Bottom"
+                           StaysOpen="False"
+                           AllowsTransparency="True"
+                           PopupAnimation="Fade">
+                        <Border Width="360"
+                                Margin="8"
+                                Style="{StaticResource PopoverCard}">
+                            <StackPanel>
+                                <TextBlock Text="Alert settings"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}"/>
+                                <WrapPanel VerticalAlignment="Center"
+                                           Margin="0,12,0,0">
+                                    <TextBlock Text="Notify above"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,6,0"/>
+                                    <TextBox x:Name="AlertThresholdTextBox"
+                                             Text="1500"
+                                             Width="64"
+                                             Padding="4,2"
+                                             HorizontalContentAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             LostFocus="AlertThreshold_LostFocus"
+                                             ToolTip="Ventilation alert threshold in ppm"/>
+                                    <TextBlock Text="ppm for"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               VerticalAlignment="Center"
+                                               Margin="6,0,4,0"/>
+                                    <TextBox x:Name="AlertDurationTextBox"
+                                             Text="10"
+                                             Width="44"
+                                             Padding="4,2"
+                                             HorizontalContentAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             LostFocus="AlertThreshold_LostFocus"
+                                             ToolTip="Required sustained alert duration in minutes"/>
+                                    <TextBlock Text="min"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               VerticalAlignment="Center"
+                                               Margin="4,0,0,0"/>
+                                </WrapPanel>
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button Content="Send test"
+                                            Style="{StaticResource SmallLinkButton}"
+                                            Click="SendTestAlert_Click"
+                                            ToolTip="Preview the notification"/>
+                                    <Button x:Name="PauseAlertsButton"
+                                            Content="Pause 1 h"
+                                            Style="{StaticResource SmallLinkButton}"
+                                            Click="PauseAlerts_Click"
+                                            ToolTip="Silence ventilation alerts for one hour"/>
+                                </WrapPanel>
+                                <TextBlock x:Name="AlertStatusText"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,8,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </Border>
+            <Border x:Name="NoticeBar"
+                    Grid.Row="1"
+                    Style="{StaticResource StatusBanner}"
+                    Margin="22,0,22,10"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="NoticeText"
+                               Foreground="{StaticResource TextPrimary}"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="12,0,0,0">
+                        <Button x:Name="NoticeActionButton"
+                                Content="Start listening"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="NoticeAction_Click"/>
+                        <Button x:Name="BluetoothSettingsButton"
+                                Content="Bluetooth settings"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="BluetoothSettings_Click"
+                                Visibility="Collapsed"/>
                     </StackPanel>
                 </Grid>
             </Border>
-            <Border x:Name="SyncProblemBanner" Grid.Row="2" Style="{StaticResource StatusBanner}" Margin="22,0,22,10"
-                    Background="#FEF3F2" BorderBrush="{StaticResource Danger}" Visibility="Collapsed">
+            <Border x:Name="SyncProblemBanner"
+                    Grid.Row="2"
+                    Style="{StaticResource StatusBanner}"
+                    Margin="22,0,22,10"
+                    Background="#FEF3F2"
+                    BorderBrush="{StaticResource Danger}"
+                    Visibility="Collapsed">
                 <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock x:Name="SyncProblemText" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                        <Button Content="Retry" Style="{StaticResource SmallLinkButton}" Click="RetrySync_Click" />
-                        <Button Content="Dismiss" Style="{StaticResource SmallLinkButton}" Click="DismissSyncProblem_Click" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SyncProblemText"
+                               Foreground="{StaticResource TextPrimary}"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="12,0,0,0">
+                        <Button Content="Retry"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="RetrySync_Click"/>
+                        <Button Content="Dismiss"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="DismissSyncProblem_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="22,18,22,18">
+        <Grid Grid.Row="1"
+              Margin="22,18,22,18">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Metric cards: always visible; click one to chart it -->
-            <Grid Grid.Row="0" Margin="0,0,0,14" AutomationProperties.Name="Chart shows">
+            <Grid Grid.Row="0"
+                  Margin="0,0,0,14"
+                  AutomationProperties.Name="Chart shows">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.6*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.6*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- CO2 hero -->
-                <RadioButton x:Name="Co2Tab" Grid.Column="0" GroupName="Metric" Tag="Co2" IsChecked="True" Style="{StaticResource HeroTab}"
-                             Checked="MetricTab_Checked" ToolTip="Show CO₂ history" AutomationProperties.Name="CO₂, no reading, show history">
+                <RadioButton x:Name="Co2Tab"
+                             Grid.Column="0"
+                             GroupName="Metric"
+                             Tag="Co2"
+                             IsChecked="True"
+                             Style="{StaticResource HeroTab}"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show CO₂ history"
+                             AutomationProperties.Name="CO₂, no reading, show history">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="Carbon dioxide" Foreground="#BFD5F7" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <Border x:Name="QualityBadge" CornerRadius="8" Padding="10,4" Visibility="Collapsed" HorizontalAlignment="Right">
+                            <TextBlock Text="Carbon dioxide"
+                                       Foreground="#BFD5F7"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                            <Border x:Name="QualityBadge"
+                                    CornerRadius="8"
+                                    Padding="10,4"
+                                    Visibility="Collapsed"
+                                    HorizontalAlignment="Right">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock x:Name="QualityIcon" FontSize="13" FontWeight="Bold" Foreground="#0F1B2E" Margin="0,0,6,0" />
-                                    <TextBlock x:Name="QualityText" FontWeight="Bold" FontSize="12" Foreground="#0F1B2E" />
+                                    <TextBlock x:Name="QualityIcon"
+                                               FontSize="13"
+                                               FontWeight="Bold"
+                                               Foreground="#0F1B2E"
+                                               Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="QualityText"
+                                               FontWeight="Bold"
+                                               FontSize="12"
+                                               Foreground="#0F1B2E"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="Co2Text" Text="–" Foreground="White" FontSize="60" FontWeight="SemiBold" />
-                            <TextBlock x:Name="Co2UnitText" Text="ppm" Foreground="#9DB8E0" FontSize="20" FontWeight="SemiBold"
-                                       VerticalAlignment="Bottom" Margin="8,0,0,12" Visibility="Collapsed" />
+                            <TextBlock x:Name="Co2Text"
+                                       Text="–"
+                                       Foreground="White"
+                                       FontSize="60"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="Co2UnitText"
+                                       Text="ppm"
+                                       Foreground="#9DB8E0"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Bottom"
+                                       Margin="8,0,0,12"
+                                       Visibility="Collapsed"/>
                         </StackPanel>
-                        <TextBlock x:Name="TrendText" FontSize="13" FontWeight="SemiBold" Margin="2,0,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
-                        <TextBlock x:Name="Co2CaptionText" Text="Waiting for your first live reading, or sync history to download stored readings."
-                                   Foreground="#D4E1F2" FontSize="13" Margin="2,0,0,0" TextTrimming="CharacterEllipsis" />
-                        <TextBlock x:Name="Co2AdviceText" FontSize="13" FontWeight="SemiBold" Foreground="White" Margin="2,4,0,0" Visibility="Collapsed" />
+                        <TextBlock x:Name="TrendText"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="2,0,0,0"
+                                   Visibility="Collapsed"
+                                   AutomationProperties.LiveSetting="Polite"/>
+                        <TextBlock x:Name="Co2CaptionText"
+                                   Text="Waiting for your first live reading, or sync history to download stored readings."
+                                   Foreground="#D4E1F2"
+                                   FontSize="13"
+                                   Margin="2,0,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="Co2AdviceText"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   Margin="2,4,0,0"
+                                   Visibility="Collapsed"/>
 
                         <!-- Gauge: 400 - 2000 ppm -->
-                        <Grid Margin="0,12,0,0" Height="16">
-                            <Border Height="8" CornerRadius="4" VerticalAlignment="Center">
+                        <Grid x:Name="GaugeBar"
+                              Margin="0,12,0,0"
+                              Height="16">
+                            <Border Height="8"
+                                    CornerRadius="4"
+                                    VerticalAlignment="Center">
                                 <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="{StaticResource Co2GoodColor}" Offset="0" />
-                                        <GradientStop Color="{StaticResource Co2GoodColor}" Offset="0.375" />
-                                        <GradientStop Color="{StaticResource Co2FairColor}" Offset="0.375" />
-                                        <GradientStop Color="{StaticResource Co2FairColor}" Offset="0.625" />
-                                        <GradientStop Color="{StaticResource Co2PoorColor}" Offset="0.625" />
-                                        <GradientStop Color="{StaticResource Co2PoorColor}" Offset="1" />
+                                    <LinearGradientBrush StartPoint="0,0"
+                                                         EndPoint="1,0">
+                                        <GradientStop Color="{StaticResource Co2GoodColor}"
+                                                      Offset="0"/>
+                                        <GradientStop Color="{StaticResource Co2GoodColor}"
+                                                      Offset="0.375"/>
+                                        <GradientStop Color="{StaticResource Co2FairColor}"
+                                                      Offset="0.375"/>
+                                        <GradientStop Color="{StaticResource Co2FairColor}"
+                                                      Offset="0.625"/>
+                                        <GradientStop Color="{StaticResource Co2PoorColor}"
+                                                      Offset="0.625"/>
+                                        <GradientStop Color="{StaticResource Co2PoorColor}"
+                                                      Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                             </Border>
-                            <Grid x:Name="GaugeMarkerGrid" Visibility="Collapsed">
+                            <Grid x:Name="GaugeMarkerGrid"
+                                  Visibility="Collapsed">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition x:Name="GaugeLeft" Width="0.5*" />
-                                    <ColumnDefinition x:Name="GaugeRight" Width="0.5*" />
+                                    <ColumnDefinition x:Name="GaugeLeft"
+                                                      Width="0.5*"/>
+                                    <ColumnDefinition x:Name="GaugeRight"
+                                                      Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <Ellipse Width="16" Height="16" Fill="White" Stroke="#16294A" StrokeThickness="3"
-                                         HorizontalAlignment="Right" Margin="0,0,-8,0" />
+                                <Ellipse Width="16"
+                                         Height="16"
+                                         Fill="White"
+                                         Stroke="#16294A"
+                                         StrokeThickness="3"
+                                         HorizontalAlignment="Right"
+                                         Margin="0,0,-8,0"/>
                             </Grid>
                             <Grid IsHitTestVisible="False">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="3*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Width="1" Background="#16294A" HorizontalAlignment="Right" />
-                                <Border Grid.Column="1" Width="1" Background="#16294A" HorizontalAlignment="Right" />
+                                <Border Grid.Column="0"
+                                        Width="1"
+                                        Background="#16294A"
+                                        HorizontalAlignment="Right"/>
+                                <Border Grid.Column="1"
+                                        Width="1"
+                                        Background="#16294A"
+                                        HorizontalAlignment="Right"/>
                             </Grid>
                         </Grid>
+                        <Canvas x:Name="GaugeNumberCanvas"
+                                Width="{Binding ActualWidth, ElementName=GaugeBar}"
+                                Height="16"
+                                Margin="0,6,0,0"
+                                SizeChanged="GaugeNumberCanvas_SizeChanged">
+                            <TextBlock x:Name="Gauge400Label"
+                                       Text="400"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       SizeChanged="GaugeNumberLabel_SizeChanged"/>
+                            <TextBlock x:Name="Gauge1000Label"
+                                       Text="1,000"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       SizeChanged="GaugeNumberLabel_SizeChanged"/>
+                            <TextBlock x:Name="Gauge1400Label"
+                                       Text="1,400"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       SizeChanged="GaugeNumberLabel_SizeChanged"/>
+                            <TextBlock x:Name="Gauge2000Label"
+                                       Text="2,000+"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       SizeChanged="GaugeNumberLabel_SizeChanged"/>
+                        </Canvas>
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="600*"/>
+                                <ColumnDefinition Width="400*"/>
+                                <ColumnDefinition Width="600*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="400" Foreground="#BFD5F7" FontSize="12" />
-                            <TextBlock Text="1,000" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
-                            <TextBlock Grid.Column="1" Text="1,400" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
-                            <TextBlock Grid.Column="2" Text="2,000+" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
-                        </Grid>
-                        <Grid Margin="0,2,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Good" Foreground="#BFD5F7" FontSize="12" />
-                            <TextBlock Grid.Column="1" Text="Getting stuffy" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Center" />
-                            <TextBlock Grid.Column="2" Text="High" Foreground="#BFD5F7" FontSize="12" HorizontalAlignment="Right" />
+                            <TextBlock x:Name="GoodZoneText"
+                                       Text="Good air"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       HorizontalAlignment="Stretch"
+                                       TextAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="FairZoneText"
+                                       Grid.Column="1"
+                                       Text="Getting stuffy"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       HorizontalAlignment="Stretch"
+                                       TextAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="PoorZoneText"
+                                       Grid.Column="2"
+                                       Text="Poor air"
+                                       Foreground="#BFD5F7"
+                                       FontSize="12"
+                                       HorizontalAlignment="Stretch"
+                                       TextAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </StackPanel>
                 </RadioButton>
 
                 <!-- Temperature -->
-                <RadioButton x:Name="TemperatureTab" Grid.Column="1" GroupName="Metric" Tag="Temperature" Foreground="#F97316"
-                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
-                             ToolTip="Show temperature history" AutomationProperties.Name="Temperature, no reading, show history">
+                <RadioButton x:Name="TemperatureTab"
+                             Grid.Column="1"
+                             GroupName="Metric"
+                             Tag="Temperature"
+                             Foreground="#F97316"
+                             Style="{StaticResource MetricTab}"
+                             Height="100"
+                             VerticalAlignment="Top"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show temperature history"
+                             AutomationProperties.Name="Temperature, no reading, show history">
                     <StackPanel>
-                        <TextBlock Text="Temperature" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
-                            <TextBlock x:Name="TemperatureText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
-                            <TextBlock x:Name="TemperatureUnitText" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
+                        <TextBlock Text="Temperature"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0,4,0,0">
+                            <TextBlock x:Name="TemperatureText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="28"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TemperatureUnitText"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="TemperatureRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="TemperatureRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </RadioButton>
 
                 <!-- Humidity -->
-                <RadioButton x:Name="HumidityTab" Grid.Column="2" GroupName="Metric" Tag="Humidity" Foreground="#06B6D4"
-                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
-                             ToolTip="Show humidity history" AutomationProperties.Name="Humidity, no reading, show history">
+                <RadioButton x:Name="HumidityTab"
+                             Grid.Column="2"
+                             GroupName="Metric"
+                             Tag="Humidity"
+                             Foreground="#06B6D4"
+                             Style="{StaticResource MetricTab}"
+                             Height="100"
+                             VerticalAlignment="Top"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show humidity history"
+                             AutomationProperties.Name="Humidity, no reading, show history">
                     <StackPanel>
-                        <TextBlock Text="Humidity" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
-                            <TextBlock x:Name="HumidityText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
-                            <TextBlock x:Name="HumidityUnitText" Text="%" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
+                        <TextBlock Text="Humidity"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0,4,0,0">
+                            <TextBlock x:Name="HumidityText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="28"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="HumidityUnitText"
+                                       Text="%"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="HumidityRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="HumidityRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </RadioButton>
 
                 <!-- Pressure -->
-                <RadioButton x:Name="PressureTab" Grid.Column="3" GroupName="Metric" Tag="Pressure" Foreground="#8B5CF6" Margin="0"
-                             Style="{StaticResource MetricTab}" Height="100" VerticalAlignment="Top" Checked="MetricTab_Checked"
-                             ToolTip="Show pressure history" AutomationProperties.Name="Pressure, no reading, show history">
+                <RadioButton x:Name="PressureTab"
+                             Grid.Column="3"
+                             GroupName="Metric"
+                             Tag="Pressure"
+                             Foreground="#8B5CF6"
+                             Margin="0"
+                             Style="{StaticResource MetricTab}"
+                             Height="100"
+                             VerticalAlignment="Top"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show pressure history"
+                             AutomationProperties.Name="Pressure, no reading, show history">
                     <StackPanel>
-                        <TextBlock Text="Pressure" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" />
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
-                            <TextBlock x:Name="PressureText" Text="—" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="SemiBold" />
-                            <TextBlock x:Name="PressureUnitText" Text="hPa" Foreground="{StaticResource TextSecondary}" FontSize="14" Margin="5,0,0,4" />
+                        <TextBlock Text="Pressure"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0,4,0,0">
+                            <TextBlock x:Name="PressureText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="28"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="PressureUnitText"
+                                       Text="hPa"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       Margin="5,0,0,4"/>
                         </StackPanel>
-                        <TextBlock x:Name="PressureRangeText" Foreground="{StaticResource TextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="PressureRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </RadioButton>
             </Grid>
 
             <!-- One chart at a time -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="20,14,20,10" Margin="0,0,0,14">
+            <Border Grid.Row="1"
+                    Style="{StaticResource CardStyle}"
+                    Padding="20,14,20,10"
+                    Margin="0,0,0,14">
                 <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
                     <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="ChartDot" Width="8" Height="8" Fill="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                <TextBlock x:Name="ChartTitleText" Text="CO₂ HISTORY" Style="{StaticResource SectionLabel}" />
+                                <Ellipse x:Name="ChartDot"
+                                         Width="8"
+                                         Height="8"
+                                         Fill="#3B82F6"
+                                         Margin="0,0,8,0"
+                                         VerticalAlignment="Center"/>
+                                <TextBlock x:Name="ChartTitleText"
+                                           Text="CO₂ HISTORY"
+                                           Style="{StaticResource SectionLabel}"/>
                             </StackPanel>
-                            <TextBlock x:Name="ChartStatsText" Text="No readings yet" Foreground="{StaticResource Ink}" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="ChartStatsText"
+                                       Text="No readings yet"
+                                       Foreground="{StaticResource Ink}"
+                                       FontSize="12"
+                                       Margin="0,4,0,0"
+                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#EEF2F8" CornerRadius="11" Padding="3">
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Border Background="#EEF2F8"
+                                    CornerRadius="11"
+                                    Padding="3">
                                 <StackPanel Orientation="Horizontal">
-                                    <RadioButton Content="1h" Tag="1" GroupName="ChartRange" Style="{StaticResource SegmentButton}" Checked="RangeButton_Checked" />
-                                    <RadioButton Content="6h" Tag="6" GroupName="ChartRange" Style="{StaticResource SegmentButton}" IsChecked="True" Checked="RangeButton_Checked" />
-                                    <RadioButton Content="24h" Tag="24" GroupName="ChartRange" Style="{StaticResource SegmentButton}" Checked="RangeButton_Checked" />
-                                    <RadioButton Content="All" Tag="0" GroupName="ChartRange" Style="{StaticResource SegmentButton}" Checked="RangeButton_Checked" />
+                                    <RadioButton Content="1h"
+                                                 Tag="1"
+                                                 GroupName="ChartRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 Checked="RangeButton_Checked"/>
+                                    <RadioButton Content="6h"
+                                                 Tag="6"
+                                                 GroupName="ChartRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 IsChecked="True"
+                                                 Checked="RangeButton_Checked"/>
+                                    <RadioButton Content="24h"
+                                                 Tag="24"
+                                                 GroupName="ChartRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 Checked="RangeButton_Checked"/>
+                                    <RadioButton Content="All"
+                                                 Tag="0"
+                                                 GroupName="ChartRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 Checked="RangeButton_Checked"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
                     </Grid>
-                    <controls:MetricChart x:Name="HistoryChart" Grid.Row="1" Margin="0,8,0,0" MinHeight="150" />
+                    <controls:MetricChart x:Name="HistoryChart"
+                                          Grid.Row="1"
+                                          Margin="0,8,0,0"
+                                          MinHeight="150"/>
                 </Grid>
             </Border>
 
             <!-- Bottom strip: alert settings and sensor/system details -->
             <Grid Grid.Row="2">
-                <Border Style="{StaticResource CardStyle}" Padding="20,10">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Style="{StaticResource CardStyle}"
+                        Padding="20,10">
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center">
                         <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="BATTERY" Style="{StaticResource SectionLabel}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                <TextBlock x:Name="BatteryText" Text="—" Style="{StaticResource SysValue}" />
-                                <ProgressBar x:Name="BatteryBar" Style="{StaticResource ThinBar}" Foreground="#22C55E" Width="44" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Text="BATTERY"
+                                       Style="{StaticResource SectionLabel}"/>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,3,0,0">
+                                <TextBlock x:Name="BatteryText"
+                                           Text="—"
+                                           Style="{StaticResource SysValue}"/>
+                                <ProgressBar x:Name="BatteryBar"
+                                             Style="{StaticResource ThinBar}"
+                                             Foreground="#22C55E"
+                                             Width="44"
+                                             Margin="10,0,0,0"
+                                             VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="SIGNAL" Style="{StaticResource SectionLabel}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                <controls:SignalBars x:Name="DetailSignal" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <TextBlock x:Name="RssiText" Text="—" Style="{StaticResource SysValue}" />
+                            <TextBlock Text="SIGNAL"
+                                       Style="{StaticResource SectionLabel}"/>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,3,0,0">
+                                <controls:SignalBars x:Name="DetailSignal"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,8,0"/>
+                                <TextBlock x:Name="RssiText"
+                                           Text="—"
+                                           Style="{StaticResource SysValue}"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="MEASUREMENT AGE" Style="{StaticResource SectionLabel}" />
-                            <TextBlock x:Name="AgeText" Text="—" Style="{StaticResource SysValue}" Margin="0,3,0,0" />
+                            <TextBlock Text="MEASUREMENT AGE"
+                                       Style="{StaticResource SectionLabel}"/>
+                            <TextBlock x:Name="AgeText"
+                                       Text="—"
+                                       Style="{StaticResource SysValue}"
+                                       Margin="0,3,0,0"/>
                         </StackPanel>
                         <StackPanel>
-                            <TextBlock Text="INTERVAL" Style="{StaticResource SectionLabel}" />
-                            <TextBlock x:Name="IntervalText" Text="—" Style="{StaticResource SysValue}" Margin="0,3,0,0" />
+                            <TextBlock Text="INTERVAL"
+                                       Style="{StaticResource SectionLabel}"/>
+                            <TextBlock x:Name="IntervalText"
+                                       Text="—"
+                                       Style="{StaticResource SysValue}"
+                                       Margin="0,3,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
             </Grid>
         </Grid>
-        <Border x:Name="SyncToast" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12"
-                Style="{StaticResource ToastCard}" Padding="12,8" Visibility="Collapsed" IsHitTestVisible="False">
-            <TextBlock x:Name="SyncToastText" Foreground="White" FontSize="13" />
+        <Border x:Name="SyncToast"
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="12"
+                Style="{StaticResource ToastCard}"
+                Padding="12,8"
+                Visibility="Collapsed"
+                IsHitTestVisible="False">
+            <TextBlock x:Name="SyncToastText"
+                       Foreground="White"
+                       FontSize="13"/>
         </Border>
     </Grid>
 </Window>

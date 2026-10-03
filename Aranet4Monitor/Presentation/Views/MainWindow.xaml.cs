@@ -53,6 +53,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = Dashboard;
+        GoodZoneText.Text = Co2Quality.Describe(Co2Level.Good);
+        FairZoneText.Text = Co2Quality.Describe(Co2Level.Fair);
+        PoorZoneText.Text = Co2Quality.Describe(Co2Level.Poor);
         CelsiusUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
         FahrenheitUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
         ShowNumberMenuItem.IsChecked = preferences.TrayShowNumber;

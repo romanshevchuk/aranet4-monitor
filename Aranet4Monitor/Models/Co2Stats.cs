@@ -41,8 +41,8 @@ public static class Co2Stats
         var minutes = (int)Math.Round((latest.Time - reference.Time).TotalMinutes);
         return delta switch
         {
-            >= 25 => ($"▲ Rising  +{delta:N0} ppm over {minutes} min", TrendKind.Rising),
-            <= -25 => ($"▼ Falling  −{-delta:N0} ppm over {minutes} min", TrendKind.Falling),
+            >= 25 => ($"▲ Rising  {Math.Abs(delta):N0} ppm over {minutes} min", TrendKind.Rising),
+            <= -25 => ($"▼ Falling  {Math.Abs(delta):N0} ppm over {minutes} min", TrendKind.Falling),
             _ => ($"● Steady over the last {minutes} min", TrendKind.Steady),
         };
     }

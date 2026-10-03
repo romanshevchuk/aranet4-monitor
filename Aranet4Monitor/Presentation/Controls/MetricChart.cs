@@ -247,9 +247,9 @@ public sealed class MetricChart : FrameworkElement
         // ---- background bands ----
         if (kind == MetricKind.Co2)
         {
-            DrawBand(dc, Y, lo, hi, double.NegativeInfinity, 1000, Good);
-            DrawBand(dc, Y, lo, hi, 1000, 1400, Warn);
-            DrawBand(dc, Y, lo, hi, 1400, double.PositiveInfinity, Bad);
+            DrawBand(dc, Y, lo, hi, double.NegativeInfinity, Co2Quality.FairFromPpm, Good);
+            DrawBand(dc, Y, lo, hi, Co2Quality.FairFromPpm, Co2Quality.PoorFromPpm, Warn);
+            DrawBand(dc, Y, lo, hi, Co2Quality.PoorFromPpm, double.PositiveInfinity, Bad);
         }
         else if (kind == MetricKind.Humidity)
         {
