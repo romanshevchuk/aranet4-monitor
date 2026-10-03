@@ -1,6 +1,6 @@
-# Aranet4 Monitor
+# Aranet4 Monitor for Windows
 
-**An unofficial Windows system-tray app for [Aranet4](https://aranet.com/products/aranet4-home/) sensors.**
+**An unofficial Aranet4 Windows app for monitoring [Aranet4](https://aranet.com/products/aranet4-home/) sensors over Bluetooth LE.**
 
 Monitor your Aranet4 in real time, view historical measurements, export data to CSV, and receive configurable CO₂ ventilation alerts.
 
