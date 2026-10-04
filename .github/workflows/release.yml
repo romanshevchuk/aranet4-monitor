@@ -32,7 +32,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Publish self-contained Windows app
-        run: dotnet publish Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true
+        run: dotnet publish src/Aranet4Monitor/Aranet4Monitor.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true
       - name: Create ZIP
         shell: pwsh
         env:
@@ -41,7 +41,7 @@ jobs:
         run: |
           $version = $env:RELEASE_TAG.TrimStart('v')
           $archiveName = "Aranet4Monitor-$version-$env:RUNTIME_IDENTIFIER.zip"
-          Compress-Archive -Path "Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\$env:RUNTIME_IDENTIFIER\publish\*" -DestinationPath $archiveName -CompressionLevel Optimal
+          Compress-Archive -Path "src\Aranet4Monitor\bin\Release\net10.0-windows10.0.19041.0\$env:RUNTIME_IDENTIFIER\publish\*" -DestinationPath $archiveName -CompressionLevel Optimal
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.rid }}

@@ -44,14 +44,14 @@ The application is self-contained, so you **do not need to install the .NET SDK 
 If you prefer to build the application yourself, you can use the `.NET 10 SDK` on Windows:
 
 ```powershell
-dotnet run --project Aranet4Monitor/Aranet4Monitor.csproj
+dotnet run --project src/Aranet4Monitor/Aranet4Monitor.csproj
 dotnet test Aranet4Monitor.sln
 ```
 
 To create a self-contained x64 release:
 
 ```powershell
-dotnet publish Aranet4Monitor/Aranet4Monitor.csproj `
+dotnet publish src/Aranet4Monitor/Aranet4Monitor.csproj `
   --configuration Release `
   --runtime win-x64 `
   --self-contained true

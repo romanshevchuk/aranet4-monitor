@@ -1,5 +1,5 @@
 ---
-applyTo: "Aranet4Monitor/Bluetooth/**/*.cs"
+applyTo: "src/Aranet4Monitor/Bluetooth/**/*.cs"
 ---
 
 # BLE Protocol Guidance

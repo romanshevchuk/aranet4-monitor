@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- CsWinRT emits unsafe interop code for WinRT generics. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Avoid duplicate code from the CsWinRT AOT optimizer, which this project does not use. -->
+    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
+    <OutputType>WinExe</OutputType>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Presentation\Assets\AppIcon.ico</ApplicationIcon>
+    <AssemblyTitle>Aranet4 Monitor</AssemblyTitle>
+    <Product>Aranet4 Monitor</Product>
+    <Description>Unofficial Aranet4 live CO2 monitor</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aranet4Monitor.Core\Aranet4Monitor.Core.csproj" />
+  </ItemGroup>
+</Project>
