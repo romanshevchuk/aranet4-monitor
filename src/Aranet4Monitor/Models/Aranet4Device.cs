@@ -9,8 +9,6 @@ public sealed class Aranet4Device : INotifyPropertyChanged
     /// <summary>A device counts as "live" if we heard from it within this many seconds.</summary>
     private const double LiveWindowSeconds = 20;
 
-    private const int MaxHistorySamples = 10_000;
-
     private DateTime lastSeen;
     private short rssi;
     private string name = "(name pending)";
@@ -34,11 +32,10 @@ public sealed class Aranet4Device : INotifyPropertyChanged
     /// <summary>Decoded CO₂ readings, oldest first. Only touched from the UI thread.</summary>
     public List<Co2Sample> History { get; } = [];
 
-    /// <summary>Seeds the history from disk, keeping the newest samples within the storage limit.</summary>
+    /// <summary>Seeds the presentation model's history from the application's history state.</summary>
     public void LoadHistory(IEnumerable<Co2Sample> saved)
     {
-        History.Clear();
-        History.AddRange(saved.OrderBy(sample => sample.Time).TakeLast(MaxHistorySamples));
+        ReplaceHistory(saved);
         // Show the newest real CO₂ value until a live beacon arrives (temperature-only history rows have Ppm 0).
         if (History.LastOrDefault(sample => sample.Ppm > 0) is { } latest)
         {
@@ -46,85 +43,10 @@ public sealed class Aranet4Device : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Readings closer together than this are the same measurement. A live beacon and a downloaded
-    /// history record of one measurement are timestamped a few seconds apart (clock rounding, packet
-    /// latency), and the sensor never records more often than once a minute.
-    /// </summary>
-    public static readonly TimeSpan SameMeasurementTolerance = TimeSpan.FromSeconds(15);
-
-    /// <summary>Merges downloaded readings into the history and returns how many new measurements were added.</summary>
-    public int MergeHistory(IEnumerable<Co2Sample> imported)
+    public void ReplaceHistory(IEnumerable<Co2Sample> samples)
     {
-        var before = History.Count;
-        var merged = MergeNearbySamples(History.Concat(imported.Where(sample => sample.HasAnyMetric)).OrderBy(sample => sample.Time))
-            .TakeLast(MaxHistorySamples)
-            .ToList();
-
         History.Clear();
-        History.AddRange(merged);
-        return Math.Max(0, merged.Count - before);
-    }
-
-    private static List<Co2Sample> MergeNearbySamples(IEnumerable<Co2Sample> ordered)
-    {
-        var result = new List<Co2Sample>();
-        var group = new List<Co2Sample>();
-        foreach (var sample in ordered)
-        {
-            if (group.Count > 0 && sample.Time - group[0].Time > SameMeasurementTolerance)
-            {
-                result.Add(MergeSamplesAtSameTime(group));
-                group.Clear();
-            }
-
-            group.Add(sample);
-        }
-
-        if (group.Count > 0)
-        {
-            result.Add(MergeSamplesAtSameTime(group));
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Adds a reading unless it is the same measurement we already recorded (the sensor repeats each
-    /// reading in many advertisement packets). Returns true when a new point was stored.
-    /// </summary>
-    public bool TryAddSample(
-        DateTime time,
-        int ppm,
-        TimeSpan minGap,
-        decimal? temperatureCelsius = null,
-        int? humidityPercent = null,
-        decimal? pressureHpa = null)
-    {
-        if (History.Count > 0 && time - History[^1].Time < minGap)
-        {
-            return false;
-        }
-
-        History.Add(new Co2Sample(time, ppm, temperatureCelsius, humidityPercent, pressureHpa));
-
-        if (History.Count > MaxHistorySamples)
-        {
-            History.RemoveRange(0, History.Count - MaxHistorySamples);
-        }
-
-        return true;
-    }
-
-    private static Co2Sample MergeSamplesAtSameTime(IEnumerable<Co2Sample> samples)
-    {
-        var entries = samples.ToArray();
-        return new Co2Sample(
-            entries[0].Time,
-            entries.LastOrDefault(sample => sample.Ppm > 0)?.Ppm ?? 0,
-            entries.LastOrDefault(sample => sample.TemperatureCelsius.HasValue)?.TemperatureCelsius,
-            entries.LastOrDefault(sample => sample.HumidityPercent.HasValue)?.HumidityPercent,
-            entries.LastOrDefault(sample => sample.PressureHpa.HasValue)?.PressureHpa);
+        History.AddRange(samples);
     }
 
     public DateTime LastSeen

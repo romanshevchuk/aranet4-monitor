@@ -15,7 +15,7 @@ public sealed class AppServices
         Preferences = PreferencesStore.Load();
         HistorySyncService = new HistorySyncService(new Aranet4HistoryClient(), HistoryStore);
         SensorSource = new Aranet4SensorSource();
-        SensorMonitor = new SensorMonitor();
+        SensorMonitor = new SensorMonitor(HistoryStore);
     }
 
     public IHistoryStore HistoryStore { get; }

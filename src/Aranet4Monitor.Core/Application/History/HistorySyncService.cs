@@ -1,20 +1,20 @@
 using Aranet4Monitor.Abstractions;
-using Aranet4Monitor.Domain.Measurements;
 
 namespace Aranet4Monitor.Application.History;
 
 public sealed class HistorySyncService(IHistoryClient historyClient, IHistoryStore historyStore)
 {
+    public DateTime? LoadSyncCursor(string deviceAddress) => historyStore.LoadSyncCursor(deviceAddress);
+
     public async Task<HistorySyncOutcome> SyncAsync(
         string deviceAddress,
         ulong bluetoothAddress,
-        Func<IReadOnlyList<Co2Sample>, HistoryMergeResult> mergeHistory,
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
         var cursor = historyStore.LoadSyncCursor(deviceAddress);
         var download = await historyClient.DownloadAsync(bluetoothAddress, cursor, progress, cancellationToken);
-        var merged = mergeHistory(download.Samples);
+        var merged = HistoryMerger.Merge(historyStore.LoadHistory(deviceAddress), download.Samples);
 
         if (!historyStore.SaveHistory(deviceAddress, merged.Samples))
         {
@@ -28,6 +28,6 @@ public sealed class HistorySyncService(IHistoryClient historyClient, IHistorySto
             throw new IOException("The sync cursor could not be saved. Retrying will safely import the overlap again.");
         }
 
-        return new HistorySyncOutcome(merged.AddedSamples, download.MissingRecords);
+        return new HistorySyncOutcome(merged.AddedSamples, download.MissingRecords, merged.Samples);
     }
 }

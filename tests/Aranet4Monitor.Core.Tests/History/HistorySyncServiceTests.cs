@@ -1,3 +1,4 @@
+using Aranet4Monitor.Domain.Measurements;
 using Xunit;
 
 namespace Aranet4Monitor.Core.Tests.History;
@@ -9,12 +10,15 @@ public sealed class HistorySyncServiceTests
     {
         var cursor = new DateTime(2026, 10, 1, 12, 0, 0);
         var store = new FakeHistoryStore();
-        var client = new FakeHistoryClient(new HistoryDownloadResult([], cursor));
+        var first = new Co2Sample(cursor, 900);
+        var second = new Co2Sample(cursor.AddMinutes(5), 950);
+        var client = new FakeHistoryClient(new HistoryDownloadResult([first, second], cursor));
         var service = new HistorySyncService(client, store);
 
-        var result = await service.SyncAsync("sensor", 123, _ => new HistoryMergeResult(2, []));
+        var result = await service.SyncAsync("sensor", 123);
 
         Assert.Equal(2, result.AddedSamples);
+        Assert.Equal(new[] { first, second }, result.Samples);
         Assert.Equal(cursor, store.SavedCursor);
         Assert.Equal(new[] { "history", "cursor" }, store.SaveOrder);
         Assert.Equal(new DateTime(2026, 9, 1, 0, 0, 0), client.RequestedCursor);
@@ -25,10 +29,11 @@ public sealed class HistorySyncServiceTests
     {
         var cursor = new DateTime(2026, 10, 1, 12, 0, 0);
         var store = new FakeHistoryStore();
-        var client = new FakeHistoryClient(new HistoryDownloadResult([], cursor, MissingRecords: 1));
+        var partialSample = new Co2Sample(cursor, 900);
+        var client = new FakeHistoryClient(new HistoryDownloadResult([partialSample], cursor, MissingRecords: 1));
         var service = new HistorySyncService(client, store);
 
-        var result = await service.SyncAsync("sensor", 123, _ => new HistoryMergeResult(1, []));
+        var result = await service.SyncAsync("sensor", 123);
 
         Assert.Equal(1, result.MissingRecords);
         Assert.True(store.HistorySaved);
@@ -45,7 +50,7 @@ public sealed class HistorySyncServiceTests
         var service = new HistorySyncService(client, store);
 
         await Assert.ThrowsAsync<IOException>(() =>
-            service.SyncAsync("sensor", 123, _ => new HistoryMergeResult(0, [])));
+            service.SyncAsync("sensor", 123));
 
         Assert.Null(store.SavedCursor);
         Assert.Equal(new[] { "history" }, store.SaveOrder);
@@ -59,7 +64,7 @@ public sealed class HistorySyncServiceTests
         var service = new HistorySyncService(client, store);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            service.SyncAsync("sensor", 123, _ => throw new Xunit.Sdk.XunitException("The merge callback should not run.")));
+            service.SyncAsync("sensor", 123));
 
         Assert.False(store.HistorySaved);
         Assert.Null(store.SavedCursor);
@@ -75,7 +80,7 @@ public sealed class HistorySyncServiceTests
         var service = new HistorySyncService(client, store);
 
         await Assert.ThrowsAsync<IOException>(() =>
-            service.SyncAsync("sensor", 123, _ => new HistoryMergeResult(0, [])));
+            service.SyncAsync("sensor", 123));
 
         Assert.True(store.HistorySaved);
         Assert.Equal(new[] { "history", "cursor" }, store.SaveOrder);
@@ -105,6 +110,8 @@ public sealed class HistorySyncServiceTests
 
     private sealed class FakeHistoryStore : IHistoryStore
     {
+        public IReadOnlyList<Co2Sample> History { get; private set; } = [];
+
         public bool SaveHistoryResult { get; init; } = true;
 
         public bool SaveCursorResult { get; init; } = true;
@@ -117,12 +124,17 @@ public sealed class HistorySyncServiceTests
 
         public DateTime? LoadSyncCursor(string deviceAddress) => new(2026, 9, 1, 0, 0, 0);
 
-        public IReadOnlyList<Co2Sample> LoadHistory(string deviceAddress) => [];
+        public IReadOnlyList<Co2Sample> LoadHistory(string deviceAddress) => History;
 
         public bool SaveHistory(string deviceAddress, IReadOnlyList<Co2Sample> samples)
         {
             SaveOrder.Add("history");
             HistorySaved = SaveHistoryResult;
+            if (SaveHistoryResult)
+            {
+                History = samples.ToArray();
+            }
+
             return SaveHistoryResult;
         }
 

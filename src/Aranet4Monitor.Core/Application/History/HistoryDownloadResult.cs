@@ -11,4 +11,7 @@ public sealed record HistoryDownloadResult(
 
 public sealed record HistoryMergeResult(int AddedSamples, IReadOnlyList<Co2Sample> Samples);
 
-public sealed record HistorySyncOutcome(int AddedSamples, int MissingRecords);
+public sealed record HistorySyncOutcome(
+    int AddedSamples,
+    int MissingRecords,
+    IReadOnlyList<Co2Sample> Samples);

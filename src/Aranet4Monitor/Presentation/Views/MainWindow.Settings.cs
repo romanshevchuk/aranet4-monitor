@@ -77,7 +77,7 @@ public partial class MainWindow
             ? "No measurement yet"
             : lastReading.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
         DeviceAddressText.Text = device.Address;
-        DeviceLastSyncedText.Text = historyStore.LoadSyncCursor(device.Address) is { } syncedThrough
+        DeviceLastSyncedText.Text = historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
             ? syncedThrough.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
             : "Not synced yet";
     }

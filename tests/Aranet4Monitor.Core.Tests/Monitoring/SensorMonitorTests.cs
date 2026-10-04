@@ -8,7 +8,7 @@ public sealed class SensorMonitorTests
     [Fact]
     public void DefersDueNotificationAndAllowsItAfterPauseWithoutRestartingDuration()
     {
-        var monitor = new SensorMonitor();
+        var monitor = new SensorMonitor(new FakeHistoryStore());
         var start = new DateTime(2026, 10, 3, 12, 0, 0);
         var duration = TimeSpan.FromMinutes(3);
 
@@ -30,7 +30,7 @@ public sealed class SensorMonitorTests
     [Fact]
     public void ReportsRecoveryOnceAfterAReportedAlertAndRearmsTheSensor()
     {
-        var monitor = new SensorMonitor();
+        var monitor = new SensorMonitor(new FakeHistoryStore());
         var start = new DateTime(2026, 10, 3, 12, 0, 0);
         var duration = TimeSpan.FromMinutes(1);
 
@@ -56,7 +56,7 @@ public sealed class SensorMonitorTests
     [Fact]
     public void KeepsNotificationStateIndependentBetweenSensors()
     {
-        var monitor = new SensorMonitor();
+        var monitor = new SensorMonitor(new FakeHistoryStore());
         var start = new DateTime(2026, 10, 3, 12, 0, 0);
         var duration = TimeSpan.FromMinutes(1);
 
@@ -77,12 +77,51 @@ public sealed class SensorMonitorTests
     [Fact]
     public void UsesTheLatestPerSensorIntervalForFreshness()
     {
-        var monitor = new SensorMonitor();
+        var monitor = new SensorMonitor(new FakeHistoryStore());
         var now = new DateTime(2026, 10, 3, 12, 0, 0);
 
         monitor.UpdateMeasurementInterval("sensor", 180);
 
         Assert.False(monitor.IsStale("sensor", now.AddMinutes(-6), now));
         Assert.True(monitor.IsStale("sensor", now.AddMinutes(-6).AddSeconds(-1), now));
+    }
+
+    [Fact]
+    public void ProcessesAndPersistsEachLiveMeasurementOnlyOnce()
+    {
+        var store = new FakeHistoryStore();
+        var monitor = new SensorMonitor(store);
+        var observedAt = new DateTime(2026, 10, 3, 12, 0, 0);
+        var measurement = new Aranet4Measurement("1.2.3", 900, 20.5m, 1010m, 45, null, null, 60, 0);
+
+        var first = monitor.ProcessMeasurement("sensor", measurement, observedAt, 1500, TimeSpan.FromMinutes(10), false);
+        var repeated = monitor.ProcessMeasurement("sensor", measurement, observedAt.AddSeconds(5), 1500, TimeSpan.FromMinutes(10), false);
+
+        Assert.True(first.SampleAdded);
+        Assert.True(first.HistorySaved);
+        Assert.False(repeated.SampleAdded);
+        Assert.Equal(1, store.SaveCount);
+        Assert.Single(monitor.LoadHistory("sensor"));
+    }
+
+    private sealed class FakeHistoryStore : IHistoryStore
+    {
+        private readonly Dictionary<string, IReadOnlyList<Co2Sample>> histories = new(StringComparer.OrdinalIgnoreCase);
+
+        public int SaveCount { get; private set; }
+
+        public DateTime? LoadSyncCursor(string deviceAddress) => null;
+
+        public IReadOnlyList<Co2Sample> LoadHistory(string deviceAddress) =>
+            histories.GetValueOrDefault(deviceAddress, []);
+
+        public bool SaveHistory(string deviceAddress, IReadOnlyList<Co2Sample> samples)
+        {
+            SaveCount++;
+            histories[deviceAddress] = samples.ToArray();
+            return true;
+        }
+
+        public bool SaveSyncCursor(string deviceAddress, DateTime syncedThrough) => true;
     }
 }

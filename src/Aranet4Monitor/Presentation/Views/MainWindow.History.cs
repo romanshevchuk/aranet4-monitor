@@ -85,9 +85,10 @@ public partial class MainWindow
             var result = await historySyncService.SyncAsync(
                 device.Address,
                 bluetoothAddress,
-                samples => new HistoryMergeResult(device.MergeHistory(samples), device.History.ToArray()),
                 progress,
                 cancellation.Token);
+            sensorMonitor.ReplaceHistory(device.Address, result.Samples);
+            device.ReplaceHistory(result.Samples);
 
             if (Dashboard.SelectedDevice == device)
             {

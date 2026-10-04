@@ -105,7 +105,7 @@ public partial class MainWindow
         if (!devicesByAddress.TryGetValue(args.BluetoothAddress, out var device))
         {
             device = new Aranet4Device { Address = args.Address };
-            device.LoadHistory(historyStore.LoadHistory(device.Address));
+            device.LoadHistory(sensorMonitor.LoadHistory(device.Address));
             devicesByAddress.Add(args.BluetoothAddress, device);
             sensorSource.RegisterKnownAddress(args.BluetoothAddress);
             Dashboard.Devices.Add(device);
@@ -137,7 +137,6 @@ public partial class MainWindow
 
         if (args.Measurement is { } measurement)
         {
-            sensorMonitor.UpdateMeasurementInterval(device.Address, measurement.IntervalSeconds);
             device.Firmware = measurement.Firmware;
             device.Co2Ppm = measurement.Co2;
             device.TemperatureCelsius = measurement.TemperatureCelsius;
@@ -151,27 +150,18 @@ public partial class MainWindow
             device.MeasurementAge = FormatMeasurementAge(measurement.AgeSeconds);
             device.IntegrationState = "Live Smart Home beacon decoded";
 
-            // The same measurement is repeated in many packets; TryAddSample keeps one point per measurement.
             var now = args.Timestamp;
-            var measuredAt = now - TimeSpan.FromSeconds(measurement.AgeSeconds ?? 0);
-            var minGap = TimeSpan.FromSeconds(Math.Max(10, (measurement.IntervalSeconds ?? 60) * 0.5));
-            if (device.TryAddSample(
-                measuredAt,
-                measurement.Co2,
-                minGap,
-                measurement.TemperatureCelsius,
-                measurement.HumidityPercent,
-                measurement.PressureHpa))
+            var observation = sensorMonitor.ProcessMeasurement(
+                device.Address,
+                measurement,
+                now,
+                AlertThreshold,
+                TimeSpan.FromMinutes(AlertDurationMinutes),
+                AlertsPaused);
+            if (observation.SampleAdded)
             {
-                historyStore.SaveHistory(device.Address, device.History);
-                var monitoring = sensorMonitor.ObserveMeasurement(
-                    device.Address,
-                    measurement.Co2,
-                    now,
-                    measurement.IntervalSeconds,
-                    AlertThreshold,
-                    TimeSpan.FromMinutes(AlertDurationMinutes),
-                    AlertsPaused);
+                device.ReplaceHistory(observation.History);
+                var monitoring = observation.Monitoring!;
                 if (monitoring.NotificationReady)
                 {
                     preferences.LastCo2AlertAt = now;

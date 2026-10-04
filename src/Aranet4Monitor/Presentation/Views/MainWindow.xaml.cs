@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Aranet4Monitor.Abstractions;
 using Aranet4Monitor.Application.History;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
@@ -17,7 +16,6 @@ public partial class MainWindow : Window
 {
     private readonly DispatcherTimer tickTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer syncToastTimer = new() { Interval = TimeSpan.FromSeconds(4) };
-    private readonly IHistoryStore historyStore;
     private readonly IPreferencesStore preferencesStore;
     private readonly AppPreferences preferences;
     private readonly HistorySyncService historySyncService;
@@ -58,7 +56,6 @@ public partial class MainWindow : Window
 
     public MainWindow(AppServices services)
     {
-        historyStore = services.HistoryStore;
         preferencesStore = services.PreferencesStore;
         preferences = services.Preferences;
         historySyncService = services.HistorySyncService;
