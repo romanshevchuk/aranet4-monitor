@@ -317,14 +317,67 @@ public partial class MainWindow
 
     private void UpdateChartContext()
     {
-        (ChartContextTitleText.Text, ChartContextText.Text) = Dashboard.SelectedMetric switch
+        var metric = Dashboard.SelectedMetric;
+        var device = Dashboard.SelectedDevice;
+        var unit = preferences.TemperatureDisplayUnit;
+        Brush dot = AccentBrushes[metric];
+        string title, text;
+
+        switch (metric)
         {
-            MetricKind.Co2 => ("Outdoor reference · about 420 ppm", "Fresh outdoor air is the lowest level a room can reach."),
-            MetricKind.Temperature => ("Temperature trend", $"Temperature is shown in {Metrics.Unit(MetricKind.Temperature, preferences.TemperatureDisplayUnit)}; comfort varies by person and activity."),
-            MetricKind.Humidity => ("Typical indoor range · 40–60%", "Use this as a reference; comfort depends on the room."),
-            _ => ("Pressure trend", "Absolute pressure varies with altitude; trends are more useful."),
-        };
+            case MetricKind.Co2:
+                title = "Outdoor reference · about 420 ppm";
+                text = "Fresh outdoor air is the lowest level a room can reach.";
+                dot = ThemeBrush("TextSecondary", dot); // neutral: an outdoor reference is not a quality verdict
+                break;
+
+            case MetricKind.Humidity when device?.HumidityValue is { } humidity:
+                (title, text, dot) = humidity switch
+                {
+                    < 30 => ("Dry humidity", "Air is dry. The recommended range for homes is 30–50%.", ThemeBrush("Co2Fair", dot)),
+                    <= 50 => ("Comfortable humidity", "Within the recommended range for homes (30–50%).", ThemeBrush("Co2Good", dot)),
+                    <= 60 => ("Humid", "Above 50% dust mites start to thrive. Aim for 30–50%.", ThemeBrush("Co2Fair", dot)),
+                    _ => ("Damp", "Mould and dust mites flourish above 60%. Ventilate or dehumidify.", ThemeBrush("Co2Poor", dot)),
+                };
+                break;
+
+            case MetricKind.Humidity:
+                title = "Recommended range · 30–50%";
+                text = "Comfort depends on the room; this is a general guide for homes.";
+                break;
+
+            case MetricKind.Temperature when device?.TemperatureCelsius is { } temperature:
+            {
+                var celsius = (double)temperature;
+                var comfort = $"{Metrics.ConvertTemperature(20, unit):0}–{Metrics.ConvertTemperature(24, unit):0} {Metrics.Unit(MetricKind.Temperature, unit)}";
+                (title, text) = celsius switch
+                {
+                    < 18 => ("Cold", $"Well below the {comfort} comfort range."),
+                    < 20 => ("Cool", $"Slightly below the {comfort} comfort range."),
+                    <= 24 => ("Comfortable", $"Within the {comfort} comfort range."),
+                    _ => ("Warm", $"Above the {comfort} comfort range."),
+                };
+                break;
+            }
+
+            case MetricKind.Temperature:
+                title = "Temperature trend";
+                text = $"Temperature is shown in {Metrics.Unit(MetricKind.Temperature, unit)}; comfort varies by person and activity.";
+                break;
+
+            default:
+                title = "Pressure trend";
+                text = "Absolute pressure varies with altitude; trends are more useful.";
+                break;
+        }
+
+        ChartContextTitleText.Text = title;
+        ChartContextText.Text = text;
+        ChartContextDot.Fill = dot;
+        ChartContextInfo.Visibility = metric == MetricKind.Co2 ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    private Brush ThemeBrush(string key, Brush fallback) => TryFindResource(key) as Brush ?? fallback;
 
     private void MetricTab_Checked(object sender, RoutedEventArgs e)
     {

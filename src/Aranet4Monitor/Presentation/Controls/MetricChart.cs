@@ -282,6 +282,16 @@ public sealed class MetricChart : FrameworkElement
             hi = lo + step * 3;
         }
 
+        if (kind == MetricKind.Humidity)
+        {
+            // Always show the whole 30-50 comfort band with some margin (axis at least 20-60).
+            lo = Math.Min(lo, 20);
+            hi = Math.Max(hi, 60);
+            step = Math.Max(step, NiceStep((hi - lo) / 6)); // keep the grid from getting dense
+            lo = Math.Floor(lo / step) * step;
+            hi = Math.Min(100, Math.Ceiling(hi / step) * step);
+        }
+        
         if (kind == MetricKind.Co2)
         {
             lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 200) * 200);
@@ -301,7 +311,7 @@ public sealed class MetricChart : FrameworkElement
         }
         else if (kind == MetricKind.Humidity)
         {
-            DrawBand(dc, Y, lo, hi, 40, 60, Good); // the commonly recommended indoor comfort range
+            DrawBand(dc, Y, lo, hi, 30, 50, Good); // matches the "ideal 30-50%" on the humidity card
         }
 
         // ---- horizontal grid + y labels ----
@@ -318,6 +328,10 @@ public sealed class MetricChart : FrameworkElement
         {
             DrawCo2Threshold(dc, Y, Co2Quality.FairFromPpm, "Elevated");
             DrawCo2Threshold(dc, Y, Co2Quality.PoorFromPpm, "High");
+        }
+        else if (kind == MetricKind.Humidity)
+        {
+            DrawHumidityComfort(dc, Y, 30, 50);
         }
 
         // ---- time axis ----
@@ -434,14 +448,46 @@ public sealed class MetricChart : FrameworkElement
         }
 
         var yPosition = y(value);
-        if (yPosition < plot.Top || yPosition > plot.Bottom)
+        if (yPosition < plot.Top - 0.5 || yPosition > plot.Bottom + 0.5)
         {
             return;
         }
 
         dc.DrawLine(ThresholdPen, new Point(plot.Left, yPosition), new Point(plot.Right, yPosition));
         var text = Text($"{label} · {value:N0}", 11, MutedText);
-        dc.DrawText(text, new Point(plot.Right - text.Width - 6, yPosition - text.Height - 3));
+        var labelY = yPosition - text.Height - 3;
+        if (labelY < plot.Top)
+        {
+            labelY = yPosition + 3; // line sits at the top edge (e.g. "High · 1,400" with axis max 1,400): draw below it
+        }
+
+        dc.DrawText(text, new Point(plot.Right - text.Width - 6, labelY));
+    }
+
+    private void DrawHumidityComfort(DrawingContext dc, Func<double, double> y, double from, double to)
+    {
+        foreach (var yPosition in new[] { y(from), y(to) })
+        {
+            if (yPosition >= plot.Top - 0.5 && yPosition <= plot.Bottom + 0.5)
+            {
+                dc.DrawLine(ThresholdPen, new Point(plot.Left, yPosition), new Point(plot.Right, yPosition));
+            }
+        }
+
+        var top = y(to);
+        if (top < plot.Top - 0.5 || top > plot.Bottom + 0.5)
+        {
+            return;
+        }
+
+        var text = Text($"Comfortable · {from:0}-{to:0}%", 11, MutedText);
+        var labelY = top - text.Height - 3;
+        if (labelY < plot.Top)
+        {
+            labelY = top + 3;
+        }
+
+        dc.DrawText(text, new Point(plot.Right - text.Width - 6, labelY));
     }
 
     private void DrawTimeAxis(DrawingContext dc, Func<DateTime, double> x, DateTime t0, DateTime t1)
@@ -459,7 +505,6 @@ public sealed class MetricChart : FrameworkElement
         for (var drawn = 0; tick <= t1 && drawn < 200; tick += step, drawn++)
         {
             var px = Math.Round(x(tick)) + 0.5;
-            dc.DrawLine(GridPen, new Point(px, plot.Top), new Point(px, plot.Bottom));
             var label = Text(tick.ToString(format, CultureInfo.CurrentCulture), 12, AxisText);
             var left = px - label.Width / 2;
             if (left < plot.Left - 12 || left + label.Width > plot.Right + 14)
