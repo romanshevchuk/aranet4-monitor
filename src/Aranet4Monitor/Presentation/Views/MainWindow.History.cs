@@ -43,13 +43,13 @@ public partial class MainWindow
         HistoryHeaderSummaryText.Text = recentCo2.Length == 0
             ? device is null
                 ? "Select a sensor to explore its saved readings."
-                : $"{allCo2.Length:N0} readings stored on this PC · No readings in the last 24 hours"
-            : $"{Share(recentCo2.Count(sample => sample.Ppm < 1_000), recentCo2.Length)}% of the last 24 hours stayed below 1,000 ppm · {allCo2.Length:N0} readings stored on this PC";
+                : "No readings in the last 24 hours"
+            : DescribeDayQuality(Share(recentCo2.Count(sample => sample.Ppm < 1_000), recentCo2.Length));
         HistoryLastSyncText.Text = device is null
             ? "Not synced yet"
             : historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
-                ? $"Last synced {syncedThrough.ToLocalTime():g}"
-                : "Not synced yet";
+                ? $"Last synced {DescribeAge(now - syncedThrough.ToLocalTime())} · {allCo2.Length:N0} readings"
+                : $"Not synced yet · {allCo2.Length:N0} readings";
         SyncHistoryButton.IsEnabled = device is not null && syncCancellation is null;
         HistoryExportButton.IsEnabled = allCo2.Length > 0;
         HistoryChartStatsText.Text = device is null
@@ -67,7 +67,7 @@ public partial class MainWindow
             .Where(sample => sample.Ppm > 0 && sample.Time >= start && sample.Time <= now)
             .OrderBy(sample => sample.Time)
             .ToArray() ?? [];
-        var airingEvents = DetectAiringEvents(daySamples);
+        var airingEvents = AiringDetector.Detect(daySamples);
 
         HistoryDayStrip.Children.Clear();
         for (var index = 0; index < bucketCount; index++)
@@ -161,9 +161,9 @@ public partial class MainWindow
             ? "Overnight (23:00–07:00): no readings yet."
             : $"Overnight (23:00–07:00): average {overnight.Average(sample => sample.Ppm):N0} ppm, peaking at {overnight.Max(sample => sample.Ppm):N0} ppm.";
 
-        (DateTime Start, DateTime End, int Drop)? latestAiring = airingEvents.Count > 0 ? airingEvents[^1] : null;
+        AiringEvent? latestAiring = airingEvents.Count > 0 ? airingEvents[^1] : null;
         HistoryAiringText.Text = latestAiring is { } airing
-            ? $"Airing detected {airingEvents.Count} time{(airingEvents.Count == 1 ? string.Empty : "s")}. Latest at {airing.Start:t}: CO₂ fell about {airing.Drop:N0} ppm over {DescribeDuration(airing.End - airing.Start)}."
+            ? $"Airing detected {airingEvents.Count} time{(airingEvents.Count == 1 ? string.Empty : "s")}. Latest at {airing.Start:t}: CO₂ fell about {airing.DropPpm:N0} ppm over {DescribeDuration(airing.Duration)}."
             : "No clear airing detected in the last 24 hours.";
 
         var peak = daySamples.MaxBy(sample => sample.Ppm)!;
@@ -172,45 +172,27 @@ public partial class MainWindow
 
     private static int Share(int count, int total) => total == 0 ? 0 : (int)Math.Round(count * 100.0 / total);
 
+    private static string DescribeDayQuality(int goodPercent) =>
+        $"{(goodPercent >= 80 ? "Mostly good" : goodPercent >= 50 ? "Mixed" : "Mostly elevated")}: {goodPercent}% of the last 24 h stayed below 1,000 ppm.";
+
     private static string DescribeDuration(TimeSpan duration) => duration.TotalHours >= 1
         ? $"{duration.TotalHours:0.#} hours"
         : $"{Math.Max(1, (int)Math.Round(duration.TotalMinutes))} minutes";
 
-    private static List<(DateTime Start, DateTime End, int Drop)> DetectAiringEvents(IReadOnlyList<Co2Sample> samples)
+    private static string DescribeAge(TimeSpan age) => age.TotalMinutes < 1
+        ? "just now"
+        : age.TotalHours < 1
+            ? $"{(int)age.TotalMinutes} min ago"
+            : age.TotalDays < 1
+                ? $"{(int)age.TotalHours} h ago"
+                : $"{(int)age.TotalDays} d ago";
+
+    private static string DescribeExportRange(TimeSpan? range) => range switch
     {
-        var events = new List<(DateTime Start, DateTime End, int Drop)>();
-        var index = 0;
-        while (index < samples.Count - 2)
-        {
-            if (samples[index].Ppm - samples[index + 2].Ppm < 100)
-            {
-                index++;
-                continue;
-            }
-
-            var startIndex = index;
-            while (startIndex > 0 && samples[startIndex - 1].Ppm > samples[startIndex].Ppm)
-            {
-                startIndex--;
-            }
-
-            var endIndex = index + 2;
-            while (endIndex < samples.Count - 1 && samples[endIndex + 1].Ppm < samples[endIndex].Ppm)
-            {
-                endIndex++;
-            }
-
-            var drop = samples[startIndex].Ppm - samples[endIndex].Ppm;
-            if (drop >= 200)
-            {
-                events.Add((samples[startIndex].Time, samples[endIndex].Time, drop));
-            }
-
-            index = endIndex;
-        }
-
-        return events;
-    }
+        null => "all",
+        { TotalHours: < 48 } shortRange => $"{(int)shortRange.TotalHours}h",
+        { } longRange => $"{(int)longRange.TotalDays}d",
+    };
 
     private void ExportCsv_Click(object sender, RoutedEventArgs e)
     {
@@ -241,7 +223,7 @@ public partial class MainWindow
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV file (*.csv)|*.csv",
-            FileName = $"aranet4-co2-{DateTime.Now:yyyyMMdd-HHmm}",
+            FileName = $"aranet4-{device.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? device.Address}-{DescribeExportRange(visibleRange)}",
         };
         if (dialog.ShowDialog(this) != true)
         {
@@ -260,6 +242,7 @@ public partial class MainWindow
         try
         {
             File.WriteAllText(dialog.FileName, csv.ToString());
+            ShowSyncToast($"Saved {Path.GetFileName(dialog.FileName)}");
         }
         catch (IOException ex) { MessageBox.Show(this, ex.Message, "Export CSV", MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
@@ -315,11 +298,11 @@ public partial class MainWindow
             }
             else if (result.AddedSamples > 0)
             {
-                ShowSyncToast($"Synced {result.AddedSamples:N0} readings");
+                ShowSyncToast($"Synced {result.AddedSamples:N0} new readings");
             }
             else
             {
-                ShowSyncToast("No new readings");
+                ShowSyncToast("Already up to date");
             }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)

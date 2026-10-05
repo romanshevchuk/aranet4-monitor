@@ -227,36 +227,17 @@ public partial class MainWindow
         Co2DayPeakText.Text = $"{peak.Ppm:N0} ppm";
         Co2DayPeakTimeText.Text = $"Peak · {peak.Time.ToString("t", CultureInfo.CurrentCulture)}";
 
-        const int minimumAiringDropPpm = 200;
-        Co2Sample? latestAiringStart = null;
-        var index = 0;
-        while (index < samples.Length - 1)
-        {
-            var startIndex = index;
-            var endIndex = index;
-            while (endIndex + 1 < samples.Length && samples[endIndex + 1].Ppm < samples[endIndex].Ppm)
-            {
-                endIndex++;
-            }
-
-            var drop = samples[startIndex].Ppm - samples[endIndex].Ppm;
-            if (drop >= minimumAiringDropPpm)
-            {
-                latestAiringStart = samples[startIndex];
-            }
-
-            index = Math.Max(endIndex, index + 1);
-        }
-
-        if (latestAiringStart is null)
+        var airingEvents = AiringDetector.Detect(samples);
+        if (airingEvents.Count == 0)
         {
             Co2AiringTimeText.Text = "—";
             Co2AiringDetailText.Text = "No clear drop detected";
             return;
         }
 
-        Co2AiringTimeText.Text = latestAiringStart.Time.ToString("t", CultureInfo.CurrentCulture);
-        Co2AiringDetailText.Text = "CO₂ drop detected";
+        var latestAiring = airingEvents[^1];
+        Co2AiringTimeText.Text = latestAiring.Start.ToString("t", CultureInfo.CurrentCulture);
+        Co2AiringDetailText.Text = $"Down {latestAiring.DropPpm:N0} ppm over {DescribeDuration(latestAiring.Duration)}";
     }
 
     private void RefreshChart()
@@ -347,18 +328,18 @@ public partial class MainWindow
                 break;
 
             case MetricKind.Temperature when device?.TemperatureCelsius is { } temperature:
-            {
-                var celsius = (double)temperature;
-                var comfort = $"{Metrics.ConvertTemperature(20, unit):0}–{Metrics.ConvertTemperature(24, unit):0} {Metrics.Unit(MetricKind.Temperature, unit)}";
-                (title, text) = celsius switch
                 {
-                    < 18 => ("Cold", $"Well below the {comfort} comfort range."),
-                    < 20 => ("Cool", $"Slightly below the {comfort} comfort range."),
-                    <= 24 => ("Comfortable", $"Within the {comfort} comfort range."),
-                    _ => ("Warm", $"Above the {comfort} comfort range."),
-                };
-                break;
-            }
+                    var celsius = (double)temperature;
+                    var comfort = $"{Metrics.ConvertTemperature(20, unit):0}–{Metrics.ConvertTemperature(24, unit):0} {Metrics.Unit(MetricKind.Temperature, unit)}";
+                    (title, text) = celsius switch
+                    {
+                        < 18 => ("Cold", $"Well below the {comfort} comfort range."),
+                        < 20 => ("Cool", $"Slightly below the {comfort} comfort range."),
+                        <= 24 => ("Comfortable", $"Within the {comfort} comfort range."),
+                        _ => ("Warm", $"Above the {comfort} comfort range."),
+                    };
+                    break;
+                }
 
             case MetricKind.Temperature:
                 title = "Temperature trend";

@@ -291,7 +291,7 @@ public sealed class MetricChart : FrameworkElement
             lo = Math.Floor(lo / step) * step;
             hi = Math.Min(100, Math.Ceiling(hi / step) * step);
         }
-        
+
         if (kind == MetricKind.Co2)
         {
             lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 200) * 200);
