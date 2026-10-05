@@ -5,9 +5,9 @@ public static class MetricColors
 {
     public static Color Accent(MetricKind kind) => kind switch
     {
-        MetricKind.Co2 => Color.FromRgb(0x3B, 0x82, 0xF6),
-        MetricKind.Temperature => Color.FromRgb(0xF9, 0x73, 0x16),
-        MetricKind.Humidity => Color.FromRgb(0x06, 0xB6, 0xD4),
-        _ => Color.FromRgb(0x8B, 0x5C, 0xF6),
+        MetricKind.Co2 => Color.FromRgb(0x08, 0x7B, 0x51),
+        MetricKind.Temperature => Color.FromRgb(0xB7, 0x47, 0x1B),
+        MetricKind.Humidity => Color.FromRgb(0x17, 0x6B, 0xC4),
+        _ => Color.FromRgb(0x80, 0x52, 0xD6),
     };
 }

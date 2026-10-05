@@ -8,7 +8,7 @@ public sealed class DashboardViewModel : INotifyPropertyChanged
 {
     private Aranet4Device? selectedDevice;
     private MetricKind selectedMetric = MetricKind.Co2;
-    private TimeSpan? historyRange = TimeSpan.FromHours(6);
+    private TimeSpan? historyRange = TimeSpan.FromHours(1);
 
     public ObservableCollection<Aranet4Device> Devices { get; } = [];
 

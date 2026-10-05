@@ -13,7 +13,7 @@ public sealed class DashboardViewModelTests
         Assert.Empty(viewModel.Devices);
         Assert.Null(viewModel.SelectedDevice);
         Assert.Equal(MetricKind.Co2, viewModel.SelectedMetric);
-        Assert.Equal(TimeSpan.FromHours(6), viewModel.HistoryRange);
+        Assert.Equal(TimeSpan.FromHours(1), viewModel.HistoryRange);
     }
 
     [Fact]

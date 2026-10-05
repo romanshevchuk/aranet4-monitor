@@ -3,15 +3,31 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aranet4Monitor"
         xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Aranet4 Monitor"
-        Height="740"
-        Width="1180"
+        Height="760"
+        Width="1200"
         MinHeight="640"
-        MinWidth="940"
-        Background="#F3F6FB"
-        FontFamily="Segoe UI Variable Text, Segoe UI"
+        MinWidth="760"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        SizeChanged="Window_SizeChanged"
+        Background="{StaticResource AppBackground}"
+        FontFamily="{StaticResource AppFontFamily}"
         FontSize="13"
         UseLayoutRounding="True">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="74"
+                            ResizeBorderThickness="6"
+                            GlassFrameThickness="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+    <Border Margin="8"
+            Background="{StaticResource Surface}"
+            BorderBrush="{StaticResource Border}"
+            BorderThickness="1"
+            CornerRadius="20"
+            ClipToBounds="True">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,16 +42,10 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Border Grid.Row="0"
-                    Padding="22,12">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0"
-                                         EndPoint="1,0">
-                        <GradientStop Color="#0F1B2E"
-                                      Offset="0"/>
-                        <GradientStop Color="#1B3354"
-                                      Offset="1"/>
-                    </LinearGradientBrush>
-                </Border.Background>
+                    Padding="22,17"
+                    Background="{StaticResource Surface}"
+                    BorderBrush="{StaticResource Border}"
+                    BorderThickness="0,0,0,1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -51,56 +61,79 @@
                         <Grid Width="30"
                               Height="30"
                               Margin="0,0,12,0">
-                            <Ellipse Stroke="#4386F5"
+                            <Ellipse Stroke="{StaticResource Co2Good}"
                                      StrokeThickness="2.5"/>
                             <Ellipse Width="10"
                                      Height="10"
-                                     Fill="#89B4FF"/>
+                                     Fill="{StaticResource Co2Good}"/>
                         </Grid>
-                        <TextBlock Text="Aranet4 Monitor"
-                                   Foreground="White"
-                                   FontSize="19"
+                        <TextBlock Text="Air Pulse"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="16"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="16,0,12,0">
+                        <Button x:Name="LiveNavigationButton"
+                                Content="Live"
+                                Style="{StaticResource HeaderNavigationSelectedButton}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="LiveNavigation_Click"
+                                AutomationProperties.Name="Show live dashboard"/>
+                        <Button x:Name="HistoryNavigationButton"
+                                Content="History"
+                                Style="{StaticResource HeaderNavigationButton}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="HistoryNavigation_Click"
+                                AutomationProperties.Name="Show sensor history chart"/>
+                        <Button x:Name="SettingsNavigationButton"
+                                Content="Settings"
+                                Style="{StaticResource HeaderNavigationButton}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="SettingsNavigation_Click"
+                                ToolTip="Application settings and options"
+                                AutomationProperties.Name="Open settings"/>
+                    </StackPanel>
+
                     <Button x:Name="DeviceChipButton"
-                            Grid.Column="1"
+                            Grid.Column="3"
                             Style="{StaticResource DeviceChip}"
-                            Margin="20,0,0,0"
+                            MinWidth="170"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,4,0"
                             VerticalAlignment="Center"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
                             Click="DeviceChip_Click"
                             ToolTip="Sensor details and device list">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="DeviceDot"
                                      Width="9"
                                      Height="9"
-                                     Fill="#8FA3BF"
+                                     Fill="{StaticResource Muted}"
                                      Margin="0,0,9,0"
                                      VerticalAlignment="Center"/>
                             <TextBlock x:Name="ChipNameText"
                                        Text="Searching for sensor…"
+                                       MaxWidth="125"
                                        FontWeight="SemiBold"
-                                       Foreground="White"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text="▾"
-                                       Foreground="#9DB8E0"
+                                       Foreground="{StaticResource TextSecondary}"
                                        Margin="9,0,0,0"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
-                    <StackPanel Grid.Column="3"
+                    <StackPanel Grid.Column="4"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Center"
                                 Margin="0,0,10,0">
-                        <Button x:Name="SyncHistoryButton"
-                                Content="Sync history"
-                                Style="{StaticResource HeaderActionButton}"
-                                Click="SyncHistory_Click"
-                                IsEnabled="False"
-                                ToolTipService.ShowOnDisabled="True"
-                                ToolTip="Sync stored CO₂, temperature, humidity and pressure history for the selected sensor"/>
                         <StackPanel x:Name="SyncProgressPanel"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
@@ -109,11 +142,11 @@
                             <ProgressBar Width="24"
                                          Height="4"
                                          IsIndeterminate="True"
-                                         Foreground="#89B4FF"
-                                         Background="#36507A"/>
+                                         Foreground="{StaticResource Co2Good}"
+                                         Background="{StaticResource Border}"/>
                             <TextBlock x:Name="SyncStatusText"
                                        FontSize="12"
-                                       Foreground="#DDEBFF"
+                                       Foreground="{StaticResource TextPrimary}"
                                        Margin="8,0,0,0"
                                        VerticalAlignment="Center"
                                        MaxWidth="190"
@@ -130,18 +163,24 @@
 
                     <Button x:Name="MoreButton"
                             Grid.Column="5"
-                            Style="{StaticResource HeaderActionButton}"
+                            Style="{StaticResource UtilityButton}"
                             Width="36"
                             Padding="0"
                             FontSize="16"
                             Content="⋯"
                             VerticalAlignment="Center"
+                            Visibility="Collapsed"
                             Click="MoreButton_Click"
                             ToolTip="Settings and options"
                             AutomationProperties.Name="Settings and options">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="MoreMenu"
                                          Placement="Bottom">
+                                <MenuItem Header="Minimize window"
+                                          Click="MinimizeWindow_Click" />
+                                <MenuItem Header="Maximize or restore window"
+                                          Click="ToggleWindowState_Click" />
+                                <Separator />
                                 <MenuItem Header="Alert settings…"
                                           Click="OpenAlertSettings_Click"/>
                                 <MenuItem Header="Export CSV">
@@ -226,12 +265,12 @@
                                                FontWeight="Bold"
                                                VerticalAlignment="Center"/>
                                     <Border Grid.Column="1"
-                                            Background="#EAF2FF"
+                                            Background="{StaticResource SurfaceSelected}"
                                             CornerRadius="10"
                                             Padding="9,2">
                                         <TextBlock x:Name="DevicesCountText"
                                                    Text="0"
-                                                   Foreground="#2F6FDD"
+                                                   Foreground="{StaticResource Accent}"
                                                    FontWeight="Bold"
                                                    FontSize="12"/>
                                     </Border>
@@ -259,12 +298,12 @@
                                                     <Ellipse.Style>
                                                         <Style TargetType="Ellipse">
                                                             <Setter Property="Fill"
-                                                                    Value="#B6C2D3"/>
+                                                                    Value="{StaticResource Disabled}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsLive}"
                                                                              Value="True">
                                                                     <Setter Property="Fill"
-                                                                            Value="#2EC27E"/>
+                                                                            Value="{StaticResource Positive}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -299,11 +338,27 @@
                                     <TextBlock x:Name="DeviceLastMeasurementText"
                                                Text="—"
                                                Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="Measurement age"
+                                               Foreground="{StaticResource TextSecondary}"
+                                               Margin="0,8,0,0"/>
+                                    <TextBlock x:Name="DeviceMeasurementAgeText"
+                                               Text="—"
+                                               Foreground="{StaticResource TextPrimary}"/>
                                     <TextBlock Text="Battery"
                                                Foreground="{StaticResource TextSecondary}"
                                                Margin="0,8,0,0"/>
-                                    <TextBlock Text="{Binding SelectedDevice.Battery}"
-                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="BatteryText"
+                                                   Text="—"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   VerticalAlignment="Center"/>
+                                        <ProgressBar x:Name="BatteryBar"
+                                                     Style="{StaticResource ThinBar}"
+                                                     Foreground="{StaticResource Co2Good}"
+                                                     Width="64"
+                                                     Margin="10,0,0,0"
+                                                     VerticalAlignment="Center"/>
+                                    </StackPanel>
                                     <TextBlock Text="Signal"
                                                Foreground="{StaticResource TextSecondary}"
                                                Margin="0,8,0,0"/>
@@ -316,7 +371,8 @@
                                     <TextBlock Text="Measurement interval"
                                                Foreground="{StaticResource TextSecondary}"
                                                Margin="0,8,0,0"/>
-                                    <TextBlock Text="{Binding SelectedDevice.MeasurementInterval}"
+                                    <TextBlock x:Name="DeviceIntervalText"
+                                               Text="—"
                                                Foreground="{StaticResource TextPrimary}"/>
                                     <TextBlock Text="Firmware"
                                                Foreground="{StaticResource TextSecondary}"
@@ -357,7 +413,7 @@
                                            Margin="2,2,2,8"/>
                                 <Expander x:Name="DiagnosticsExpander"
                                           Header="Advanced · Bluetooth diagnostics"
-                                          Foreground="{StaticResource Muted}"
+                                          Foreground="{StaticResource TextSecondary}"
                                           FontWeight="SemiBold"
                                           Margin="0,4,0,0">
                                     <StackPanel Margin="0,8,0,0">
@@ -385,7 +441,7 @@
                                                  FontFamily="Cascadia Mono, Consolas"
                                                  FontSize="12"
                                                  BorderThickness="0"
-                                                 Background="#F7F9FC"
+                                                 Background="{StaticResource SurfaceSecondary}"
                                                  Padding="8"
                                                  Foreground="{StaticResource Ink}"/>
                                         <DockPanel Margin="0,10,0,4"
@@ -408,7 +464,7 @@
                                                  FontFamily="Cascadia Mono, Consolas"
                                                  FontSize="12"
                                                  BorderThickness="0"
-                                                 Background="#F7F9FC"
+                                                 Background="{StaticResource SurfaceSecondary}"
                                                  Padding="8"
                                                  Foreground="{StaticResource Ink}"/>
                                     </StackPanel>
@@ -438,6 +494,7 @@
                                                VerticalAlignment="Center"
                                                Margin="0,0,6,0"/>
                                     <TextBox x:Name="AlertThresholdTextBox"
+                                             Style="{StaticResource NumberInput}"
                                              Text="1500"
                                              Width="64"
                                              Padding="4,2"
@@ -450,6 +507,7 @@
                                                VerticalAlignment="Center"
                                                Margin="6,0,4,0"/>
                                     <TextBox x:Name="AlertDurationTextBox"
+                                             Style="{StaticResource NumberInput}"
                                              Text="10"
                                              Width="44"
                                              Padding="4,2"
@@ -517,7 +575,7 @@
                     Grid.Row="2"
                     Style="{StaticResource StatusBanner}"
                     Margin="22,0,22,10"
-                    Background="#FEF3F2"
+                    Background="{StaticResource DangerBackground}"
                     BorderBrush="{StaticResource Danger}"
                     Visibility="Collapsed">
                 <Grid>
@@ -544,33 +602,41 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="1"
-              Margin="22,18,22,18">
+        <ScrollViewer x:Name="DashboardScrollViewer"
+                      Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+        <Grid x:Name="DashboardGrid"
+              Grid.Row="0"
+              Margin="26,24,26,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="300"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="376"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="0.82*" MinWidth="330"/>
+                <ColumnDefinition Width="1.45*" MinWidth="420"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Metric cards: always visible; click one to chart it -->
-            <Grid Grid.Row="0"
+            <!-- CO₂ hero card -->
+            <Grid x:Name="Co2HeroPanel"
+                  Grid.Row="0"
                   Grid.Column="0"
                   Margin="0,0,16,14"
                   AutomationProperties.Name="Chart shows">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*" MinHeight="60"/>
-                    <RowDefinition Height="*" MinHeight="60"/>
-                    <RowDefinition Height="*" MinHeight="60"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- CO2 hero -->
                 <RadioButton x:Name="Co2Tab"
                              Grid.Row="0"
-                             Margin="0,0,0,12"
+                             Margin="0"
                              GroupName="Metric"
                              Tag="Co2"
                              IsChecked="True"
@@ -578,68 +644,68 @@
                              Checked="MetricTab_Checked"
                              ToolTip="Show CO₂ history"
                              AutomationProperties.Name="CO₂, no reading, show history">
-                    <StackPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
                         <Grid>
-                            <TextBlock Text="Carbon dioxide"
-                                       Foreground="#BFD5F7"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center"/>
                             <Border x:Name="QualityBadge"
-                                    CornerRadius="8"
-                                    Padding="10,4"
+                                    CornerRadius="99"
+                                    Padding="12,4"
                                     Visibility="Collapsed"
-                                    HorizontalAlignment="Right">
+                                    HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="QualityIcon"
-                                               FontSize="13"
+                                               FontSize="9"
                                                FontWeight="Bold"
-                                               Foreground="#0F1B2E"
+                                               Foreground="{StaticResource TextPrimary}"
                                                Margin="0,0,6,0"/>
                                     <TextBlock x:Name="QualityText"
                                                FontWeight="Bold"
                                                FontSize="12"
-                                               Foreground="#0F1B2E"/>
+                                               Foreground="{StaticResource TextPrimary}"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock x:Name="Co2Text"
                                        Text="–"
-                                       Foreground="White"
-                                       FontSize="60"
-                                       FontWeight="SemiBold"/>
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="118"
+                                       FontWeight="Light"/>
                             <TextBlock x:Name="Co2UnitText"
-                                       Text="ppm"
-                                       Foreground="#9DB8E0"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
+                                       Text="ppm CO₂"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="18"
+                                       FontWeight="Medium"
                                        VerticalAlignment="Bottom"
                                        Margin="8,0,0,12"
                                        Visibility="Collapsed"/>
                         </StackPanel>
                         <TextBlock x:Name="TrendText"
                                    FontSize="13"
-                                   FontWeight="SemiBold"
+                                   FontWeight="Medium"
                                    Margin="2,0,0,0"
                                    Visibility="Collapsed"
                                    AutomationProperties.LiveSetting="Polite"/>
                         <TextBlock x:Name="Co2CaptionText"
                                    Text="Waiting for your first live reading, or sync history to download stored readings."
-                                   Foreground="#D4E1F2"
+                                   Foreground="{StaticResource TextSecondary}"
                                    FontSize="13"
                                    Margin="2,0,0,0"
                                    TextTrimming="CharacterEllipsis"/>
                         <TextBlock x:Name="Co2AdviceText"
                                    FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="White"
+                                   FontWeight="Normal"
+                                   Foreground="{StaticResource TextSecondary}"
                                    Margin="2,4,0,0"
-                                   Visibility="Collapsed"/>
+                                   Visibility="Visible"/>
 
                         <!-- Gauge: 400 - 2000 ppm -->
                         <Grid x:Name="GaugeBar"
-                              Margin="0,12,0,0"
+                              Margin="0,24,0,0"
                               Height="16">
                             <Border Height="8"
                                     CornerRadius="4"
@@ -673,7 +739,7 @@
                                 <Ellipse Width="16"
                                          Height="16"
                                          Fill="White"
-                                         Stroke="#16294A"
+                                         Stroke="{StaticResource TextPrimary}"
                                          StrokeThickness="3"
                                          HorizontalAlignment="Right"
                                          Margin="0,0,-8,0"/>
@@ -686,11 +752,11 @@
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0"
                                         Width="1"
-                                        Background="#16294A"
+                                        Background="{StaticResource Border}"
                                         HorizontalAlignment="Right"/>
                                 <Border Grid.Column="1"
                                         Width="1"
-                                        Background="#16294A"
+                                        Background="{StaticResource Border}"
                                         HorizontalAlignment="Right"/>
                             </Grid>
                         </Grid>
@@ -701,22 +767,24 @@
                                 SizeChanged="GaugeNumberCanvas_SizeChanged">
                             <TextBlock x:Name="Gauge400Label"
                                        Text="400"
-                                       Foreground="#BFD5F7"
+                                       Visibility="Collapsed"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                             <TextBlock x:Name="Gauge1000Label"
                                        Text="1,000"
-                                       Foreground="#BFD5F7"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                             <TextBlock x:Name="Gauge1400Label"
                                        Text="1,400"
-                                       Foreground="#BFD5F7"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                             <TextBlock x:Name="Gauge2000Label"
                                        Text="2,000+"
-                                       Foreground="#BFD5F7"
+                                       Visibility="Collapsed"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                         </Canvas>
@@ -727,8 +795,8 @@
                                 <ColumnDefinition Width="600*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="GoodZoneText"
-                                       Text="Good air"
-                                       Foreground="#BFD5F7"
+                                       Text="Good"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"
@@ -736,8 +804,8 @@
                                        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                             <TextBlock x:Name="FairZoneText"
                                        Grid.Column="1"
-                                       Text="Getting stuffy"
-                                       Foreground="#BFD5F7"
+                                       Text="Elevated"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"
@@ -745,171 +813,67 @@
                                        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                             <TextBlock x:Name="PoorZoneText"
                                        Grid.Column="2"
-                                       Text="Poor air"
-                                       Foreground="#BFD5F7"
+                                       Text="High"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        HorizontalAlignment="Stretch"
                                        TextAlignment="Center"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         </Grid>
-                    </StackPanel>
-                </RadioButton>
-
-                <!-- Temperature -->
-                <RadioButton x:Name="TemperatureTab"
-                             Grid.Row="1"
-                             GroupName="Metric"
-                             Tag="Temperature"
-                             Foreground="#F97316"
-                             Style="{StaticResource MetricTab}"
-                             Margin="0,0,0,12"
-                             Checked="MetricTab_Checked"
-                             ToolTip="Show temperature history"
-                             AutomationProperties.Name="Temperature, no reading, show history">
-                    <Grid VerticalAlignment="Center">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Temperature"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock x:Name="TemperatureRangeText"
-                                           Margin="0,2,0,0"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="12"
-                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center"
-                                    Margin="12,0,0,0">
-                            <TextBlock x:Name="TemperatureText"
-                                       Text="—"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="28"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock x:Name="TemperatureUnitText"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="14"
-                                       VerticalAlignment="Bottom"
-                                       Margin="4,0,0,3.5"/>
-                        </StackPanel>
+                        <Border Grid.Row="1"
+                                Margin="0,14,0,0"
+                                Padding="0,14,0,0"
+                                BorderBrush="{StaticResource Border}"
+                                BorderThickness="0,1,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,8,0">
+                                    <TextBlock x:Name="Co2DayShareText"
+                                               Text="—"
+                                               Foreground="{StaticResource Ink}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="Co2DayShareDetailText"
+                                               Text="Good · 24 h"
+                                               Style="{StaticResource SubText}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="4,0,4,0">
+                                    <TextBlock x:Name="Co2DayPeakText"
+                                               Text="—"
+                                               Foreground="{StaticResource Ink}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="Co2DayPeakTimeText"
+                                               Text="No readings"
+                                               Style="{StaticResource SubText}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                    <TextBlock x:Name="Co2AiringTimeText"
+                                               Text="—"
+                                               Foreground="{StaticResource Ink}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="Co2AiringDetailText"
+                                               Text="No clear drop detected"
+                                               Style="{StaticResource SubText}"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </RadioButton>
 
-                <!-- Humidity -->
-                <RadioButton x:Name="HumidityTab"
-                             Grid.Row="2"
-                             GroupName="Metric"
-                             Tag="Humidity"
-                             Foreground="#06B6D4"
-                             Style="{StaticResource MetricTab}"
-                             Margin="0,0,0,12"
-                             Checked="MetricTab_Checked"
-                             ToolTip="Show humidity history"
-                             AutomationProperties.Name="Humidity, no reading, show history">
-                    <Grid VerticalAlignment="Center">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Humidity"
-                                           Foreground="{StaticResource TextPrimary}"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"/>
-                                <Border x:Name="HumidityComfortBadge"
-                                        Margin="8,0,0,0"
-                                        Padding="8,1"
-                                        CornerRadius="9"
-                                        Background="#E3F6EA"
-                                        VerticalAlignment="Center"
-                                        Visibility="Collapsed">
-                                    <TextBlock x:Name="HumidityComfortText"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Foreground="#1A7A45"/>
-                                </Border>
-                            </StackPanel>
-                            <TextBlock x:Name="HumidityRangeText"
-                                           Margin="0,2,0,0"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="12"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center"
-                                    Margin="12,0,0,0">
-                            <TextBlock x:Name="HumidityText"
-                                       Text="—"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="28"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock x:Name="HumidityUnitText"
-                                       Text="%"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="14"
-                                       VerticalAlignment="Bottom"
-                                       Margin="4,0,0,3.5"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- Pressure -->
-                <RadioButton x:Name="PressureTab"
-                             Grid.Row="3"
-                             GroupName="Metric"
-                             Tag="Pressure"
-                             Foreground="#8B5CF6"
-                             Margin="0"
-                             Style="{StaticResource MetricTab}"
-                             Checked="MetricTab_Checked"
-                             ToolTip="Show pressure history"
-                             AutomationProperties.Name="Pressure, no reading, show history">
-                    <Grid VerticalAlignment="Center">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Pressure"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock x:Name="PressureRangeText"
-                                           Margin="0,2,0,0"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="12"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center"
-                                    Margin="12,0,0,0">
-                            <TextBlock x:Name="PressureText"
-                                       Text="—"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="28"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock x:Name="PressureUnitText"
-                                       Text="hPa"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="14"
-                                       VerticalAlignment="Bottom"
-                                       Margin="4,0,0,3.5"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
             </Grid>
 
             <!-- One chart at a time -->
-            <Border Grid.Row="0"
+            <Border x:Name="HistoryChartCard"
+                    Grid.Row="0"
                     Grid.Column="1"
                     Style="{StaticResource CardStyle}"
                     Padding="20,14,20,10"
@@ -918,6 +882,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -929,18 +894,19 @@
                                 <Ellipse x:Name="ChartDot"
                                          Width="8"
                                          Height="8"
-                                         Fill="#3B82F6"
+                                         Fill="{StaticResource Co2Good}"
                                          Margin="0,0,8,0"
-                                         VerticalAlignment="Center"/>
+                                         VerticalAlignment="Center"
+                                         Visibility="Collapsed"/>
                                 <TextBlock x:Name="ChartTitleText"
-                                           Text="CO₂ history"
+                                           Text="CO₂"
                                            Foreground="{StaticResource Ink}"
                                            FontSize="14"
                                            FontWeight="SemiBold"/>
                             </StackPanel>
                             <TextBlock x:Name="ChartStatsText"
                                        Text="No readings yet"
-                                       Foreground="{StaticResource Ink}"
+                                       Foreground="{StaticResource TextSecondary}"
                                        FontSize="12"
                                        Margin="0,4,0,0"
                                        TextTrimming="CharacterEllipsis"/>
@@ -948,28 +914,23 @@
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center">
-                            <Border Background="#EEF2F8"
-                                    CornerRadius="11"
+                            <Border Background="{StaticResource SurfaceSecondary}"
+                                    CornerRadius="10"
                                     Padding="3">
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Content="1h"
                                                  Tag="1"
                                                  GroupName="ChartRange"
                                                  Style="{StaticResource SegmentButton}"
+                                                 IsChecked="True"
                                                  Checked="RangeButton_Checked"/>
                                     <RadioButton Content="6h"
                                                  Tag="6"
                                                  GroupName="ChartRange"
                                                  Style="{StaticResource SegmentButton}"
-                                                 IsChecked="True"
                                                  Checked="RangeButton_Checked"/>
                                     <RadioButton Content="24h"
                                                  Tag="24"
-                                                 GroupName="ChartRange"
-                                                 Style="{StaticResource SegmentButton}"
-                                                 Checked="RangeButton_Checked"/>
-                                    <RadioButton Content="All"
-                                                 Tag="0"
                                                  GroupName="ChartRange"
                                                  Style="{StaticResource SegmentButton}"
                                                  Checked="RangeButton_Checked"/>
@@ -980,66 +941,463 @@
                     <controls:MetricChart x:Name="HistoryChart"
                                           Grid.Row="1"
                                           Margin="0,8,0,0"
-                                          MinHeight="150"/>
+                                          MinHeight="150"
+                                          Focusable="True"
+                                          KeyboardNavigation.IsTabStop="True"
+                                          AutomationProperties.Name="CO₂ history chart"
+                                          AutomationProperties.HelpText="Use the left and right arrow keys to inspect readings. Home and End move to the first and latest readings."/>
+                    <Border Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Padding="0,9,0,0"
+                            BorderBrush="{StaticResource Border}"
+                            BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Ellipse x:Name="ChartContextDot"
+                                     Width="7"
+                                     Height="7"
+                                     Fill="{StaticResource Co2Good}"
+                                     Margin="0,5,8,0"
+                                     VerticalAlignment="Top"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="ChartContextTitleText"
+                                           Text="Outdoor reference · about 420 ppm"
+                                           Foreground="{StaticResource Ink}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock x:Name="ChartContextText"
+                                           Text="CO₂ is a ventilation signal; it does not measure particles or VOCs."
+                                           Foreground="{StaticResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,2,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
 
-            <!-- Bottom strip: alert settings and sensor/system details -->
-            <Grid Grid.Row="1"
-                  Grid.ColumnSpan="2">
-                <Border Style="{StaticResource CardStyle}"
-                        Padding="20,10">
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="BATTERY"
-                                       Style="{StaticResource SectionLabel}"/>
-                            <StackPanel Orientation="Horizontal"
-                                        Margin="0,3,0,0">
-                                <TextBlock x:Name="BatteryText"
-                                           Text="—"
-                                           Style="{StaticResource SysValue}"/>
-                                <ProgressBar x:Name="BatteryBar"
-                                             Style="{StaticResource ThinBar}"
-                                             Foreground="#22C55E"
-                                             Width="44"
-                                             Margin="10,0,0,0"
-                                             VerticalAlignment="Center"/>
-                            </StackPanel>
+
+
+            <!-- Secondary metrics stay selectable and share one compact row. -->
+            <Grid x:Name="SecondaryMetricsGrid"
+                  Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  Margin="0,0,0,14"
+                  AutomationProperties.Name="Other sensor metrics">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <RadioButton x:Name="TemperatureTab"
+                             Grid.Row="0"
+                             Grid.Column="0"
+                             GroupName="Metric"
+                             Tag="Temperature"
+                             Foreground="{StaticResource TemperatureAccent}"
+                             Style="{StaticResource MetricTab}"
+                             Margin="0,0,14,0"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show temperature history"
+                             AutomationProperties.Name="Temperature, no reading, show history">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Temperature"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="TemperatureText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="31"
+                                       FontWeight="Normal"/>
+                            <TextBlock x:Name="TemperatureUnitText"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       VerticalAlignment="Bottom"
+                                       Margin="4,0,0,5"/>
                         </StackPanel>
-                        <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="SIGNAL"
-                                       Style="{StaticResource SectionLabel}"/>
+                        <TextBlock x:Name="TemperatureRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <RadioButton x:Name="HumidityTab"
+                             Grid.Row="0"
+                             Grid.Column="1"
+                             GroupName="Metric"
+                             Tag="Humidity"
+                             Foreground="{StaticResource HumidityAccent}"
+                             Style="{StaticResource MetricTab}"
+                             Margin="0,0,14,0"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show humidity history"
+                             AutomationProperties.Name="Humidity, no reading, show history">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Humidity"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="HumidityText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="31"
+                                       FontWeight="Normal"/>
+                            <TextBlock x:Name="HumidityUnitText"
+                                       Text="%"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       VerticalAlignment="Bottom"
+                                       Margin="4,0,0,5"/>
+                        </StackPanel>
+                        <TextBlock x:Name="HumidityRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <RadioButton x:Name="PressureTab"
+                             Grid.Row="0"
+                             Grid.Column="2"
+                             GroupName="Metric"
+                             Tag="Pressure"
+                             Foreground="{StaticResource PressureAccent}"
+                             Margin="0"
+                             Style="{StaticResource MetricTab}"
+                             Checked="MetricTab_Checked"
+                             ToolTip="Show pressure history"
+                             AutomationProperties.Name="Pressure, no reading, show history">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Pressure"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="PressureText"
+                                       Text="—"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="31"
+                                       FontWeight="Normal"/>
+                            <TextBlock x:Name="PressureUnitText"
+                                       Text="hPa"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="14"
+                                       VerticalAlignment="Bottom"
+                                       Margin="4,0,0,5"/>
+                        </StackPanel>
+                        <TextBlock x:Name="PressureRangeText"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </RadioButton>
+            </Grid>
+
+            <!-- Bottom strip: alert settings and sensor/system details -->
+            <Grid x:Name="StatusStripGrid"
+                  Grid.Row="2"
+                  Grid.ColumnSpan="2"
+                  Margin="-26,0,-26,-18">
+                <Border Style="{StaticResource StatusStrip}"
+                        Padding="24,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0">
+                            <Ellipse x:Name="FooterStatusDot"
+                                     Width="8"
+                                     Height="8"
+                                     Fill="{StaticResource Muted}"
+                                     Margin="0,0,8,0"
+                                     VerticalAlignment="Center"/>
+                            <TextBlock x:Name="FooterStatusText"
+                                       Text="Searching"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0">
                             <StackPanel Orientation="Horizontal"
-                                        Margin="0,3,0,0">
+                                        VerticalAlignment="Center">
                                 <controls:SignalBars x:Name="DetailSignal"
                                                      VerticalAlignment="Center"
                                                      Margin="0,0,8,0"/>
                                 <TextBlock x:Name="RssiText"
                                            Text="—"
-                                           Style="{StaticResource SysValue}"/>
+                                           Foreground="{StaticResource TextSecondary}"
+                                           FontSize="13"
+                                           Visibility="Collapsed"
+                                           VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
-                        <StackPanel Margin="0,0,28,0">
-                            <TextBlock Text="MEASUREMENT AGE"
-                                       Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="AgeText"
-                                       Text="—"
-                                       Style="{StaticResource SysValue}"
-                                       Margin="0,3,0,0"/>
+                        <Button Grid.Column="3"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="DeviceChip_Click"
+                                ToolTip="Open selected sensor details">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Battery"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           VerticalAlignment="Center"/>
+                                <Border Width="24"
+                                        Height="10"
+                                        BorderBrush="{StaticResource TextSecondary}"
+                                        BorderThickness="1"
+                                        CornerRadius="2"
+                                        Margin="8,0,0,0"
+                                        Padding="1">
+                                    <ProgressBar x:Name="FooterBatteryBar"
+                                                 Style="{StaticResource ThinBar}"
+                                                 Height="6"
+                                                 VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock x:Name="FooterBatteryText"
+                                           Text="—"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           FontWeight="SemiBold"
+                                           Margin="6,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+        <Grid x:Name="HistoryView"
+              Grid.Row="1"
+              Margin="24,18,24,18"
+              Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="How the room breathed"
+                               Foreground="{StaticResource TextPrimary}"
+                               FontSize="28"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="HistoryHeaderSummaryText"
+                               Text="No saved readings yet"
+                               Foreground="{StaticResource TextSecondary}"
+                               FontSize="13"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="HistoryLastSyncText"
+                               Text="Not synced yet"
+                               Foreground="{StaticResource TextSecondary}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"/>
+                    <Button x:Name="SyncHistoryButton"
+                            Content="Sync history"
+                            Style="{StaticResource HeaderActionButton}"
+                            Click="SyncHistory_Click"
+                            IsEnabled="False"
+                            ToolTip="Download readings stored on the selected sensor"/>
+                </StackPanel>
+            </Grid>
+            <Grid x:Name="HistoryContentGrid"
+                  Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="420"/>
+                    <ColumnDefinition Width="280"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="HistoryMainCard"
+                        Style="{StaticResource CardStyle}"
+                        Padding="20"
+                        Margin="0,0,14,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="300"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CO₂"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock x:Name="HistoryChartStatsText"
+                                           Text="No readings yet"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           FontSize="13"
+                                           Margin="0,3,0,0"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <Border Grid.Column="1"
+                                    Background="{StaticResource SurfaceSecondary}"
+                                    CornerRadius="10"
+                                    Padding="3">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="History24HoursButton"
+                                                 Content="24h"
+                                                 Tag="24"
+                                                 GroupName="HistoryRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 IsChecked="True"
+                                                 Checked="HistoryRangeButton_Checked"/>
+                                    <RadioButton Content="7d"
+                                                 Tag="168"
+                                                 GroupName="HistoryRange"
+                                                 Style="{StaticResource SegmentButton}"
+                                                 Checked="HistoryRangeButton_Checked"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <controls:MetricChart x:Name="LongHistoryChart"
+                                              Grid.Row="1"
+                                              Margin="0,10,0,0"
+                                              MinHeight="220"
+                                              Focusable="True"
+                                              KeyboardNavigation.IsTabStop="True"
+                                              AutomationProperties.Name="CO₂ history over the selected range"
+                                              AutomationProperties.HelpText="Use left and right arrow keys to inspect readings."/>
+                        <StackPanel Grid.Row="2" Margin="0,12,0,8">
+                            <TextBlock Text="Day at a glance"
+                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="One stripe every 20 minutes · ● airing detected"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       Margin="0,2,0,0"/>
                         </StackPanel>
-                        <StackPanel>
-                            <TextBlock Text="INTERVAL"
-                                       Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="IntervalText"
-                                       Text="—"
-                                       Style="{StaticResource SysValue}"
-                                       Margin="0,3,0,0"/>
-                        </StackPanel>
+                        <UniformGrid x:Name="HistoryDayStrip"
+                                     Grid.Row="3"
+                                     Rows="1"
+                                     Columns="72"
+                                     Height="40"/>
+                        <Grid Grid.Row="4" Margin="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="HistoryStartTimeText"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"/>
+                            <TextBlock x:Name="HistoryQuarterTimeText"
+                                       Grid.Column="1"
+                                       TextAlignment="Center"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"/>
+                            <TextBlock x:Name="HistoryHalfTimeText"
+                                       Grid.Column="2"
+                                       TextAlignment="Center"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"/>
+                            <TextBlock x:Name="HistoryThreeQuarterTimeText"
+                                       Grid.Column="3"
+                                       TextAlignment="Center"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"/>
+                            <TextBlock Text="Now"
+                                       Grid.Column="4"
+                                       TextAlignment="Right"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+                <Border x:Name="HistorySummaryCard"
+                        Grid.Column="1"
+                        Style="{StaticResource CardStyle}"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Time in each zone"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"/>
+                        <Grid x:Name="HistoryZoneShareBar"
+                              Height="12"
+                              Margin="0,12,0,8"
+                              ClipToBounds="True"/>
+                        <TextBlock x:Name="HistoryZoneShareText"
+                                   Text="No readings yet"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"/>
+                        <Border Height="1"
+                                Background="{StaticResource Border}"
+                                Margin="0,16,0,14"/>
+                        <TextBlock Text="Worth knowing"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock x:Name="HistoryOvernightText"
+                                   Text="Overnight: no readings yet."
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock x:Name="HistoryAiringText"
+                                   Text="No clear airing detected in the last 24 hours."
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock x:Name="HistoryPeakText"
+                                   Text="Highest: no readings yet."
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0"/>
+                        <Border Height="1"
+                                Background="{StaticResource Border}"
+                                Margin="0,16,0,14"/>
+                        <TextBlock Text="Export"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock Text="Raw measurements for the selected range."
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Margin="0,4,0,10"/>
+                        <Button x:Name="HistoryExportButton"
+                                Content="Export CSV"
+                                Tag="visible"
+                                Style="{StaticResource GhostButton}"
+                                Click="ExportCsv_Click"/>
                     </StackPanel>
                 </Border>
             </Grid>
         </Grid>
+        </Grid>
+        </ScrollViewer>
         <Border x:Name="SyncToast"
                 Grid.Row="1"
                 HorizontalAlignment="Center"
@@ -1050,8 +1408,9 @@
                 Visibility="Collapsed"
                 IsHitTestVisible="False">
             <TextBlock x:Name="SyncToastText"
-                       Foreground="White"
+                       Foreground="{StaticResource TextPrimary}"
                        FontSize="13"/>
         </Border>
     </Grid>
+    </Border>
 </Window>

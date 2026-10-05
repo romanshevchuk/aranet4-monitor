@@ -11,11 +11,12 @@ namespace Aranet4Monitor.Presentation.Tray;
 /// </summary>
 public static class TrayIconRenderer
 {
-    private static readonly System.Drawing.Color Good = System.Drawing.Color.FromArgb(0x22, 0xC5, 0x6E);
-    private static readonly System.Drawing.Color Fair = System.Drawing.Color.FromArgb(0xFF, 0xB8, 0x2E);
-    private static readonly System.Drawing.Color Poor = System.Drawing.Color.FromArgb(0xEF, 0x44, 0x44);
-    private static readonly System.Drawing.Color Stale = System.Drawing.Color.FromArgb(0x6B, 0x76, 0x86);
-    private static readonly System.Drawing.Color DarkText = System.Drawing.Color.FromArgb(0x0B, 0x14, 0x24);
+    // GDI draws the tray icon independently of WPF resources; keep these RGB values aligned with the shared palette.
+    private static readonly System.Drawing.Color Good = System.Drawing.Color.FromArgb(0x24, 0xB7, 0x7C);
+    private static readonly System.Drawing.Color Fair = System.Drawing.Color.FromArgb(0xE7, 0xA5, 0x2F);
+    private static readonly System.Drawing.Color Poor = System.Drawing.Color.FromArgb(0xB8, 0x3A, 0x30);
+    private static readonly System.Drawing.Color Stale = System.Drawing.Color.FromArgb(0x61, 0x72, 0x7E);
+    private static readonly System.Drawing.Color DarkText = System.Drawing.Color.FromArgb(0x17, 0x23, 0x2C);
 
     /// <summary>
     /// What fits on a ~16–24 px icon: the exact number below 1000 ("820"), otherwise thousands with one decimal

@@ -16,16 +16,18 @@ public sealed class MetricChart : FrameworkElement
     private static readonly Typeface Regular = new(Font, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
     private static readonly Typeface Bold = new(Font, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 
-    private static readonly Color Good = Color.FromRgb(0x2E, 0xC2, 0x7E);
-    private static readonly Color Warn = Color.FromRgb(0xF5, 0xB9, 0x42);
-    private static readonly Color Bad = Color.FromRgb(0xEF, 0x5B, 0x5B);
+    private static readonly Color Good = Color.FromRgb(0x24, 0xB7, 0x7C);
+    private static readonly Color Warn = Color.FromRgb(0xE7, 0xA5, 0x2F);
+    private static readonly Color Bad = Color.FromRgb(0xD8, 0x5A, 0x50);
 
-    private static readonly Brush AxisText = Solid(Color.FromRgb(0x66, 0x73, 0x8A));
-    private static readonly Brush InkText = Solid(Color.FromRgb(0x16, 0x22, 0x38));
-    private static readonly Brush MutedText = Solid(Color.FromRgb(0x66, 0x73, 0x8A));
-    private static readonly Pen GridPen = new(Solid(Color.FromRgb(0xE8, 0xED, 0xF5)), 1);
-    private static readonly Pen TooltipPen = new(Solid(Color.FromRgb(0xD5, 0xDD, 0xEA)), 1);
-    private static readonly Pen CursorPen = new(Solid(Color.FromRgb(0xA9, 0xB6, 0xCB)), 1) { DashStyle = DashStyles.Dash };
+    private static readonly Brush AxisText = Solid(Color.FromRgb(0x61, 0x72, 0x7E));
+    private static readonly Brush InkText = Solid(Color.FromRgb(0x17, 0x23, 0x2C));
+    private static readonly Brush MutedText = Solid(Color.FromRgb(0x61, 0x72, 0x7E));
+    private static readonly Pen GridPen = new(Solid(Color.FromRgb(0xD9, 0xE2, 0xE7)), 1);
+    private static readonly Pen TooltipPen = new(Solid(Color.FromRgb(0xD9, 0xE2, 0xE7)), 1);
+    private static readonly Pen ThresholdPen = new(Solid(Color.FromRgb(0x9A, 0xA8, 0xB0)), 1) { DashStyle = DashStyles.Dash };
+    private static readonly Pen CursorPen = new(Solid(Color.FromRgb(0x9A, 0xA8, 0xB0)), 1) { DashStyle = DashStyles.Dash };
+    private static readonly Pen FocusPen = new(Solid(Color.FromRgb(0x17, 0x6B, 0xC4)), 2);
 
     /// <summary>A longer silence than this breaks the line instead of drawing a misleading straight segment.</summary>
     private static readonly TimeSpan GapThreshold = TimeSpan.FromMinutes(30);
@@ -133,10 +135,50 @@ public sealed class MetricChart : FrameworkElement
         }
     }
 
+    protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (end <= first)
+        {
+            return;
+        }
+
+        var index = hover < first || hover >= end ? end - 1 : hover;
+        switch (e.Key)
+        {
+            case System.Windows.Input.Key.Left:
+                index = Math.Max(first, index - 1);
+                break;
+            case System.Windows.Input.Key.Right:
+                index = Math.Min(end - 1, index + 1);
+                break;
+            case System.Windows.Input.Key.Home:
+                index = first;
+                break;
+            case System.Windows.Input.Key.End:
+                index = end - 1;
+                break;
+            default:
+                return;
+        }
+
+        if (index != hover)
+        {
+            hover = index;
+            InvalidateVisual();
+        }
+
+        e.Handled = true;
+    }
+
     protected override void OnRender(DrawingContext dc)
     {
         double w = ActualWidth, h = ActualHeight;
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, h)); // makes the whole area hit-testable
+        if (IsKeyboardFocused && w >= 4 && h >= 4)
+        {
+            dc.DrawRoundedRectangle(null, FocusPen, new Rect(1, 1, w - 2, h - 2), 4, 4);
+        }
         if (w < 120 || h < 80)
         {
             return;
@@ -240,6 +282,13 @@ public sealed class MetricChart : FrameworkElement
             hi = lo + step * 3;
         }
 
+        if (kind == MetricKind.Co2)
+        {
+            lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 200) * 200);
+            hi = Math.Ceiling(Math.Max(max, 1100) / 200) * 200;
+            step = hi <= 3000 ? 200 : NiceStep((hi - lo) / 5);
+        }
+
         double X(DateTime t) => plot.Left + (t - t0).TotalSeconds / (t1 - t0).TotalSeconds * plot.Width;
         double Y(double v) => plot.Bottom - (v - lo) / (hi - lo) * plot.Height;
 
@@ -263,6 +312,12 @@ public sealed class MetricChart : FrameworkElement
             dc.DrawLine(GridPen, new Point(plot.Left, y), new Point(plot.Right, y));
             var label = Text(gridValue.ToString(yFormat, CultureInfo.CurrentCulture), 12, AxisText);
             dc.DrawText(label, new Point(plot.Left - 8 - label.Width, y - label.Height / 2));
+        }
+
+        if (kind == MetricKind.Co2)
+        {
+            DrawCo2Threshold(dc, Y, Co2Quality.FairFromPpm, "Elevated");
+            DrawCo2Threshold(dc, Y, Co2Quality.PoorFromPpm, "High");
         }
 
         // ---- time axis ----
@@ -327,13 +382,16 @@ public sealed class MetricChart : FrameworkElement
         }
 
         dc.PushClip(new RectangleGeometry(plot));
-        dc.DrawGeometry(areaBrush, null, area);
+        if (kind != MetricKind.Co2)
+        {
+            dc.DrawGeometry(areaBrush, null, area);
+        }
         var pen = new Pen(lineBrush, 2.25) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         dc.DrawGeometry(null, pen, line);
         dc.Pop();
 
-        // With only a few readings, show the individual points so isolated ones are visible too.
-        if (end - first <= 80)
+        // Secondary metrics show sparse points so isolated measurements remain visible.
+        if (kind != MetricKind.Co2 && end - first <= 80)
         {
             for (var i = first; i < end; i++)
             {
@@ -366,6 +424,24 @@ public sealed class MetricChart : FrameworkElement
         var top = y(b);
         var bottom = y(a);
         dc.DrawRectangle(Solid(color, 20), null, new Rect(plot.Left, top, plot.Width, bottom - top));
+    }
+
+    private void DrawCo2Threshold(DrawingContext dc, Func<double, double> y, int value, string label)
+    {
+        if (value < 400 || value > 20000)
+        {
+            return;
+        }
+
+        var yPosition = y(value);
+        if (yPosition < plot.Top || yPosition > plot.Bottom)
+        {
+            return;
+        }
+
+        dc.DrawLine(ThresholdPen, new Point(plot.Left, yPosition), new Point(plot.Right, yPosition));
+        var text = Text($"{label} · {value:N0}", 11, MutedText);
+        dc.DrawText(text, new Point(plot.Right - text.Width - 6, yPosition - text.Height - 3));
     }
 
     private void DrawTimeAxis(DrawingContext dc, Func<DateTime, double> x, DateTime t0, DateTime t1)

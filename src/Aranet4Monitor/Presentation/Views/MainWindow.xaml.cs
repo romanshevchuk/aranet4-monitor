@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Aranet4Monitor.Application.History;
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
     private int tickCount;
     private bool allowClose;
     private bool listenerHasBeenStarted;
+    private bool isNarrowDashboardLayout;
     private StatusKind statusKind = StatusKind.Idle;
 
     private static readonly Brush DotLive = Frozen(Color.FromRgb(0x2E, 0xC2, 0x7E));
@@ -39,9 +41,6 @@ public partial class MainWindow : Window
     private static readonly Brush SeenStale = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
     private static readonly Dictionary<MetricKind, Brush> AccentBrushes =
         Enum.GetValues<MetricKind>().ToDictionary(kind => kind, kind => Frozen(MetricColors.Accent(kind)));
-    private static readonly Brush TrendRising = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
-    private static readonly Brush TrendFalling = Frozen(Color.FromRgb(0x7B, 0xE0, 0xAE));
-    private static readonly Brush TrendSteady = Frozen(Color.FromRgb(0x9D, 0xB8, 0xE0));
     private static readonly Brush alertStatusNeutral = Frozen(Color.FromRgb(0x66, 0x73, 0x8A));
     private static readonly Brush alertStatusSuccess = Frozen(Color.FromRgb(0x15, 0x80, 0x3D));
     private static readonly Brush alertStatusWarning = Frozen(Color.FromRgb(0xB4, 0x53, 0x09));
@@ -64,9 +63,9 @@ public partial class MainWindow : Window
 
         InitializeComponent();
         DataContext = Dashboard;
-        GoodZoneText.Text = Co2Quality.Describe(Co2Level.Good);
-        FairZoneText.Text = Co2Quality.Describe(Co2Level.Fair);
-        PoorZoneText.Text = Co2Quality.Describe(Co2Level.Poor);
+        GoodZoneText.Text = "Good";
+        FairZoneText.Text = "Elevated";
+        PoorZoneText.Text = "High";
         CelsiusUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
         FahrenheitUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
         ShowNumberMenuItem.IsChecked = preferences.TrayShowNumber;
@@ -201,6 +200,95 @@ public partial class MainWindow : Window
         };
     }
 
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (DashboardGrid is null)
+        {
+            return;
+        }
+
+        var useNarrowLayout = ActualWidth < 1060;
+        if (useNarrowLayout == isNarrowDashboardLayout)
+        {
+            return;
+        }
+
+        isNarrowDashboardLayout = useNarrowLayout;
+        DashboardGrid.RowDefinitions.Clear();
+        DashboardGrid.ColumnDefinitions.Clear();
+
+        if (useNarrowLayout)
+        {
+            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition());
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            Grid.SetRow(Co2HeroPanel, 0);
+            Grid.SetColumn(Co2HeroPanel, 0);
+            Grid.SetRow(HistoryChartCard, 1);
+            Grid.SetColumn(HistoryChartCard, 0);
+            Grid.SetRow(SecondaryMetricsGrid, 2);
+            Grid.SetColumn(SecondaryMetricsGrid, 0);
+            Grid.SetColumnSpan(SecondaryMetricsGrid, 1);
+            Grid.SetRow(StatusStripGrid, 3);
+            Grid.SetColumn(StatusStripGrid, 0);
+            Grid.SetColumnSpan(StatusStripGrid, 1);
+            Co2HeroPanel.Margin = new Thickness(0, 0, 0, 12);
+            HistoryChartCard.Margin = new Thickness(0, 0, 0, 12);
+            HistoryChart.MinHeight = 190;
+            DashboardGrid.Margin = new Thickness(16, 14, 16, 14);
+            StatusStripGrid.Margin = new Thickness(-16, 0, -16, -14);
+            HistoryView.Margin = new Thickness(16, 14, 16, 14);
+            HistoryContentGrid.ColumnDefinitions.Clear();
+            HistoryContentGrid.RowDefinitions.Clear();
+            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
+            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(HistoryMainCard, 0);
+            Grid.SetColumn(HistoryMainCard, 0);
+            HistoryMainCard.Margin = new Thickness(0, 0, 0, 14);
+            Grid.SetRow(HistorySummaryCard, 1);
+            Grid.SetColumn(HistorySummaryCard, 0);
+        }
+        else
+        {
+            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.82, GridUnitType.Star), MinWidth = 330 });
+            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star), MinWidth = 420 });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star), MinHeight = 300 });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            Grid.SetRow(Co2HeroPanel, 0);
+            Grid.SetColumn(Co2HeroPanel, 0);
+            Grid.SetRow(HistoryChartCard, 0);
+            Grid.SetColumn(HistoryChartCard, 1);
+            Grid.SetRow(SecondaryMetricsGrid, 1);
+            Grid.SetColumn(SecondaryMetricsGrid, 0);
+            Grid.SetColumnSpan(SecondaryMetricsGrid, 2);
+            Grid.SetRow(StatusStripGrid, 2);
+            Grid.SetColumn(StatusStripGrid, 0);
+            Grid.SetColumnSpan(StatusStripGrid, 2);
+            Co2HeroPanel.Margin = new Thickness(0, 0, 16, 14);
+            HistoryChartCard.Margin = new Thickness(0, 0, 0, 14);
+            HistoryChart.MinHeight = 150;
+            DashboardGrid.Margin = new Thickness(26, 24, 26, 18);
+            StatusStripGrid.Margin = new Thickness(-26, 0, -26, -18);
+            HistoryView.Margin = new Thickness(26, 24, 26, 18);
+            HistoryContentGrid.ColumnDefinitions.Clear();
+            HistoryContentGrid.RowDefinitions.Clear();
+            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(280) });
+            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(HistoryMainCard, 0);
+            Grid.SetColumn(HistoryMainCard, 0);
+            HistoryMainCard.Margin = new Thickness(0, 0, 14, 0);
+            Grid.SetRow(HistorySummaryCard, 0);
+            Grid.SetColumn(HistorySummaryCard, 1);
+        }
+    }
+
     private enum StatusKind
     {
         Idle, Listening, Error, BluetoothUnavailable
@@ -219,25 +307,30 @@ public partial class MainWindow : Window
                 NoticeText.Text = "Live readings are off.";
                 NoticeActionButton.Content = "Start listening";
                 BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.Background = System.Windows.SystemColors.ControlLightBrush;
+                NoticeBar.Background = (Brush)FindResource("SurfaceSecondary");
+                NoticeBar.BorderBrush = (Brush)FindResource("Border");
                 NoticeBar.ToolTip = null;
                 break;
             case StatusKind.Error:
                 NoticeText.Text = "Live readings stopped. Check Bluetooth settings or permissions, then try again.";
                 NoticeActionButton.Content = "Try again";
                 BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xF2));
+                NoticeBar.Background = (Brush)FindResource("DangerBackground");
+                NoticeBar.BorderBrush = (Brush)FindResource("Danger");
                 NoticeBar.ToolTip = details ?? text;
                 break;
             case StatusKind.BluetoothUnavailable:
                 NoticeText.Text = "Bluetooth is off. Turn it on in Windows settings to see live readings.";
                 NoticeActionButton.Visibility = Visibility.Collapsed;
                 BluetoothSettingsButton.Visibility = Visibility.Visible;
-                NoticeBar.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xF7, 0xE8));
+                NoticeBar.Background = (Brush)FindResource("WarningBackground");
+                NoticeBar.BorderBrush = (Brush)FindResource("Warning");
                 NoticeBar.ToolTip = details ?? text;
                 break;
             default:
                 NoticeActionButton.Visibility = Visibility.Visible;
+                NoticeBar.Background = (Brush)FindResource("PositiveBackground");
+                NoticeBar.BorderBrush = (Brush)FindResource("Positive");
                 NoticeBar.ToolTip = details;
                 break;
         }
@@ -274,6 +367,7 @@ public partial class MainWindow : Window
     {
         if (statusKind == StatusKind.Error)
         {
+            UpdateFooterStatus("Listener error", "Danger");
             DeviceDot.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
             DeviceChipButton.ToolTip = "Live readings stopped. Try starting the listener again.";
             return;
@@ -281,6 +375,7 @@ public partial class MainWindow : Window
 
         if (statusKind is StatusKind.Idle or StatusKind.BluetoothUnavailable)
         {
+            UpdateFooterStatus(statusKind == StatusKind.BluetoothUnavailable ? "Bluetooth unavailable" : "Stopped", "Muted");
             DeviceDot.Fill = DotIdle;
             DeviceChipButton.ToolTip = statusKind == StatusKind.BluetoothUnavailable
                 ? "Bluetooth is unavailable. Turn it on in Windows settings to see live readings."
@@ -290,6 +385,7 @@ public partial class MainWindow : Window
 
         if (Dashboard.SelectedDevice is not { } device || GetLastReadingTime(device) == default)
         {
+            UpdateFooterStatus("Searching", "Muted");
             DeviceDot.Fill = DotIdle;
             DeviceChipButton.ToolTip = "Looking for your Aranet4. Make sure Smart Home Integration is enabled in the Aranet Home app.";
             return;
@@ -299,9 +395,16 @@ public partial class MainWindow : Window
             device.Address,
             GetLastReadingTime(device),
             DateTime.Now);
+        UpdateFooterStatus(stale ? "Waiting for sensor" : "Live", stale ? "Warning" : "Positive");
         DeviceDot.Fill = stale ? DotStale : DotLive;
         DeviceChipButton.ToolTip = stale
             ? "No recent readings from this sensor. Move it closer and check its battery."
             : "Receiving live readings from this sensor.";
+    }
+
+    private void UpdateFooterStatus(string text, string brushKey)
+    {
+        FooterStatusText.Text = text;
+        FooterStatusDot.Fill = (Brush)FindResource(brushKey);
     }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Storage;
@@ -68,6 +69,11 @@ public partial class MainWindow
             : stale
                 ? "No recent readings"
                 : "Receiving live data";
+        DeviceStatusText.Foreground = lastReading == default
+            ? (Brush)FindResource("TextSecondary")
+            : stale
+                ? (Brush)FindResource("Warning")
+                : (Brush)FindResource("Positive");
         DeviceStatusDot.Fill = lastReading == default
             ? DotIdle
             : stale
@@ -80,6 +86,13 @@ public partial class MainWindow
         DeviceLastSyncedText.Text = historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
             ? syncedThrough.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
             : "Not synced yet";
+        BatteryText.Foreground = device.BatteryValue switch
+        {
+            <= 15 => (Brush)FindResource("Danger"),
+            <= 35 => (Brush)FindResource("Warning"),
+            _ => (Brush)FindResource("TextPrimary"),
+        };
+        FooterBatteryText.Foreground = BatteryText.Foreground;
     }
 
     private void CopyAddress_Click(object sender, RoutedEventArgs e)
@@ -103,6 +116,43 @@ public partial class MainWindow
     }
 
     private void OpenAlertSettings_Click(object sender, RoutedEventArgs e) => AlertSettingsPopup.IsOpen = true;
+
+    private void LiveNavigation_Click(object sender, RoutedEventArgs e)
+    {
+        DashboardGrid.Visibility = Visibility.Visible;
+        HistoryView.Visibility = Visibility.Collapsed;
+        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        DashboardScrollViewer.ScrollToTop();
+        Co2Tab.Focus();
+    }
+
+    private void HistoryNavigation_Click(object sender, RoutedEventArgs e)
+    {
+        DashboardGrid.Visibility = Visibility.Collapsed;
+        HistoryView.Visibility = Visibility.Visible;
+        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        RefreshHistoryView();
+        DashboardScrollViewer.ScrollToTop();
+        LongHistoryChart.Focus();
+    }
+
+    private void SettingsNavigation_Click(object sender, RoutedEventArgs e)
+    {
+        MoreMenu.PlacementTarget = SettingsNavigationButton;
+        MoreMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        MoreMenu.IsOpen = true;
+    }
+
+    private void MinimizeWindow_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void ToggleWindowState_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+    }
 
     private void ListenMenuItem_Click(object sender, RoutedEventArgs e)
     {

@@ -6,8 +6,8 @@ namespace Aranet4Monitor.Presentation.Controls;
 /// <summary>Tiny 4-bar signal strength indicator (like a phone's reception icon).</summary>
 public sealed class SignalBars : FrameworkElement
 {
-    private static readonly Brush DefaultActive = Freeze(new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)));
-    private static readonly Brush DefaultInactive = Freeze(new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1)));
+    private static readonly Brush DefaultActive = Freeze(new SolidColorBrush(Color.FromRgb(0x9A, 0xAB, 0xB8)));
+    private static readonly Brush DefaultInactive = Freeze(new SolidColorBrush(Color.FromRgb(0xD9, 0xE2, 0xE7)));
     private static readonly double[] Heights = [5, 8, 12, 16];
 
     public static readonly DependencyProperty BarsProperty = DependencyProperty.Register(

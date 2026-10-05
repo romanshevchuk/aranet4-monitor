@@ -57,16 +57,21 @@ public partial class MainWindow
         AutomationProperties.SetName(PressureTab, $"Pressure, {device.Pressure}, show history");
         AutomationProperties.SetName(Co2Tab, $"CO₂, {(hasReading ? $"{device.Co2Ppm:N0} ppm" : "no reading")}, show history");
         BatteryText.Text = device.Battery;
+        FooterBatteryText.Text = device.Battery;
         BatteryBar.Value = device.BatteryValue;
-        BatteryBar.Foreground = new SolidColorBrush(device.BatteryValue switch
+        FooterBatteryBar.Value = device.BatteryValue;
+        var batteryBrush = new SolidColorBrush(device.BatteryValue switch
         {
             <= 15 => Color.FromRgb(0xEF, 0x5B, 0x5B),
             <= 35 => Color.FromRgb(0xF5, 0xB9, 0x42),
             _ => Color.FromRgb(0x22, 0xC5, 0x5E),
         });
+        BatteryBar.Foreground = batteryBrush;
+        FooterBatteryBar.Foreground = batteryBrush;
+        FooterBatteryText.Foreground = batteryBrush;
 
-        AgeText.Text = device.MeasurementAge;
-        IntervalText.Text = device.MeasurementInterval;
+        DeviceMeasurementAgeText.Text = device.MeasurementAge;
+        DeviceIntervalText.Text = device.MeasurementInterval;
         RssiText.Text = device.Packets == 0 ? "—" : $"{device.Rssi} dBm";
         DetailSignal.Bars = device.SignalBars;
         ChipNameText.Text = device.Name;
@@ -91,6 +96,8 @@ public partial class MainWindow
 
     private void UpdateCo2Hero(Aranet4Device device)
     {
+        UpdateCo2DaySummary(device, DateTime.Now);
+
         if (device.Co2Ppm <= 0)
         {
             Co2Text.Text = "–";
@@ -131,12 +138,7 @@ public partial class MainWindow
             && Co2Stats.Trend(device.History) is { } trend)
         {
             TrendText.Text = trend.Kind == TrendKind.Steady ? "Steady" : trend.Text;
-            TrendText.Foreground = trend.Kind switch
-            {
-                TrendKind.Rising => TrendRising,
-                TrendKind.Falling => TrendFalling,
-                _ => TrendSteady,
-            };
+            TrendText.Foreground = (Brush)FindResource("TextPrimary");
             TrendText.Visibility = Visibility.Visible;
             Co2CaptionText.Visibility = Visibility.Collapsed;
         }
@@ -159,21 +161,102 @@ public partial class MainWindow
         unitText.Text = unit;
     }
 
-    private string RangeSummary(Aranet4Device? device, MetricKind kind, DateTime now)
+    private string MetricSummary(Aranet4Device? device, MetricKind kind, DateTime now)
     {
-        if (device is null || Metrics.Range(device.History, Dashboard.HistoryRange, now, kind, preferences.TemperatureDisplayUnit) is not { } range)
+        if (device is null)
         {
             return "No readings yet";
         }
 
-        var label = Dashboard.HistoryRange is { } selectedRange
-            ? $"Last {selectedRange.TotalHours:0} h"
-            : "All";
-        var summary = kind == MetricKind.Humidity
-            ? $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)}%"
-            : $"{label}: {Metrics.Format(range.Min, kind)}–{Metrics.Format(range.Max, kind)} {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
+        if (kind == MetricKind.Humidity)
+        {
+            int? humidity = device.HumidityValue > 0
+                ? (int)Math.Round(device.HumidityValue)
+                : device.History.LastOrDefault(sample => sample.HumidityPercent.HasValue)?.HumidityPercent;
+            if (humidity is not { } value)
+            {
+                return "No readings yet";
+            }
 
-        return summary;
+            var condition = value < 30 ? "Dry" : value <= 50 ? "Comfortable" : value <= 60 ? "Humid" : "Damp";
+            return $"{condition} · ideal 30–50%";
+        }
+
+        var readings = device.History
+            .Where(sample => sample.Time >= now - TimeSpan.FromHours(1) && sample.Time <= now)
+            .Select(sample => (sample.Time, Value: Metrics.Value(sample, kind, preferences.TemperatureDisplayUnit)))
+            .Where(item => item.Value.HasValue)
+            .Select(item => (item.Time, Value: item.Value!.Value))
+            .OrderBy(item => item.Time)
+            .ToArray();
+        if (readings.Length < 2)
+        {
+            return "No recent trend";
+        }
+
+        var delta = readings[^1].Value - readings[0].Value;
+        var threshold = kind == MetricKind.Temperature && preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit ? 0.9 : kind == MetricKind.Temperature ? 0.5 : 1;
+        var trend = Math.Abs(delta) < threshold ? "Steady" : delta > 0 ? "Rising" : "Falling";
+
+        return $"{trend} this hour";
+    }
+
+    private void UpdateCo2DaySummary(Aranet4Device? device, DateTime now)
+    {
+        var samples = device?.History
+            .Where(sample => sample.Ppm > 0 && sample.Time >= now - TimeSpan.FromHours(24) && sample.Time <= now)
+            .OrderBy(sample => sample.Time)
+            .ToArray() ?? [];
+
+        if (samples.Length == 0)
+        {
+            Co2DayShareText.Text = "—";
+            Co2DayShareDetailText.Text = "No readings · 24 h";
+            Co2DayPeakText.Text = "—";
+            Co2DayPeakTimeText.Text = "No readings";
+            Co2AiringTimeText.Text = "—";
+            Co2AiringDetailText.Text = "No clear drop detected";
+            return;
+        }
+
+        var belowThreshold = samples.Count(sample => sample.Ppm < 1000);
+        Co2DayShareText.Text = $"{Math.Round(belowThreshold * 100.0 / samples.Length):0}%";
+        Co2DayShareDetailText.Text = "Good · 24 h";
+
+        var peak = samples.MaxBy(sample => sample.Ppm)!;
+        Co2DayPeakText.Text = $"{peak.Ppm:N0} ppm";
+        Co2DayPeakTimeText.Text = $"Peak · {peak.Time.ToString("t", CultureInfo.CurrentCulture)}";
+
+        const int minimumAiringDropPpm = 200;
+        Co2Sample? latestAiringStart = null;
+        var index = 0;
+        while (index < samples.Length - 1)
+        {
+            var startIndex = index;
+            var endIndex = index;
+            while (endIndex + 1 < samples.Length && samples[endIndex + 1].Ppm < samples[endIndex].Ppm)
+            {
+                endIndex++;
+            }
+
+            var drop = samples[startIndex].Ppm - samples[endIndex].Ppm;
+            if (drop >= minimumAiringDropPpm)
+            {
+                latestAiringStart = samples[startIndex];
+            }
+
+            index = Math.Max(endIndex, index + 1);
+        }
+
+        if (latestAiringStart is null)
+        {
+            Co2AiringTimeText.Text = "—";
+            Co2AiringDetailText.Text = "No clear drop detected";
+            return;
+        }
+
+        Co2AiringTimeText.Text = latestAiringStart.Time.ToString("t", CultureInfo.CurrentCulture);
+        Co2AiringDetailText.Text = "CO₂ drop detected";
     }
 
     private void RefreshChart()
@@ -181,37 +264,66 @@ public partial class MainWindow
         var device = Dashboard.SelectedDevice;
         var now = DateTime.Now;
 
+        UpdateCo2DaySummary(device, now);
+
         HistoryChart.Metric = Dashboard.SelectedMetric;
         HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
         HistoryChart.Samples = device?.History;
         HistoryChart.Range = Dashboard.HistoryRange;
         HistoryChart.InvalidateVisual();
+        AutomationProperties.SetName(HistoryChart, $"{Metrics.Title(Dashboard.SelectedMetric)} history chart");
 
-        ChartTitleText.Text = $"{Metrics.Title(Dashboard.SelectedMetric)} history";
+        ChartTitleText.Text = Metrics.Title(Dashboard.SelectedMetric);
         ChartDot.Fill = AccentBrushes[Dashboard.SelectedMetric];
-        ChartStatsText.Text = device is null ? "No readings yet" : Metrics.Describe(device.History, Dashboard.HistoryRange, now, Dashboard.SelectedMetric, preferences.TemperatureDisplayUnit);
+        ChartContextDot.Fill = AccentBrushes[Dashboard.SelectedMetric];
+        UpdateChartContext();
+        ChartStatsText.Text = device is null
+            ? "No readings yet"
+            : DescribeChartSummary(device.History, Dashboard.HistoryRange, now, Dashboard.SelectedMetric);
 
-        TemperatureRangeText.Text = RangeSummary(device, MetricKind.Temperature, now);
-        HumidityRangeText.Text = RangeSummary(device, MetricKind.Humidity, now);
-        PressureRangeText.Text = RangeSummary(device, MetricKind.Pressure, now);
-        UpdateHumidityComfort(device);
+        TemperatureRangeText.Text = MetricSummary(device, MetricKind.Temperature, now);
+        HumidityRangeText.Text = MetricSummary(device, MetricKind.Humidity, now);
+        PressureRangeText.Text = MetricSummary(device, MetricKind.Pressure, now);
+
+        if (HistoryView is { Visibility: Visibility.Visible })
+        {
+            RefreshHistoryView();
+        }
     }
 
-    /// <summary>Comfort word and badge next to the humidity label (Dry under 40%, Comfortable 40–60%, Humid above 60%).</summary>
-    private void UpdateHumidityComfort(Aranet4Device? device)
+    private string DescribeChartSummary(
+        IReadOnlyList<Co2Sample> samples,
+        TimeSpan? range,
+        DateTime now,
+        MetricKind kind)
     {
-        var latest = device?.History.LastOrDefault(sample => sample.HumidityPercent.HasValue)?.HumidityPercent;
-        if (latest is not { } humidity)
+        var from = range is null ? DateTime.MinValue : now - range.Value;
+        var values = samples
+            .Where(sample => sample.Time >= from && sample.Time <= now)
+            .Select(sample => Metrics.Value(sample, kind, preferences.TemperatureDisplayUnit))
+            .Where(value => value.HasValue)
+            .Select(value => value!.Value)
+            .ToArray();
+        if (values.Length == 0)
         {
-            HumidityComfortBadge.Visibility = Visibility.Collapsed;
-            return;
+            return Metrics.Describe(samples, range, now, kind, preferences.TemperatureDisplayUnit);
         }
 
-        var comfortable = humidity >= 40 && humidity <= 60;
-        HumidityComfortText.Text = humidity < 40 ? "Dry" : comfortable ? "Comfortable" : "Humid";
-        HumidityComfortText.Foreground = new SolidColorBrush(comfortable ? Color.FromRgb(0x1A, 0x7A, 0x45) : Color.FromRgb(0x7A, 0x4B, 0x00));
-        HumidityComfortBadge.Background = new SolidColorBrush(comfortable ? Color.FromRgb(0xE3, 0xF6, 0xEA) : Color.FromRgb(0xFF, 0xF4, 0xDC));
-        HumidityComfortBadge.Visibility = Visibility.Visible;
+        var unit = kind == MetricKind.Humidity
+            ? "%"
+            : $" {Metrics.Unit(kind, preferences.TemperatureDisplayUnit)}";
+        return $"Low {Metrics.Format(values.Min(), kind)} · average {Metrics.Format(values.Average(), kind)} · high {Metrics.Format(values.Max(), kind)}{unit}";
+    }
+
+    private void UpdateChartContext()
+    {
+        (ChartContextTitleText.Text, ChartContextText.Text) = Dashboard.SelectedMetric switch
+        {
+            MetricKind.Co2 => ("Outdoor reference · about 420 ppm", "Fresh outdoor air is the lowest level a room can reach."),
+            MetricKind.Temperature => ("Temperature trend", $"Temperature is shown in {Metrics.Unit(MetricKind.Temperature, preferences.TemperatureDisplayUnit)}; comfort varies by person and activity."),
+            MetricKind.Humidity => ("Typical indoor range · 40–60%", "Use this as a reference; comfort depends on the room."),
+            _ => ("Pressure trend", "Absolute pressure varies with altitude; trends are more useful."),
+        };
     }
 
     private void MetricTab_Checked(object sender, RoutedEventArgs e)
@@ -243,20 +355,35 @@ public partial class MainWindow
         var level = Co2Quality.Classify(ppm);
         var (icon, color) = level switch
         {
-            Co2Level.Good => ("✓", (Color)FindResource("Co2GoodColor")),
-            Co2Level.Fair => ("!", (Color)FindResource("Co2FairColor")),
-            _ => ("!", (Color)FindResource("Co2PoorColor")),
+            Co2Level.Good => ("●", (Color)FindResource("Co2GoodColor")),
+            Co2Level.Fair => ("●", (Color)FindResource("Co2FairColor")),
+            _ => ("●", (Color)FindResource("Co2PoorColor")),
         };
         QualityIcon.Text = icon;
-        QualityText.Text = Co2Quality.Describe(level);
-        QualityBadge.Background = new SolidColorBrush(color);
+        QualityText.Text = level switch
+        {
+            Co2Level.Good => "Good",
+            Co2Level.Fair => "Elevated",
+            _ => "High",
+        };
+        var statusColor = level switch
+        {
+            Co2Level.Good => (Color)FindResource("PositiveColor"),
+            Co2Level.Fair => (Color)FindResource("WarningColor"),
+            _ => (Color)FindResource("DangerColor"),
+        };
+        QualityBadge.Background = new SolidColorBrush(Color.FromArgb(0x1F, color.R, color.G, color.B));
+        QualityBadge.BorderBrush = new SolidColorBrush(color);
+        QualityBadge.BorderThickness = new Thickness(1);
+        QualityIcon.Foreground = new SolidColorBrush(statusColor);
+        QualityText.Foreground = new SolidColorBrush(statusColor);
         QualityBadge.Visibility = Visibility.Visible;
         Co2AdviceText.Text = ppm < Co2Quality.FairFromPpm
-            ? string.Empty
+            ? "Comfortable. Nothing to do."
             : ppm < Co2Quality.PoorFromPpm
-                ? "Consider opening a window"
-                : "Ventilate now";
-        Co2AdviceText.Visibility = ppm < Co2Quality.FairFromPpm ? Visibility.Collapsed : Visibility.Visible;
+                ? "Open a window for about 10 minutes."
+                : "Open a window or door when you can.";
+        Co2AdviceText.Visibility = Visibility.Visible;
 
         var fraction = Math.Clamp((ppm - 400) / 1600.0, 0.0, 1.0);
         GaugeLeft.Width = new GridLength(Math.Max(fraction, 0.001), GridUnitType.Star);
@@ -292,9 +419,10 @@ public partial class MainWindow
 
     private void ClearDetails()
     {
-        Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = AgeText.Text = IntervalText.Text = RssiText.Text = "—";
+        Co2Text.Text = TemperatureText.Text = HumidityText.Text = PressureText.Text = BatteryText.Text = FooterBatteryText.Text = DeviceMeasurementAgeText.Text = DeviceIntervalText.Text = RssiText.Text = "—";
         Co2UnitText.Visibility = Visibility.Collapsed;
         Co2CaptionText.Text = "Waiting for your first live reading, or sync history to download stored readings.";
+        UpdateCo2DaySummary(null, DateTime.Now);
         Co2CaptionText.Visibility = Visibility.Visible;
         Co2AdviceText.Visibility = Visibility.Collapsed;
         Co2Text.Text = "–";
@@ -304,6 +432,7 @@ public partial class MainWindow
         PressureUnitText.Text = Metrics.Unit(MetricKind.Pressure, preferences.TemperatureDisplayUnit);
         HumidityRangeText.Text = string.Empty;
         BatteryBar.Value = 0;
+        FooterBatteryBar.Value = 0;
         DetailSignal.Bars = 0;
         ShowQuality(0);
         SyncHistoryButton.IsEnabled = false;
@@ -320,7 +449,6 @@ public partial class MainWindow
         AutomationProperties.SetName(HumidityTab, "Humidity, no reading, show history");
         AutomationProperties.SetName(PressureTab, "Pressure, no reading, show history");
         HistoryChart.Samples = null;
-        UpdateHumidityComfort(null);
         ChartStatsText.Text = "No readings yet";
         HistoryChart.InvalidateVisual();
         UpdateHeaderSensorState();

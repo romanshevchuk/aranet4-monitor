@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -27,6 +28,7 @@ public sealed class ToastWindow : Window
 
     public ToastWindow(string title, string body, ToastKind kind)
     {
+        Title = title;
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -36,13 +38,16 @@ public sealed class ToastWindow : Window
         ResizeMode = ResizeMode.NoResize;
         Opacity = 0;
 
-        var accent = kind switch
+        var (accent, accentBackground) = kind switch
         {
-            ToastKind.Danger => Color.FromRgb(0xEF, 0x5B, 0x5B),
-            ToastKind.Warning => Color.FromRgb(0xF5, 0xB9, 0x42),
-            ToastKind.Success => Color.FromRgb(0x2E, 0xC2, 0x7E),
-            _ => Color.FromRgb(0x5B, 0x9B, 0xFF),
+            ToastKind.Danger => ("Danger", "DangerBackground"),
+            ToastKind.Warning => ("Warning", "WarningBackground"),
+            ToastKind.Success => ("Positive", "PositiveBackground"),
+            _ => ("Info", "SurfaceSelected"),
         };
+        var accentBrush = ResourceBrush(accent);
+        var accentBackgroundBrush = ResourceBrush(accentBackground);
+        var textPrimaryBrush = ResourceBrush("TextPrimary");
         var symbol = kind switch
         {
             ToastKind.Danger or ToastKind.Warning => "!",
@@ -57,7 +62,7 @@ public sealed class ToastWindow : Window
             FontFamily = font,
             FontSize = 16,
             FontWeight = FontWeights.SemiBold,
-            Foreground = Brushes.White,
+            Foreground = textPrimaryBrush,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 10, 0),
         };
@@ -66,7 +71,7 @@ public sealed class ToastWindow : Window
             Text = body,
             FontFamily = font,
             FontSize = 14,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xD7, 0xE7, 0xFF)),
+            Foreground = ResourceBrush("TextSecondary"),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 5, 0, 0),
         };
@@ -76,7 +81,7 @@ public sealed class ToastWindow : Window
             FontFamily = font,
             FontSize = 16,
             FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x0F, 0x1B, 0x2E)),
+            Foreground = accentBrush,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -85,7 +90,7 @@ public sealed class ToastWindow : Window
             Width = 30,
             Height = 30,
             Margin = new Thickness(14, 14, 0, 0),
-            Background = new SolidColorBrush(accent),
+            Background = accentBackgroundBrush,
             CornerRadius = new CornerRadius(15),
             Child = iconText,
             VerticalAlignment = VerticalAlignment.Top,
@@ -99,14 +104,16 @@ public sealed class ToastWindow : Window
             Padding = new Thickness(0),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            Foreground = new SolidColorBrush(Color.FromRgb(0xA9, 0xB6, 0xCB)),
+            Foreground = ResourceBrush("TextSecondary"),
             FontSize = 18,
             Cursor = System.Windows.Input.Cursors.Hand,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Top,
             ToolTip = "Dismiss",
+            FocusVisualStyle = (Style)System.Windows.Application.Current.FindResource("KeyboardFocusVisual"),
         };
         close.Click += (_, _) => Dismiss();
+        AutomationProperties.SetName(close, "Dismiss notification");
 
         var header = new Grid();
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -164,6 +171,9 @@ public sealed class ToastWindow : Window
         };
         Closed += (_, _) => timer.Stop();
     }
+
+    private static Brush ResourceBrush(string key) =>
+        (Brush)System.Windows.Application.Current.FindResource(key);
 
     /// <summary>Fades the pop-up out and closes it. Safe to call more than once.</summary>
     public void Dismiss()

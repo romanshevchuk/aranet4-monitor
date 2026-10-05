@@ -1,11 +1,217 @@
 using System.Globalization;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Aranet4Monitor;
 
 public partial class MainWindow
 {
+    private TimeSpan selectedHistoryRange = TimeSpan.FromDays(1);
+
+    private void HistoryRangeButton_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton { Tag: string tag }
+            || !int.TryParse(tag, CultureInfo.InvariantCulture, out var hours))
+        {
+            return;
+        }
+
+        selectedHistoryRange = TimeSpan.FromHours(hours);
+        RefreshHistoryView();
+    }
+
+    private void RefreshHistoryView()
+    {
+        if (LongHistoryChart is null)
+        {
+            return;
+        }
+
+        var device = Dashboard.SelectedDevice;
+        var now = DateTime.Now;
+        var allCo2 = device?.History.Where(sample => sample.Ppm > 0).ToArray() ?? [];
+        var recentCo2 = allCo2
+            .Where(sample => sample.Time >= now - TimeSpan.FromHours(24) && sample.Time <= now)
+            .ToArray();
+        LongHistoryChart.Metric = MetricKind.Co2;
+        LongHistoryChart.Samples = device?.History;
+        LongHistoryChart.Range = selectedHistoryRange;
+        LongHistoryChart.InvalidateVisual();
+
+        HistoryHeaderSummaryText.Text = recentCo2.Length == 0
+            ? device is null
+                ? "Select a sensor to explore its saved readings."
+                : $"{allCo2.Length:N0} readings stored on this PC · No readings in the last 24 hours"
+            : $"{Share(recentCo2.Count(sample => sample.Ppm < 1_000), recentCo2.Length)}% of the last 24 hours stayed below 1,000 ppm · {allCo2.Length:N0} readings stored on this PC";
+        HistoryLastSyncText.Text = device is null
+            ? "Not synced yet"
+            : historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
+                ? $"Last synced {syncedThrough.ToLocalTime():g}"
+                : "Not synced yet";
+        SyncHistoryButton.IsEnabled = device is not null && syncCancellation is null;
+        HistoryExportButton.IsEnabled = allCo2.Length > 0;
+        HistoryChartStatsText.Text = device is null
+            ? "No readings yet"
+            : Metrics.Describe(device.History, selectedHistoryRange, now, MetricKind.Co2);
+
+        RefreshDayAtAGlance(device, now);
+    }
+
+    private void RefreshDayAtAGlance(Aranet4Device? device, DateTime now)
+    {
+        const int bucketCount = 72;
+        var start = now - TimeSpan.FromHours(24);
+        var daySamples = device?.History
+            .Where(sample => sample.Ppm > 0 && sample.Time >= start && sample.Time <= now)
+            .OrderBy(sample => sample.Time)
+            .ToArray() ?? [];
+        var airingEvents = DetectAiringEvents(daySamples);
+
+        HistoryDayStrip.Children.Clear();
+        for (var index = 0; index < bucketCount; index++)
+        {
+            var bucketStart = start + TimeSpan.FromMinutes(index * 20);
+            var bucketEnd = bucketStart + TimeSpan.FromMinutes(20);
+            var bucket = daySamples
+                .Where(sample => sample.Time >= bucketStart && sample.Time < bucketEnd)
+                .ToArray();
+
+            var border = new Border
+            {
+                Background = (Brush)FindResource("SurfaceSecondary"),
+                CornerRadius = new CornerRadius(3),
+                Margin = new Thickness(1),
+                ToolTip = $"{bucketStart:t}–{bucketEnd:t}: no CO₂ readings",
+            };
+            if (bucket.Length > 0)
+            {
+                var average = (int)Math.Round(bucket.Average(sample => sample.Ppm));
+                var level = Co2Quality.Classify(average);
+                border.Background = (Brush)FindResource(level switch
+                {
+                    Co2Level.Good => "Co2GoodZone",
+                    Co2Level.Fair => "Co2FairZone",
+                    _ => "Co2PoorZone",
+                });
+                border.ToolTip = $"{bucketStart:t}–{bucketEnd:t}: average {average:N0} ppm · {Co2Quality.Describe(level)}";
+
+                if (airingEvents.Any(item => item.Start >= bucketStart && item.Start < bucketEnd))
+                {
+                    border.BorderBrush = (Brush)FindResource("TextPrimary");
+                    border.BorderThickness = new Thickness(1);
+                    border.ToolTip += " · airing detected";
+                }
+            }
+
+            HistoryDayStrip.Children.Add(border);
+        }
+
+        HistoryStartTimeText.Text = start.ToString("ddd HH:mm", CultureInfo.CurrentCulture);
+        HistoryQuarterTimeText.Text = (start + TimeSpan.FromHours(6)).ToString("HH:mm", CultureInfo.CurrentCulture);
+        HistoryHalfTimeText.Text = (start + TimeSpan.FromHours(12)).ToString("HH:mm", CultureInfo.CurrentCulture);
+        HistoryThreeQuarterTimeText.Text = (start + TimeSpan.FromHours(18)).ToString("HH:mm", CultureInfo.CurrentCulture);
+
+        var good = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Good);
+        var elevated = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Fair);
+        var high = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Poor);
+        var total = daySamples.Length;
+        HistoryZoneShareBar.Children.Clear();
+        HistoryZoneShareBar.ColumnDefinitions.Clear();
+        if (total == 0)
+        {
+            HistoryZoneShareText.Text = "No readings in the last 24 hours.";
+            HistoryOvernightText.Text = "Overnight: no readings yet.";
+            HistoryAiringText.Text = "No clear airing detected in the last 24 hours.";
+            HistoryPeakText.Text = "Highest: no readings yet.";
+            return;
+        }
+
+        var zones = new[]
+        {
+            (Count: good, Resource: "Co2GoodZone"),
+            (Count: elevated, Resource: "Co2FairZone"),
+            (Count: high, Resource: "Co2PoorZone"),
+        };
+        var column = 0;
+        foreach (var zone in zones.Where(zone => zone.Count > 0))
+        {
+            HistoryZoneShareBar.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = new GridLength(zone.Count, GridUnitType.Star),
+            });
+            var segment = new Border
+            {
+                Background = (Brush)FindResource(zone.Resource),
+                CornerRadius = new CornerRadius(6),
+                Margin = new Thickness(1, 0, 1, 0),
+                ToolTip = $"{Math.Round(zone.Count * 100.0 / total):0}% of readings",
+            };
+            Grid.SetColumn(segment, column++);
+            HistoryZoneShareBar.Children.Add(segment);
+        }
+
+        HistoryZoneShareText.Text = $"{Share(good, total)}% good · {Share(elevated, total)}% elevated · {Share(high, total)}% high · of readings";
+
+        var overnight = daySamples
+            .Where(sample => sample.Time.Hour >= 23 || sample.Time.Hour < 7)
+            .ToArray();
+        HistoryOvernightText.Text = overnight.Length == 0
+            ? "Overnight (23:00–07:00): no readings yet."
+            : $"Overnight (23:00–07:00): average {overnight.Average(sample => sample.Ppm):N0} ppm, peaking at {overnight.Max(sample => sample.Ppm):N0} ppm.";
+
+        (DateTime Start, DateTime End, int Drop)? latestAiring = airingEvents.Count > 0 ? airingEvents[^1] : null;
+        HistoryAiringText.Text = latestAiring is { } airing
+            ? $"Airing detected {airingEvents.Count} time{(airingEvents.Count == 1 ? string.Empty : "s")}. Latest at {airing.Start:t}: CO₂ fell about {airing.Drop:N0} ppm over {DescribeDuration(airing.End - airing.Start)}."
+            : "No clear airing detected in the last 24 hours.";
+
+        var peak = daySamples.MaxBy(sample => sample.Ppm)!;
+        HistoryPeakText.Text = $"Highest: {peak.Ppm:N0} ppm at {peak.Time:t}.";
+    }
+
+    private static int Share(int count, int total) => total == 0 ? 0 : (int)Math.Round(count * 100.0 / total);
+
+    private static string DescribeDuration(TimeSpan duration) => duration.TotalHours >= 1
+        ? $"{duration.TotalHours:0.#} hours"
+        : $"{Math.Max(1, (int)Math.Round(duration.TotalMinutes))} minutes";
+
+    private static List<(DateTime Start, DateTime End, int Drop)> DetectAiringEvents(IReadOnlyList<Co2Sample> samples)
+    {
+        var events = new List<(DateTime Start, DateTime End, int Drop)>();
+        var index = 0;
+        while (index < samples.Count - 2)
+        {
+            if (samples[index].Ppm - samples[index + 2].Ppm < 100)
+            {
+                index++;
+                continue;
+            }
+
+            var startIndex = index;
+            while (startIndex > 0 && samples[startIndex - 1].Ppm > samples[startIndex].Ppm)
+            {
+                startIndex--;
+            }
+
+            var endIndex = index + 2;
+            while (endIndex < samples.Count - 1 && samples[endIndex + 1].Ppm < samples[endIndex].Ppm)
+            {
+                endIndex++;
+            }
+
+            var drop = samples[startIndex].Ppm - samples[endIndex].Ppm;
+            if (drop >= 200)
+            {
+                events.Add((samples[startIndex].Time, samples[endIndex].Time, drop));
+            }
+
+            index = endIndex;
+        }
+
+        return events;
+    }
+
     private void ExportCsv_Click(object sender, RoutedEventArgs e)
     {
         if (Dashboard.SelectedDevice is not { History.Count: > 0 } device)
@@ -15,10 +221,15 @@ public partial class MainWindow
         }
 
         IEnumerable<Co2Sample> samples = device.History;
-        if (sender is System.Windows.Controls.MenuItem { Tag: "visible" }
-            && Dashboard.HistoryRange is { } visibleRange)
+        TimeSpan? visibleRange = sender switch
         {
-            var earliest = DateTime.Now - visibleRange;
+            Button { Tag: "visible" } => selectedHistoryRange,
+            System.Windows.Controls.MenuItem { Tag: "visible" } => Dashboard.HistoryRange,
+            _ => null,
+        };
+        if (visibleRange is { } range)
+        {
+            var earliest = DateTime.Now - range;
             samples = samples.Where(sample => sample.Time >= earliest);
             if (!samples.Any())
             {
