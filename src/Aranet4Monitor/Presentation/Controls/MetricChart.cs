@@ -16,18 +16,26 @@ public sealed class MetricChart : FrameworkElement
     private static readonly Typeface Regular = new(Font, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
     private static readonly Typeface Bold = new(Font, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 
-    private static readonly Color Good = Color.FromRgb(0x24, 0xB7, 0x7C);
-    private static readonly Color Warn = Color.FromRgb(0xE7, 0xA5, 0x2F);
-    private static readonly Color Bad = Color.FromRgb(0xD8, 0x5A, 0x50);
+    // Rebuilt lazily whenever the theme changes.
+    private static Palette? palette;
 
-    private static readonly Brush AxisText = Solid(Color.FromRgb(0x61, 0x72, 0x7E));
-    private static readonly Brush InkText = Solid(Color.FromRgb(0x17, 0x23, 0x2C));
-    private static readonly Brush MutedText = Solid(Color.FromRgb(0x61, 0x72, 0x7E));
-    private static readonly Pen GridPen = new(Solid(Color.FromRgb(0xD9, 0xE2, 0xE7)), 1);
-    private static readonly Pen TooltipPen = new(Solid(Color.FromRgb(0xD9, 0xE2, 0xE7)), 1);
-    private static readonly Pen ThresholdPen = new(Solid(Color.FromRgb(0x9A, 0xA8, 0xB0)), 1) { DashStyle = DashStyles.Dash };
-    private static readonly Pen CursorPen = new(Solid(Color.FromRgb(0x9A, 0xA8, 0xB0)), 1) { DashStyle = DashStyles.Dash };
-    private static readonly Pen FocusPen = new(Solid(Color.FromRgb(0x17, 0x6B, 0xC4)), 2);
+    private static Palette ThemePalette => palette is { } current && current.Version == ThemeService.Version
+        ? current
+        : palette = Palette.Create();
+
+    private static Color Good => ThemePalette.Good;
+    private static Color Warn => ThemePalette.Warn;
+    private static Color Bad => ThemePalette.Bad;
+
+    private static Brush AxisText => ThemePalette.Muted;
+    private static Brush InkText => ThemePalette.Ink;
+    private static Brush MutedText => ThemePalette.Muted;
+    private static Brush SurfaceFill => ThemePalette.Surface;
+    private static Pen GridPen => ThemePalette.Grid;
+    private static Pen TooltipPen => ThemePalette.Grid;
+    private static Pen ThresholdPen => ThemePalette.Threshold;
+    private static Pen CursorPen => ThemePalette.Threshold;
+    private static Pen FocusPen => ThemePalette.Focus;
 
     /// <summary>A longer silence than this breaks the line instead of drawing a misleading straight segment.</summary>
     private static readonly TimeSpan GapThreshold = TimeSpan.FromMinutes(30);
@@ -84,6 +92,13 @@ public sealed class MetricChart : FrameworkElement
     private int first, end;
     private int hover = -1;
 
+    public MetricChart()
+    {
+        Loaded += (_, _) => ThemeService.Changed += OnThemeChanged;
+        Unloaded += (_, _) => ThemeService.Changed -= OnThemeChanged;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) => InvalidateVisual();
     protected override Size MeasureOverride(Size availableSize) =>
         new(double.IsInfinity(availableSize.Width) ? 400 : availableSize.Width,
             double.IsInfinity(availableSize.Height) ? 200 : availableSize.Height);
@@ -409,7 +424,7 @@ public sealed class MetricChart : FrameworkElement
         {
             for (var i = first; i < end; i++)
             {
-                dc.DrawEllipse(Brushes.White, new Pen(Solid(PointColor(kind, pts[i].Value, accent)), 1.75),
+                dc.DrawEllipse(SurfaceFill, new Pen(Solid(PointColor(kind, pts[i].Value, accent)), 1.75),
                     new Point(X(pts[i].Time), Y(pts[i].Value)), 3, 3);
             }
         }
@@ -418,7 +433,7 @@ public sealed class MetricChart : FrameworkElement
         if (hover == -1)
         {
             var newest = pts[end - 1];
-            dc.DrawEllipse(Solid(PointColor(kind, newest.Value, accent)), new Pen(Brushes.White, 2.5), new Point(X(newest.Time), Y(newest.Value)), 5, 5);
+            dc.DrawEllipse(Solid(PointColor(kind, newest.Value, accent)), new Pen(SurfaceFill, 2.5), new Point(X(newest.Time), Y(newest.Value)), 5, 5);
         }
         else
         {
@@ -519,7 +534,7 @@ public sealed class MetricChart : FrameworkElement
     private void DrawHover(DrawingContext dc, MetricKind kind, Color accent, Pt point, double px, double py, bool includeDay)
     {
         dc.DrawLine(CursorPen, new Point(px, plot.Top), new Point(px, plot.Bottom));
-        dc.DrawEllipse(Solid(PointColor(kind, point.Value, accent)), new Pen(Brushes.White, 2.5), new Point(px, py), 6, 6);
+        dc.DrawEllipse(Solid(PointColor(kind, point.Value, accent)), new Pen(SurfaceFill, 2.5), new Point(px, py), 6, 6);
 
         var value = Text(Metrics.FormatWithUnit(point.Value, kind, TemperatureDisplayUnit), 15, InkText, bold: true);
         var when = point.Time.ToString(includeDay ? "ddd HH:mm" : "HH:mm", CultureInfo.CurrentCulture);
@@ -531,7 +546,7 @@ public sealed class MetricChart : FrameworkElement
         var boxX = px + 14 + boxW > plot.Right ? px - 14 - boxW : px + 14;
         var boxY = Math.Clamp(py - boxH / 2, plot.Top + 2, plot.Bottom - boxH - 2);
 
-        dc.DrawRoundedRectangle(Brushes.White, TooltipPen, new Rect(boxX, boxY, boxW, boxH), 8, 8);
+        dc.DrawRoundedRectangle(SurfaceFill, TooltipPen, new Rect(boxX, boxY, boxW, boxH), 8, 8);
         dc.DrawText(value, new Point(boxX + padX, boxY + padY));
         dc.DrawText(detail, new Point(boxX + padX, boxY + padY + value.Height + 1));
     }
@@ -618,5 +633,38 @@ public sealed class MetricChart : FrameworkElement
         var brush = new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
         brush.Freeze();
         return brush;
+    }
+
+    /// <summary>Theme-dependent drawing objects, created once per palette change.</summary>
+    private sealed class Palette
+    {
+        public required int Version { get; init; }
+        public required Color Good { get; init; }
+        public required Color Warn { get; init; }
+        public required Color Bad { get; init; }
+        public required Brush Ink { get; init; }
+        public required Brush Muted { get; init; }
+        public required Brush Surface { get; init; }
+        public required Pen Grid { get; init; }
+        public required Pen Threshold { get; init; }
+        public required Pen Focus { get; init; }
+
+        public static Palette Create()
+        {
+            var muted = Solid(ThemeService.GetColor("TextSecondaryColor"));
+            return new Palette
+            {
+                Version = ThemeService.Version,
+                Good = ThemeService.GetColor("Co2GoodColor"),
+                Warn = ThemeService.GetColor("Co2FairColor"),
+                Bad = ThemeService.GetColor("Co2PoorColor"),
+                Ink = Solid(ThemeService.GetColor("TextPrimaryColor")),
+                Muted = muted,
+                Surface = Solid(ThemeService.GetColor("SurfaceColor")),
+                Grid = new Pen(Solid(ThemeService.GetColor("BorderColor")), 1),
+                Threshold = new Pen(Solid(ThemeService.GetColor("DisabledColor")), 1) { DashStyle = DashStyles.Dash },
+                Focus = new Pen(Solid(ThemeService.GetColor("AccentColor")), 2),
+            };
+        }
     }
 }

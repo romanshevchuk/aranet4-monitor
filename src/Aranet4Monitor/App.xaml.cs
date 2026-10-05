@@ -1,3 +1,5 @@
+using Aranet4Monitor.Presentation;
+
 namespace Aranet4Monitor;
 
 public partial class App : System.Windows.Application
@@ -6,7 +8,10 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
-        var mainWindow = new MainWindow(new AppServices());
+        var services = new AppServices();
+        ThemeService.Initialize(services.Preferences.Theme);
+
+        var mainWindow = new MainWindow(services);
         MainWindow = mainWindow;
         mainWindow.Show();
     }

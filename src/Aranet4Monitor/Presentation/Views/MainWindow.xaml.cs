@@ -34,25 +34,20 @@ public partial class MainWindow : Window
     private bool isNarrowDashboardLayout;
     private StatusKind statusKind = StatusKind.Idle;
 
-    private static readonly Brush DotLive = Frozen(Color.FromRgb(0x2E, 0xC2, 0x7E));
-    private static readonly Brush DotStale = Frozen(Color.FromRgb(0xF5, 0xB9, 0x42));
-    private static readonly Brush DotIdle = Frozen(Color.FromRgb(0x8F, 0xA3, 0xBF));
-    private static readonly Brush SeenLive = Frozen(Color.FromRgb(0x9D, 0xB8, 0xE0));
-    private static readonly Brush SeenStale = Frozen(Color.FromRgb(0xFF, 0xD2, 0x7A));
-    private static readonly Dictionary<MetricKind, Brush> AccentBrushes =
-        Enum.GetValues<MetricKind>().ToDictionary(kind => kind, kind => Frozen(MetricColors.Accent(kind)));
-    private static readonly Brush alertStatusNeutral = Frozen(Color.FromRgb(0x66, 0x73, 0x8A));
-    private static readonly Brush alertStatusSuccess = Frozen(Color.FromRgb(0x15, 0x80, 0x3D));
-    private static readonly Brush alertStatusWarning = Frozen(Color.FromRgb(0xB4, 0x53, 0x09));
-    private static readonly Brush alertStatusDanger = Frozen(Color.FromRgb(0xB4, 0x23, 0x18));
+    private static Brush DotLive => ThemeService.GetBrush("Co2Good");
+    private static Brush DotStale => ThemeService.GetBrush("Co2Fair");
+    private static Brush DotIdle => ThemeService.GetBrush("Disabled");
+    private static Brush SeenStale => ThemeService.GetBrush("Warning");
+    private static readonly AccentBrushSet AccentBrushes = new();
+    private static Brush alertStatusNeutral => ThemeService.GetBrush("TextSecondary");
+    private static Brush alertStatusSuccess => ThemeService.GetBrush("Positive");
+    private static Brush alertStatusWarning => ThemeService.GetBrush("Warning");
+    private static Brush alertStatusDanger => ThemeService.GetBrush("Danger");
 
-    private static Brush Frozen(Color color)
+    private sealed class AccentBrushSet
     {
-        var brush = new SolidColorBrush(color);
-        brush.Freeze();
-        return brush;
+        public Brush this[MetricKind kind] => ThemeService.AccentBrush(kind);
     }
-
     public MainWindow(AppServices services)
     {
         preferencesStore = services.PreferencesStore;
@@ -68,6 +63,8 @@ public partial class MainWindow : Window
         PoorZoneText.Text = "High";
         CelsiusUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
         FahrenheitUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
+        UpdateThemeMenu();
+        ThemeService.Changed += ThemeService_Changed;
         ShowNumberMenuItem.IsChecked = preferences.TrayShowNumber;
         LargePopupsMenuItem.IsChecked = preferences.LargePopups;
         StartWithWindowsMenuItem.IsChecked = StartupRegistration.IsEnabled;
@@ -128,6 +125,7 @@ public partial class MainWindow : Window
             StopWatching();
             sensorSource.AdvertisementReceived -= SensorSource_AdvertisementReceived;
             sensorSource.Stopped -= SensorSource_Stopped;
+            ThemeService.Changed -= ThemeService_Changed;
             sensorSource.Dispose();
             notifications.Dispose();
         };
@@ -307,30 +305,30 @@ public partial class MainWindow : Window
                 NoticeText.Text = "Live readings are off.";
                 NoticeActionButton.Content = "Start listening";
                 BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.Background = (Brush)FindResource("SurfaceSecondary");
-                NoticeBar.BorderBrush = (Brush)FindResource("Border");
+                NoticeBar.SetResourceReference(Border.BackgroundProperty, "SurfaceSecondary");
+                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Border");
                 NoticeBar.ToolTip = null;
                 break;
             case StatusKind.Error:
                 NoticeText.Text = "Live readings stopped. Check Bluetooth settings or permissions, then try again.";
                 NoticeActionButton.Content = "Try again";
                 BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.Background = (Brush)FindResource("DangerBackground");
-                NoticeBar.BorderBrush = (Brush)FindResource("Danger");
+                NoticeBar.SetResourceReference(Border.BackgroundProperty, "DangerBackground");
+                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Danger");
                 NoticeBar.ToolTip = details ?? text;
                 break;
             case StatusKind.BluetoothUnavailable:
                 NoticeText.Text = "Bluetooth is off. Turn it on in Windows settings to see live readings.";
                 NoticeActionButton.Visibility = Visibility.Collapsed;
                 BluetoothSettingsButton.Visibility = Visibility.Visible;
-                NoticeBar.Background = (Brush)FindResource("WarningBackground");
-                NoticeBar.BorderBrush = (Brush)FindResource("Warning");
+                NoticeBar.SetResourceReference(Border.BackgroundProperty, "WarningBackground");
+                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Warning");
                 NoticeBar.ToolTip = details ?? text;
                 break;
             default:
                 NoticeActionButton.Visibility = Visibility.Visible;
-                NoticeBar.Background = (Brush)FindResource("PositiveBackground");
-                NoticeBar.BorderBrush = (Brush)FindResource("Positive");
+                NoticeBar.SetResourceReference(Border.BackgroundProperty, "PositiveBackground");
+                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Positive");
                 NoticeBar.ToolTip = details;
                 break;
         }
@@ -368,7 +366,7 @@ public partial class MainWindow : Window
         if (statusKind == StatusKind.Error)
         {
             UpdateFooterStatus("Listener error", "Danger");
-            DeviceDot.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            DeviceDot.Fill = ThemeService.GetBrush("Danger");
             DeviceChipButton.ToolTip = "Live readings stopped. Try starting the listener again.";
             return;
         }

@@ -60,11 +60,11 @@ public partial class MainWindow
         FooterBatteryText.Text = device.Battery;
         BatteryBar.Value = device.BatteryValue;
         FooterBatteryBar.Value = device.BatteryValue;
-        var batteryBrush = new SolidColorBrush(device.BatteryValue switch
+        var batteryBrush = ThemeService.GetBrush(device.BatteryValue switch
         {
-            <= 15 => Color.FromRgb(0xEF, 0x5B, 0x5B),
-            <= 35 => Color.FromRgb(0xF5, 0xB9, 0x42),
-            _ => Color.FromRgb(0x22, 0xC5, 0x5E),
+            <= 15 => "Danger",
+            <= 35 => "Co2Fair",
+            _ => "Co2Good",
         });
         BatteryBar.Foreground = batteryBrush;
         FooterBatteryBar.Foreground = batteryBrush;

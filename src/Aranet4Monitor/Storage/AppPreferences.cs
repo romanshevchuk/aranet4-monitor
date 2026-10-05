@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Aranet4Monitor.Application.Alerts;
+using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor.Storage;
 
@@ -11,6 +12,9 @@ public sealed class AppPreferences
 
     [JsonConverter(typeof(JsonStringEnumConverter<TemperatureUnit>))]
     public TemperatureUnit TemperatureDisplayUnit { get; set; } = TemperatureUnit.Celsius;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<AppTheme>))]
+    public AppTheme Theme { get; set; } = AppTheme.Auto;
 
     public DateTime? LastCo2AlertAt { get; set; }
 

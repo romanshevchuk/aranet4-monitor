@@ -12,7 +12,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         SizeChanged="Window_SizeChanged"
-        Background="{StaticResource AppBackground}"
+        Background="{DynamicResource AppBackground}"
         FontFamily="{StaticResource AppFontFamily}"
         FontSize="13"
         UseLayoutRounding="True">
@@ -23,8 +23,8 @@
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
     <Border Margin="8"
-            Background="{StaticResource Surface}"
-            BorderBrush="{StaticResource Border}"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Border}"
             BorderThickness="1"
             CornerRadius="20"
             ClipToBounds="True">
@@ -43,14 +43,15 @@
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0"
                         Padding="22,17"
-                        Background="{StaticResource Surface}"
-                        BorderBrush="{StaticResource Border}"
+                        Background="{DynamicResource Surface}"
+                        BorderBrush="{DynamicResource Border}"
                         BorderThickness="0,0,0,1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
@@ -61,14 +62,14 @@
                             <Grid Width="30"
                                   Height="30"
                                   Margin="0,0,12,0">
-                                <Ellipse Stroke="{StaticResource Co2Good}"
+                                <Ellipse Stroke="{DynamicResource Co2Good}"
                                          StrokeThickness="2.5"/>
                                 <Ellipse Width="10"
                                          Height="10"
-                                         Fill="{StaticResource Co2Good}"/>
+                                         Fill="{DynamicResource Co2Good}"/>
                             </Grid>
                             <TextBlock Text="Air Pulse"
-                                       Foreground="{StaticResource TextPrimary}"
+                                       Foreground="{DynamicResource TextPrimary}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
@@ -113,18 +114,18 @@
                                 <Ellipse x:Name="DeviceDot"
                                          Width="9"
                                          Height="9"
-                                         Fill="{StaticResource Muted}"
+                                         Fill="{DynamicResource Muted}"
                                          Margin="0,0,9,0"
                                          VerticalAlignment="Center"/>
                                 <TextBlock x:Name="ChipNameText"
                                            Text="Searching for sensor…"
                                            MaxWidth="125"
                                            FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}"
+                                           Foreground="{DynamicResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="▾"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            Margin="9,0,0,0"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
@@ -142,11 +143,11 @@
                                 <ProgressBar Width="24"
                                              Height="4"
                                              IsIndeterminate="True"
-                                             Foreground="{StaticResource Co2Good}"
-                                             Background="{StaticResource Border}"/>
+                                             Foreground="{DynamicResource Co2Good}"
+                                             Background="{DynamicResource Border}"/>
                                 <TextBlock x:Name="SyncStatusText"
                                            FontSize="12"
-                                           Foreground="{StaticResource TextPrimary}"
+                                           Foreground="{DynamicResource TextPrimary}"
                                            Margin="8,0,0,0"
                                            VerticalAlignment="Center"
                                            MaxWidth="190"
@@ -204,6 +205,23 @@
                                                   IsCheckable="True"
                                                   Click="TemperatureUnit_Click"/>
                                     </MenuItem>
+                                    <MenuItem Header="Appearance">
+                                        <MenuItem x:Name="AutoThemeMenuItem"
+                                                  Header="Match Windows"
+                                                  Tag="Auto"
+                                                  IsCheckable="True"
+                                                  Click="ThemeMenuItem_Click"/>
+                                        <MenuItem x:Name="LightThemeMenuItem"
+                                                  Header="Light"
+                                                  Tag="Light"
+                                                  IsCheckable="True"
+                                                  Click="ThemeMenuItem_Click"/>
+                                        <MenuItem x:Name="DarkThemeMenuItem"
+                                                  Header="Dark"
+                                                  Tag="Dark"
+                                                  IsCheckable="True"
+                                                  Click="ThemeMenuItem_Click"/>
+                                    </MenuItem>
                                     <MenuItem x:Name="ListenMenuItem"
                                               Header="Listen for live readings"
                                               IsCheckable="True"
@@ -224,7 +242,7 @@
                                               Click="BluetoothDiagnostics_Click"/>
                                     <Separator/>
                                     <MenuItem Header="Forget detected devices…"
-                                              Foreground="{StaticResource Danger}"
+                                              Foreground="{DynamicResource Danger}"
                                               Click="ClearButton_Click"/>
                                     <MenuItem Header="Exit Aranet4 Monitor"
                                               ToolTip="Closing the window keeps the app running in the tray."
@@ -232,6 +250,28 @@
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
+
+                        <StackPanel Grid.Column="6"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="6,0,0,0"
+                                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button Content="&#xE921;"
+                                    Style="{StaticResource CaptionButton}"
+                                    Click="MinimizeWindow_Click"
+                                    ToolTip="Minimize"
+                                    AutomationProperties.Name="Minimize window"/>
+                            <Button Content="&#xE922;"
+                                    Style="{StaticResource CaptionButton}"
+                                    Click="ToggleWindowState_Click"
+                                    ToolTip="Maximize or restore"
+                                    AutomationProperties.Name="Maximize or restore window"/>
+                            <Button Content="&#xE8BB;"
+                                    Style="{StaticResource CaptionButton}"
+                                    Click="CloseWindow_Click"
+                                    ToolTip="Close (keeps running in the tray)"
+                                    AutomationProperties.Name="Close window"/>
+                        </StackPanel>
 
                         <!-- Device list + Bluetooth diagnostics: out of the way until wanted -->
                         <Popup x:Name="DevicePopup"
@@ -260,17 +300,17 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock x:Name="DevicesTitleText"
                                                    Text="SENSOR"
-                                                   Foreground="{StaticResource Ink}"
+                                                   Foreground="{DynamicResource Ink}"
                                                    FontSize="13"
                                                    FontWeight="Bold"
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
-                                                Background="{StaticResource SurfaceSelected}"
+                                                Background="{DynamicResource SurfaceSelected}"
                                                 CornerRadius="10"
                                                 Padding="9,2">
                                             <TextBlock x:Name="DevicesCountText"
                                                        Text="0"
-                                                       Foreground="{StaticResource Accent}"
+                                                       Foreground="{DynamicResource Accent}"
                                                        FontWeight="Bold"
                                                        FontSize="12"/>
                                         </Border>
@@ -298,12 +338,12 @@
                                                         <Ellipse.Style>
                                                             <Style TargetType="Ellipse">
                                                                 <Setter Property="Fill"
-                                                                        Value="{StaticResource Disabled}"/>
+                                                                        Value="{DynamicResource Disabled}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsLive}"
                                                                                  Value="True">
                                                                         <Setter Property="Fill"
-                                                                                Value="{StaticResource Positive}"/>
+                                                                                Value="{DynamicResource Positive}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -311,7 +351,7 @@
                                                     </Ellipse>
                                                     <TextBlock Grid.Column="1"
                                                                Text="{Binding Name}"
-                                                               Foreground="{StaticResource Ink}"
+                                                               Foreground="{DynamicResource Ink}"
                                                                FontWeight="SemiBold"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </Grid>
@@ -324,69 +364,69 @@
                                             <Ellipse x:Name="DeviceStatusDot"
                                                      Width="8"
                                                      Height="8"
-                                                     Fill="{StaticResource Muted}"
+                                                     Fill="{DynamicResource Muted}"
                                                      Margin="0,0,8,0"
                                                      VerticalAlignment="Center"/>
                                             <TextBlock x:Name="DeviceStatusText"
                                                        Text="Waiting for a sensor"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        FontWeight="SemiBold"/>
                                         </StackPanel>
                                         <TextBlock Text="Last measurement"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,10,0,0"/>
                                         <TextBlock x:Name="DeviceLastMeasurementText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"/>
+                                                   Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Measurement age"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <TextBlock x:Name="DeviceMeasurementAgeText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"/>
+                                                   Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Battery"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock x:Name="BatteryText"
                                                        Text="—"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        VerticalAlignment="Center"/>
                                             <ProgressBar x:Name="BatteryBar"
                                                          Style="{StaticResource ThinBar}"
-                                                         Foreground="{StaticResource Co2Good}"
+                                                         Foreground="{DynamicResource Co2Good}"
                                                          Width="64"
                                                          Margin="10,0,0,0"
                                                          VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <TextBlock Text="Signal"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <StackPanel Orientation="Horizontal">
                                             <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"/>
                                             <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        Margin="8,0,0,0"/>
                                         </StackPanel>
                                         <TextBlock Text="Measurement interval"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <TextBlock x:Name="DeviceIntervalText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"/>
+                                                   Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Firmware"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <TextBlock Text="{Binding SelectedDevice.Firmware}"
-                                                   Foreground="{StaticResource TextPrimary}"/>
+                                                   Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Address"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <DockPanel LastChildFill="False">
                                             <TextBlock x:Name="DeviceAddressText"
                                                        Text="—"
                                                        FontFamily="Cascadia Mono, Consolas"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        VerticalAlignment="Center"/>
                                             <Button DockPanel.Dock="Right"
                                                     Content="Copy"
@@ -395,11 +435,11 @@
                                                     ToolTip="Copy address"/>
                                         </DockPanel>
                                         <TextBlock Text="Last synced"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="0,8,0,0"/>
                                         <TextBlock x:Name="DeviceLastSyncedText"
                                                    Text="Not synced yet"
-                                                   Foreground="{StaticResource TextPrimary}"/>
+                                                   Foreground="{DynamicResource TextPrimary}"/>
                                         <Button Content="Sync history"
                                                 Style="{StaticResource HeaderActionButton}"
                                                 HorizontalAlignment="Left"
@@ -408,18 +448,18 @@
                                     </StackPanel>
                                     <TextBlock x:Name="EmptyHintText"
                                                Text="Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app."
-                                               Foreground="{StaticResource Muted}"
+                                               Foreground="{DynamicResource Muted}"
                                                TextWrapping="Wrap"
                                                Margin="2,2,2,8"/>
                                     <Expander x:Name="DiagnosticsExpander"
                                               Header="Advanced · Bluetooth diagnostics"
-                                              Foreground="{StaticResource TextSecondary}"
+                                              Foreground="{DynamicResource TextSecondary}"
                                               FontWeight="SemiBold"
                                               Margin="0,4,0,0">
                                         <StackPanel Margin="0,8,0,0">
                                             <TextBlock x:Name="PacketCountText"
                                                        Text="0 packets received"
-                                                       Foreground="{StaticResource Muted}"
+                                                       Foreground="{DynamicResource Muted}"
                                                        Margin="0,0,0,8"/>
                                             <DockPanel Margin="0,0,0,4"
                                                        LastChildFill="False">
@@ -441,9 +481,9 @@
                                                      FontFamily="Cascadia Mono, Consolas"
                                                      FontSize="12"
                                                      BorderThickness="0"
-                                                     Background="{StaticResource SurfaceSecondary}"
+                                                     Background="{DynamicResource SurfaceSecondary}"
                                                      Padding="8"
-                                                     Foreground="{StaticResource Ink}"/>
+                                                     Foreground="{DynamicResource Ink}"/>
                                             <DockPanel Margin="0,10,0,4"
                                                        LastChildFill="False">
                                                 <TextBlock Text="SCAN RESPONSE"
@@ -464,9 +504,9 @@
                                                      FontFamily="Cascadia Mono, Consolas"
                                                      FontSize="12"
                                                      BorderThickness="0"
-                                                     Background="{StaticResource SurfaceSecondary}"
+                                                     Background="{DynamicResource SurfaceSecondary}"
                                                      Padding="8"
-                                                     Foreground="{StaticResource Ink}"/>
+                                                     Foreground="{DynamicResource Ink}"/>
                                         </StackPanel>
                                     </Expander>
                                 </StackPanel>
@@ -486,11 +526,11 @@
                                     <TextBlock Text="Alert settings"
                                                FontSize="16"
                                                FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimary}"/>
+                                               Foreground="{DynamicResource TextPrimary}"/>
                                     <WrapPanel VerticalAlignment="Center"
                                                Margin="0,12,0,0">
                                         <TextBlock Text="Notify above"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,6,0"/>
                                         <TextBox x:Name="AlertThresholdTextBox"
@@ -503,7 +543,7 @@
                                                  LostFocus="AlertThreshold_LostFocus"
                                                  ToolTip="Ventilation alert threshold in ppm"/>
                                         <TextBlock Text="ppm for"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    VerticalAlignment="Center"
                                                    Margin="6,0,4,0"/>
                                         <TextBox x:Name="AlertDurationTextBox"
@@ -516,7 +556,7 @@
                                                  LostFocus="AlertThreshold_LostFocus"
                                                  ToolTip="Required sustained alert duration in minutes"/>
                                         <TextBlock Text="min"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    VerticalAlignment="Center"
                                                    Margin="4,0,0,0"/>
                                     </WrapPanel>
@@ -532,7 +572,7 @@
                                                 ToolTip="Silence ventilation alerts for one hour"/>
                                     </WrapPanel>
                                     <TextBlock x:Name="AlertStatusText"
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="12"
                                                Margin="0,8,0,0"
                                                TextWrapping="Wrap"/>
@@ -552,7 +592,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="NoticeText"
-                                   Foreground="{StaticResource TextPrimary}"
+                                   Foreground="{DynamicResource TextPrimary}"
                                    VerticalAlignment="Center"
                                    TextWrapping="Wrap"/>
                         <StackPanel Grid.Column="1"
@@ -575,8 +615,8 @@
                         Grid.Row="2"
                         Style="{StaticResource StatusBanner}"
                         Margin="22,0,22,10"
-                        Background="{StaticResource DangerBackground}"
-                        BorderBrush="{StaticResource Danger}"
+                        Background="{DynamicResource DangerBackground}"
+                        BorderBrush="{DynamicResource Danger}"
                         Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -584,7 +624,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="SyncProblemText"
-                                   Foreground="{StaticResource TextPrimary}"
+                                   Foreground="{DynamicResource TextPrimary}"
                                    VerticalAlignment="Center"
                                    TextWrapping="Wrap"/>
                         <StackPanel Grid.Column="1"
@@ -616,15 +656,15 @@
                           Margin="26,24,26,18">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"
-                                    MinHeight="300"/>
+                                           MinHeight="300"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="0.82*"
-                                    MinWidth="330"/>
+                                              MinWidth="330"/>
                             <ColumnDefinition Width="1.45*"
-                                    MinWidth="420"/>
+                                              MinWidth="420"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- CO₂ hero card -->
@@ -663,24 +703,24 @@
                                                     <TextBlock x:Name="QualityIcon"
                                                                FontSize="9"
                                                                FontWeight="Bold"
-                                                               Foreground="{StaticResource TextPrimary}"
+                                                               Foreground="{DynamicResource TextPrimary}"
                                                                Margin="0,0,6,0"/>
                                                     <TextBlock x:Name="QualityText"
                                                                FontWeight="Bold"
                                                                FontSize="12"
-                                                               Foreground="{StaticResource TextPrimary}"/>
+                                                               Foreground="{DynamicResource TextPrimary}"/>
                                                 </StackPanel>
                                             </Border>
                                         </Grid>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock x:Name="Co2Text"
                                                        Text="–"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        FontSize="118"
                                                        FontWeight="Light"/>
                                             <TextBlock x:Name="Co2UnitText"
                                                        Text="ppm CO₂"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="18"
                                                        FontWeight="Medium"
                                                        VerticalAlignment="Bottom"
@@ -695,14 +735,14 @@
                                                    AutomationProperties.LiveSetting="Polite"/>
                                         <TextBlock x:Name="Co2CaptionText"
                                                    Text="Waiting for your first live reading, or sync history to download stored readings."
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="13"
                                                    Margin="2,0,0,0"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock x:Name="Co2AdviceText"
                                                    FontSize="13"
                                                    FontWeight="Normal"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    Margin="2,4,0,0"
                                                    Visibility="Visible"/>
 
@@ -711,7 +751,7 @@
                                               Margin="0,24,0,0"
                                               Height="16">
                                             <Grid Height="8"
-                                                    VerticalAlignment="Center">
+                                                  VerticalAlignment="Center">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="3*"/>
                                                     <ColumnDefinition Width="2*"/>
@@ -720,15 +760,15 @@
                                                 <Border Grid.Column="0"
                                                         CornerRadius="4"
                                                         Margin="0,0,1.5,0"
-                                                        Background="{StaticResource Co2Good}"/>
+                                                        Background="{DynamicResource Co2Good}"/>
                                                 <Border Grid.Column="1"
                                                         CornerRadius="4"
                                                         Margin="1.5,0,1.5,0"
-                                                        Background="{StaticResource Co2Fair}"/>
+                                                        Background="{DynamicResource Co2Fair}"/>
                                                 <Border Grid.Column="2"
                                                         CornerRadius="4"
                                                         Margin="1.5,0,0,0"
-                                                        Background="{StaticResource Co2Poor}"/>
+                                                        Background="{DynamicResource Co2Poor}"/>
                                             </Grid>
                                             <Grid x:Name="GaugeMarkerGrid"
                                                   Visibility="Collapsed">
@@ -740,8 +780,8 @@
                                                 </Grid.ColumnDefinitions>
                                                 <Ellipse Width="16"
                                                          Height="16"
-                                                         Fill="White"
-                                                         Stroke="{StaticResource TextPrimary}"
+                                                         Fill="{DynamicResource Surface}"
+                                                         Stroke="{DynamicResource TextPrimary}"
                                                          StrokeThickness="3"
                                                          HorizontalAlignment="Right"
                                                          Margin="0,0,-8,0"/>
@@ -755,23 +795,23 @@
                                             <TextBlock x:Name="Gauge400Label"
                                                        Text="400"
                                                        Visibility="Collapsed"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                                             <TextBlock x:Name="Gauge1000Label"
                                                        Text="1,000"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                                             <TextBlock x:Name="Gauge1400Label"
                                                        Text="1,400"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                                             <TextBlock x:Name="Gauge2000Label"
                                                        Text="2,000+"
                                                        Visibility="Collapsed"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        SizeChanged="GaugeNumberLabel_SizeChanged"/>
                                         </Canvas>
@@ -783,7 +823,7 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock x:Name="GoodZoneText"
                                                        Text="Good"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        HorizontalAlignment="Stretch"
                                                        TextAlignment="Center"
@@ -792,7 +832,7 @@
                                             <TextBlock x:Name="FairZoneText"
                                                        Grid.Column="1"
                                                        Text="Elevated"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        HorizontalAlignment="Stretch"
                                                        TextAlignment="Center"
@@ -801,7 +841,7 @@
                                             <TextBlock x:Name="PoorZoneText"
                                                        Grid.Column="2"
                                                        Text="High"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="12"
                                                        HorizontalAlignment="Stretch"
                                                        TextAlignment="Center"
@@ -812,7 +852,7 @@
                                     <Border Grid.Row="1"
                                             Margin="0,14,0,0"
                                             Padding="0,14,0,0"
-                                            BorderBrush="{StaticResource Border}"
+                                            BorderBrush="{DynamicResource Border}"
                                             BorderThickness="0,1,0,0">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -823,7 +863,7 @@
                                             <StackPanel Margin="0,0,8,0">
                                                 <TextBlock x:Name="Co2DayShareText"
                                                            Text="—"
-                                                           Foreground="{StaticResource Ink}"
+                                                           Foreground="{DynamicResource Ink}"
                                                            FontSize="17"
                                                            FontWeight="SemiBold"/>
                                                 <TextBlock x:Name="Co2DayShareDetailText"
@@ -831,10 +871,10 @@
                                                            Style="{StaticResource SubText}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1"
-                                                    Margin="4,0,4,0">
+                                                        Margin="4,0,4,0">
                                                 <TextBlock x:Name="Co2DayPeakText"
                                                            Text="—"
-                                                           Foreground="{StaticResource Ink}"
+                                                           Foreground="{DynamicResource Ink}"
                                                            FontSize="17"
                                                            FontWeight="SemiBold"/>
                                                 <TextBlock x:Name="Co2DayPeakTimeText"
@@ -842,10 +882,10 @@
                                                            Style="{StaticResource SubText}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2"
-                                                    Margin="8,0,0,0">
+                                                        Margin="8,0,0,0">
                                                 <TextBlock x:Name="Co2AiringTimeText"
                                                            Text="—"
-                                                           Foreground="{StaticResource Ink}"
+                                                           Foreground="{DynamicResource Ink}"
                                                            FontSize="17"
                                                            FontWeight="SemiBold"/>
                                                 <TextBlock x:Name="Co2AiringDetailText"
@@ -883,19 +923,19 @@
                                             <Ellipse x:Name="ChartDot"
                                                      Width="8"
                                                      Height="8"
-                                                     Fill="{StaticResource Co2Good}"
+                                                     Fill="{DynamicResource Co2Good}"
                                                      Margin="0,0,8,0"
                                                      VerticalAlignment="Center"
                                                      Visibility="Collapsed"/>
                                             <TextBlock x:Name="ChartTitleText"
                                                        Text="CO₂"
-                                                       Foreground="{StaticResource Ink}"
+                                                       Foreground="{DynamicResource Ink}"
                                                        FontSize="14"
                                                        FontWeight="SemiBold"/>
                                         </StackPanel>
                                         <TextBlock x:Name="ChartStatsText"
                                                    Text="No readings yet"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="12"
                                                    Margin="0,4,0,0"
                                                    TextTrimming="CharacterEllipsis"/>
@@ -903,7 +943,7 @@
                                     <StackPanel Grid.Column="1"
                                                 Orientation="Horizontal"
                                                 VerticalAlignment="Center">
-                                        <Border Background="{StaticResource SurfaceSecondary}"
+                                        <Border Background="{DynamicResource SurfaceSecondary}"
                                                 CornerRadius="10"
                                                 Padding="3">
                                             <StackPanel Orientation="Horizontal">
@@ -938,7 +978,7 @@
                                 <Border Grid.Row="2"
                                         Margin="0,8,0,0"
                                         Padding="0,9,0,0"
-                                        BorderBrush="{StaticResource Border}"
+                                        BorderBrush="{DynamicResource Border}"
                                         BorderThickness="0,1,0,0">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -948,13 +988,13 @@
                                         <Ellipse x:Name="ChartContextDot"
                                                  Width="7"
                                                  Height="7"
-                                                 Fill="{StaticResource Co2Good}"
+                                                 Fill="{DynamicResource Co2Good}"
                                                  Margin="0,5,8,0"
                                                  VerticalAlignment="Top"/>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock x:Name="ChartContextTitleText"
                                                        Text="Outdoor reference · about 420 ppm"
-                                                       Foreground="{StaticResource Ink}"
+                                                       Foreground="{DynamicResource Ink}"
                                                        FontSize="12"
                                                        FontWeight="SemiBold"
                                                        TextWrapping="Wrap"/>
@@ -965,13 +1005,13 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock x:Name="ChartContextText"
                                                            Text="CO₂ is a ventilation signal; it does not measure particles or VOCs."
-                                                           Foreground="{StaticResource TextSecondary}"
+                                                           Foreground="{DynamicResource TextSecondary}"
                                                            FontSize="12"
                                                            TextWrapping="Wrap"/>
                                                 <TextBlock x:Name="ChartContextInfo"
                                                            Grid.Column="1"
                                                            Text="ⓘ"
-                                                           Foreground="{StaticResource TextSecondary}"
+                                                           Foreground="{DynamicResource TextSecondary}"
                                                            Background="Transparent"
                                                            FontSize="13"
                                                            Margin="8,0,0,0"
@@ -1010,7 +1050,7 @@
                                          Grid.Column="0"
                                          GroupName="Metric"
                                          Tag="Temperature"
-                                         Foreground="{StaticResource TemperatureAccent}"
+                                         Foreground="{DynamicResource TemperatureAccent}"
                                          Style="{StaticResource MetricTab}"
                                          Margin="0,0,14,0"
                                          Checked="MetricTab_Checked"
@@ -1018,31 +1058,31 @@
                                          AutomationProperties.Name="Temperature, no reading, show history">
                                 <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <Ellipse Width="8"
-                                                Height="8"
-                                                Fill="{StaticResource TemperatureAccent}"
-                                                VerticalAlignment="Center"/>
+                                                 Height="8"
+                                                 Fill="{DynamicResource TemperatureAccent}"
+                                                 VerticalAlignment="Center"/>
                                         <TextBlock Text="Temperature"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="13"
                                                    Margin="7,0,0,0"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <TextBlock x:Name="TemperatureText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"
+                                                   Foreground="{DynamicResource TextPrimary}"
                                                    FontSize="31"
                                                    FontWeight="Normal"/>
                                         <TextBlock x:Name="TemperatureUnitText"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="14"
                                                    VerticalAlignment="Bottom"
                                                    Margin="4,0,0,5"/>
                                     </StackPanel>
                                     <TextBlock x:Name="TemperatureRangeText"
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="12"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
@@ -1053,7 +1093,7 @@
                                          Grid.Column="1"
                                          GroupName="Metric"
                                          Tag="Humidity"
-                                         Foreground="{StaticResource HumidityAccent}"
+                                         Foreground="{DynamicResource HumidityAccent}"
                                          Style="{StaticResource MetricTab}"
                                          Margin="0,0,14,0"
                                          Checked="MetricTab_Checked"
@@ -1061,32 +1101,32 @@
                                          AutomationProperties.Name="Humidity, no reading, show history">
                                 <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <Ellipse Width="8"
-                                                Height="8"
-                                                Fill="{StaticResource HumidityAccent}"
-                                                VerticalAlignment="Center"/>
+                                                 Height="8"
+                                                 Fill="{DynamicResource HumidityAccent}"
+                                                 VerticalAlignment="Center"/>
                                         <TextBlock Text="Humidity"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="13"
                                                    Margin="7,0,0,0"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <TextBlock x:Name="HumidityText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"
+                                                   Foreground="{DynamicResource TextPrimary}"
                                                    FontSize="31"
                                                    FontWeight="Normal"/>
                                         <TextBlock x:Name="HumidityUnitText"
                                                    Text="%"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="14"
                                                    VerticalAlignment="Bottom"
                                                    Margin="4,0,0,5"/>
                                     </StackPanel>
                                     <TextBlock x:Name="HumidityRangeText"
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="12"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
@@ -1097,7 +1137,7 @@
                                          Grid.Column="2"
                                          GroupName="Metric"
                                          Tag="Pressure"
-                                         Foreground="{StaticResource PressureAccent}"
+                                         Foreground="{DynamicResource PressureAccent}"
                                          Margin="0"
                                          Style="{StaticResource MetricTab}"
                                          Checked="MetricTab_Checked"
@@ -1105,32 +1145,32 @@
                                          AutomationProperties.Name="Pressure, no reading, show history">
                                 <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <Ellipse Width="8"
-                                                Height="8"
-                                                Fill="{StaticResource PressureAccent}"
-                                                VerticalAlignment="Center"/>
+                                                 Height="8"
+                                                 Fill="{DynamicResource PressureAccent}"
+                                                 VerticalAlignment="Center"/>
                                         <TextBlock Text="Pressure"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="13"
                                                    Margin="7,0,0,0"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
+                                                VerticalAlignment="Center">
                                         <TextBlock x:Name="PressureText"
                                                    Text="—"
-                                                   Foreground="{StaticResource TextPrimary}"
+                                                   Foreground="{DynamicResource TextPrimary}"
                                                    FontSize="31"
                                                    FontWeight="Normal"/>
                                         <TextBlock x:Name="PressureUnitText"
                                                    Text="hPa"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="14"
                                                    VerticalAlignment="Bottom"
                                                    Margin="4,0,0,5"/>
                                     </StackPanel>
                                     <TextBlock x:Name="PressureRangeText"
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="12"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
@@ -1157,12 +1197,12 @@
                                         <Ellipse x:Name="FooterStatusDot"
                                                  Width="8"
                                                  Height="8"
-                                                 Fill="{StaticResource Muted}"
+                                                 Fill="{DynamicResource Muted}"
                                                  Margin="0,0,8,0"
                                                  VerticalAlignment="Center"/>
                                         <TextBlock x:Name="FooterStatusText"
                                                    Text="Searching"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="13"
                                                    FontWeight="Medium"
                                                    VerticalAlignment="Center"/>
@@ -1178,26 +1218,26 @@
                                                                  Margin="0,0,8,0"/>
                                             <TextBlock x:Name="RssiText"
                                                        Text="—"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="13"
                                                        Visibility="Collapsed"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </StackPanel>
-                                  <Button x:Name="FooterBatteryButton"
-                                    Grid.Column="3"
-                                    Style="{StaticResource SmallLinkButton}"
-                                    Click="DeviceChip_Click"
-                                    ToolTipService.ShowDuration="12000"
-                                    ToolTip="Aranet4 uses 2 × AA batteries (replaceable). A longer measurement interval extends battery life.">
+                                    <Button x:Name="FooterBatteryButton"
+                                            Grid.Column="3"
+                                            Style="{StaticResource SmallLinkButton}"
+                                            Click="DeviceChip_Click"
+                                            ToolTipService.ShowDuration="12000"
+                                            ToolTip="Aranet4 uses 2 × AA batteries (replaceable). A longer measurement interval extends battery life.">
                                         <StackPanel Orientation="Horizontal"
                                                     VerticalAlignment="Center">
                                             <TextBlock Text="Battery"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        VerticalAlignment="Center"/>
                                             <Border Width="24"
                                                     Height="10"
-                                                    BorderBrush="{StaticResource TextSecondary}"
+                                                    BorderBrush="{DynamicResource TextSecondary}"
                                                     BorderThickness="1"
                                                     CornerRadius="2"
                                                     Margin="8,0,0,0"
@@ -1209,7 +1249,7 @@
                                             </Border>
                                             <TextBlock x:Name="FooterBatteryText"
                                                        Text="—"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        FontWeight="SemiBold"
                                                        Margin="6,0,0,0"
                                                        VerticalAlignment="Center"/>
@@ -1228,19 +1268,19 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid Grid.Row="0"
-                                Margin="0,0,0,14">
+                              Margin="0,0,0,14">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="How the room breathed"
-                                           Foreground="{StaticResource TextPrimary}"
+                                           Foreground="{DynamicResource TextPrimary}"
                                            FontSize="28"
                                            FontWeight="SemiBold"/>
                                 <TextBlock x:Name="HistoryHeaderSummaryText"
                                            Text="No saved readings yet"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            FontSize="13"
                                            Margin="0,4,0,0"/>
                             </StackPanel>
@@ -1249,7 +1289,7 @@
                                         VerticalAlignment="Center">
                                 <TextBlock x:Name="HistoryLastSyncText"
                                            Text="Not synced yet"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            FontSize="12"
                                            VerticalAlignment="Center"
                                            Margin="0,0,12,0"/>
@@ -1265,7 +1305,7 @@
                               Grid.Row="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"
-                                        MinWidth="420"/>
+                                                  MinWidth="420"/>
                                 <ColumnDefinition Width="280"/>
                             </Grid.ColumnDefinitions>
                             <Border x:Name="HistoryMainCard"
@@ -1287,18 +1327,18 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="CO₂"
-                                                       Foreground="{StaticResource TextPrimary}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"/>
                                             <TextBlock x:Name="HistoryChartStatsText"
                                                        Text="No readings yet"
-                                                       Foreground="{StaticResource TextSecondary}"
+                                                       Foreground="{DynamicResource TextSecondary}"
                                                        FontSize="13"
                                                        Margin="0,3,0,0"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                         <Border Grid.Column="1"
-                                                Background="{StaticResource SurfaceSecondary}"
+                                                Background="{DynamicResource SurfaceSecondary}"
                                                 CornerRadius="10"
                                                 Padding="3">
                                             <StackPanel Orientation="Horizontal">
@@ -1326,13 +1366,13 @@
                                                           AutomationProperties.Name="CO₂ history over the selected range"
                                                           AutomationProperties.HelpText="Use left and right arrow keys to inspect readings."/>
                                     <StackPanel Grid.Row="2"
-                                            Margin="0,12,0,8">
+                                                Margin="0,12,0,8">
                                         <TextBlock Text="Day at a glance"
-                                                   Foreground="{StaticResource TextPrimary}"
+                                                   Foreground="{DynamicResource TextPrimary}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"/>
                                         <TextBlock Text="One stripe every 20 minutes · ● airing detected"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="12"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
@@ -1342,7 +1382,7 @@
                                                  Columns="72"
                                                  Height="40"/>
                                     <Grid Grid.Row="4"
-                                            Margin="0,5,0,0">
+                                          Margin="0,5,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="*"/>
@@ -1351,27 +1391,27 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock x:Name="HistoryStartTimeText"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="11"/>
                                         <TextBlock x:Name="HistoryQuarterTimeText"
                                                    Grid.Column="1"
                                                    TextAlignment="Center"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="11"/>
                                         <TextBlock x:Name="HistoryHalfTimeText"
                                                    Grid.Column="2"
                                                    TextAlignment="Center"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="11"/>
                                         <TextBlock x:Name="HistoryThreeQuarterTimeText"
                                                    Grid.Column="3"
                                                    TextAlignment="Center"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="11"/>
                                         <TextBlock Text="Now"
                                                    Grid.Column="4"
                                                    TextAlignment="Right"
-                                                   Foreground="{StaticResource TextSecondary}"
+                                                   Foreground="{DynamicResource TextSecondary}"
                                                    FontSize="11"/>
                                     </Grid>
                                 </Grid>
@@ -1382,7 +1422,7 @@
                                     Padding="18">
                                 <StackPanel>
                                     <TextBlock Text="Time in each zone"
-                                               Foreground="{StaticResource TextPrimary}"
+                                               Foreground="{DynamicResource TextPrimary}"
                                                FontSize="14"
                                                FontWeight="SemiBold"/>
                                     <Grid x:Name="HistoryZoneShareBar"
@@ -1391,43 +1431,43 @@
                                           ClipToBounds="True"/>
                                     <TextBlock x:Name="HistoryZoneShareText"
                                                Text="No readings yet"
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"/>
                                     <Border Height="1"
-                                            Background="{StaticResource Border}"
+                                            Background="{DynamicResource Border}"
                                             Margin="0,16,0,14"/>
                                     <TextBlock Text="Worth knowing"
-                                               Foreground="{StaticResource TextPrimary}"
+                                               Foreground="{DynamicResource TextPrimary}"
                                                FontSize="14"
                                                FontWeight="SemiBold"/>
                                     <TextBlock x:Name="HistoryOvernightText"
                                                Text="Overnight: no readings yet."
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"
                                                Margin="0,8,0,0"/>
                                     <TextBlock x:Name="HistoryAiringText"
                                                Text="No clear airing detected in the last 24 hours."
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"
                                                Margin="0,8,0,0"/>
                                     <TextBlock x:Name="HistoryPeakText"
                                                Text="Highest: no readings yet."
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"
                                                Margin="0,8,0,0"/>
                                     <Border Height="1"
-                                            Background="{StaticResource Border}"
+                                            Background="{DynamicResource Border}"
                                             Margin="0,16,0,14"/>
                                     <TextBlock Text="Export"
-                                               Foreground="{StaticResource TextPrimary}"
+                                               Foreground="{DynamicResource TextPrimary}"
                                                FontSize="14"
                                                FontWeight="SemiBold"/>
                                     <TextBlock Text="Raw measurements for the selected range."
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"
                                                Margin="0,4,0,10"/>
@@ -1452,7 +1492,7 @@
                     Visibility="Collapsed"
                     IsHitTestVisible="False">
                 <TextBlock x:Name="SyncToastText"
-                           Foreground="{StaticResource TextPrimary}"
+                           Foreground="{DynamicResource TextPrimary}"
                            FontSize="13"/>
             </Border>
         </Grid>

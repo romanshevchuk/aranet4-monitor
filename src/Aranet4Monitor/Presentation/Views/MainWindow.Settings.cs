@@ -147,6 +147,42 @@ public partial class MainWindow
 
     private void MinimizeWindow_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
+    private void CloseWindow_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void ThemeMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem { Tag: string tag }
+            || !Enum.TryParse<AppTheme>(tag, out var mode))
+        {
+            return;
+        }
+
+        preferences.Theme = mode;
+        preferencesStore.Save(preferences);
+        UpdateThemeMenu();
+        ThemeService.SetMode(mode);
+    }
+
+    private void UpdateThemeMenu()
+    {
+        AutoThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Auto;
+        LightThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Light;
+        DarkThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Dark;
+    }
+
+    private void ThemeService_Changed(object? sender, EventArgs e)
+    {
+        UpdateHeaderSensorState();
+        if (Dashboard.SelectedDevice is { } device)
+        {
+            ShowDetails(device);
+        }
+        else
+        {
+            RefreshChart();
+        }
+    }
+
     private void ToggleWindowState_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState == WindowState.Maximized
