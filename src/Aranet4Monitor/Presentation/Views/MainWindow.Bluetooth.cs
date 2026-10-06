@@ -20,14 +20,14 @@ public partial class MainWindow
         try
         {
             sensorSource.Start();
-            ListenMenuItem.IsChecked = true;
+            settings.SetListeningState(true);
             SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
             EmptyHintText.Text = "Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app.";
         }
         catch (Exception ex)
         {
             sensorSource.Stop();
-            ListenMenuItem.IsChecked = false;
+            settings.SetListeningState(false);
             if (ex is UnauthorizedAccessException
                 || ex.Message.Contains("Bluetooth", StringComparison.OrdinalIgnoreCase)
                 || ex.Message.Contains("radio", StringComparison.OrdinalIgnoreCase))
@@ -41,7 +41,7 @@ public partial class MainWindow
         }
     }
 
-    private void ClearButton_Click(object sender, RoutedEventArgs e)
+    private void ForgetDetectedDevices()
     {
         if (Dashboard.Devices.Count == 0)
         {
@@ -76,13 +76,13 @@ public partial class MainWindow
         }
 
         sensorSource.Stop();
-        ListenMenuItem.IsChecked = false;
+        settings.SetListeningState(false);
         SetStatus("Stopped", StatusKind.Idle);
     }
 
     private void SensorSource_Stopped(object? sender, SensorSourceStoppedEventArgs args) => Dispatcher.InvokeAsync(() =>
     {
-        ListenMenuItem.IsChecked = false;
+        settings.SetListeningState(false);
         if (args.RadioUnavailable)
         {
             SetStatus("Bluetooth radio unavailable", StatusKind.BluetoothUnavailable, args.Error);
@@ -167,20 +167,16 @@ public partial class MainWindow
                     preferences.LastCo2AlertAt = now;
                     preferences.LastCo2AlertPpm = measurement.Co2;
                     preferencesStore.Save(preferences);
-                    SetAlertStatus($"Alert sent: {measurement.Co2:N0} ppm at {now:t}", alertStatusDanger);
+                    SetAlertStatus($"Alert sent: {measurement.Co2:N0} ppm at {now:t}");
                     notifications.NotifyHighCo2(measurement.Co2);
                 }
                 else if (monitoring.NotificationDeferred)
                 {
-                    SetAlertStatus(
-                        $"Above your alert level, but notifications are paused until {alertsPausedUntil:t}.",
-                        alertStatusWarning);
+                    SetAlertStatus($"Above your alert level, but notifications are paused until {alertsPausedUntil:t}.");
                 }
                 else if (measurement.Co2 > AlertThreshold)
                 {
-                    SetAlertStatus(
-                        $"Above your alert level; waiting for {AlertDurationMinutes} minutes of sustained readings.",
-                        alertStatusWarning);
+                    SetAlertStatus($"Above your alert level; waiting for {AlertDurationMinutes} minutes of sustained readings.");
                 }
                 else if (measurement.Co2 <= monitoring.ResetThresholdPpm)
                 {
@@ -192,13 +188,11 @@ public partial class MainWindow
 
                     if (preferences.LastCo2AlertAt is { } previousAlert)
                     {
-                        SetAlertStatus(
-                            $"Recovered below {monitoring.ResetThresholdPpm:N0} ppm. Last alert {previousAlert:t}.",
-                            alertStatusSuccess);
+                        SetAlertStatus($"Recovered below {monitoring.ResetThresholdPpm:N0} ppm. Last alert {previousAlert:t}.");
                     }
                     else
                     {
-                        SetAlertStatus("No active high-CO₂ alert.", alertStatusNeutral);
+                        SetAlertStatus("No active high-CO₂ alert.");
                     }
                 }
             }

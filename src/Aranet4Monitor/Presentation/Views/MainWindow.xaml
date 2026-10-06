@@ -3,9 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aranet4Monitor"
         xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls"
+        xmlns:presentation="clr-namespace:Aranet4Monitor.Presentation"
+        xmlns:history="clr-namespace:Aranet4Monitor.Presentation.Views.History"
+        xmlns:views="clr-namespace:Aranet4Monitor.Presentation.Views"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Aranet4 Monitor"
-        Height="730"
+        Height="750"
         Width="1200"
         MinHeight="640"
         MinWidth="760"
@@ -16,25 +19,30 @@
         FontFamily="{StaticResource AppFontFamily}"
         FontSize="13"
         UseLayoutRounding="True">
+    <Window.Resources>
+        <presentation:AppPageVisibilityConverter x:Key="AppPageVisibilityConverter"/>
+    </Window.Resources>
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="74"
                             ResizeBorderThickness="6"
                             GlassFrameThickness="0"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
-    <Border Margin="8"
+    <Border Margin="2"
             Background="{DynamicResource Surface}"
             BorderBrush="{DynamicResource Border}"
-            BorderThickness="1"
+            BorderThickness="4"
             CornerRadius="20"
             ClipToBounds="True">
-        <Grid>
+        <Grid x:Name="ShellGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header: brand, device chip, status, menu -->
+            <!-- Header: brand, navigation, device chip, caption buttons -->
             <Grid Grid.Row="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -51,8 +59,6 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -82,18 +88,24 @@
                             <Button x:Name="LiveNavigationButton"
                                     Content="Live"
                                     Style="{StaticResource HeaderNavigationSelectedButton}"
+                                    Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                                    CommandParameter="{x:Static presentation:AppPage.Live}"
                                     shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="LiveNavigation_Click"
                                     AutomationProperties.Name="Show live dashboard"/>
                             <Button x:Name="HistoryNavigationButton"
                                     Content="History"
                                     Style="{StaticResource HeaderNavigationButton}"
+                                    Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                                    CommandParameter="{x:Static presentation:AppPage.History}"
                                     shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="HistoryNavigation_Click"
                                     AutomationProperties.Name="Show sensor history chart"/>
                             <Button x:Name="SettingsNavigationButton"
                                     Content="Settings"
                                     Style="{StaticResource HeaderNavigationButton}"
+                                    Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                                    CommandParameter="{x:Static presentation:AppPage.Settings}"
                                     shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                     Click="SettingsNavigation_Click"
                                     ToolTip="Application settings and options"
@@ -132,126 +144,6 @@
                         </Button>
 
                         <StackPanel Grid.Column="4"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,10,0">
-                            <StackPanel x:Name="SyncProgressPanel"
-                                        Orientation="Horizontal"
-                                        VerticalAlignment="Center"
-                                        Visibility="Collapsed"
-                                        Margin="8,0,0,0">
-                                <ProgressBar Width="24"
-                                             Height="4"
-                                             IsIndeterminate="True"
-                                             Foreground="{DynamicResource Co2Good}"
-                                             Background="{DynamicResource Border}"/>
-                                <TextBlock x:Name="SyncStatusText"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextPrimary}"
-                                           Margin="8,0,0,0"
-                                           VerticalAlignment="Center"
-                                           MaxWidth="190"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <Button x:Name="CancelHistorySyncButton"
-                                    Content="Cancel"
-                                    Style="{StaticResource HeaderActionButton}"
-                                    Click="CancelHistorySync_Click"
-                                    IsEnabled="False"
-                                    Visibility="Collapsed"
-                                    Margin="6,0,0,0"/>
-                        </StackPanel>
-
-                        <Button x:Name="MoreButton"
-                                Grid.Column="5"
-                                Style="{StaticResource UtilityButton}"
-                                Width="36"
-                                Padding="0"
-                                FontSize="16"
-                                Content="⋯"
-                                VerticalAlignment="Center"
-                                Visibility="Collapsed"
-                                Click="MoreButton_Click"
-                                ToolTip="Settings and options"
-                                AutomationProperties.Name="Settings and options">
-                            <Button.ContextMenu>
-                                <ContextMenu x:Name="MoreMenu"
-                                             Placement="Bottom">
-                                    <MenuItem Header="Minimize window"
-                                              Click="MinimizeWindow_Click"/>
-                                    <MenuItem Header="Maximize or restore window"
-                                              Click="ToggleWindowState_Click"/>
-                                    <Separator/>
-                                    <MenuItem Header="Alert settings…"
-                                              Click="OpenAlertSettings_Click"/>
-                                    <MenuItem Header="Export CSV">
-                                        <MenuItem Header="Visible range"
-                                                  Tag="visible"
-                                                  Click="ExportCsv_Click"/>
-                                        <MenuItem Header="All"
-                                                  Tag="all"
-                                                  Click="ExportCsv_Click"/>
-                                    </MenuItem>
-                                    <Separator/>
-                                    <MenuItem Header="Temperature unit">
-                                        <MenuItem x:Name="CelsiusUnitMenuItem"
-                                                  Header="Celsius (°C)"
-                                                  Tag="Celsius"
-                                                  IsCheckable="True"
-                                                  Click="TemperatureUnit_Click"/>
-                                        <MenuItem x:Name="FahrenheitUnitMenuItem"
-                                                  Header="Fahrenheit (°F)"
-                                                  Tag="Fahrenheit"
-                                                  IsCheckable="True"
-                                                  Click="TemperatureUnit_Click"/>
-                                    </MenuItem>
-                                    <MenuItem Header="Appearance">
-                                        <MenuItem x:Name="AutoThemeMenuItem"
-                                                  Header="Match Windows"
-                                                  Tag="Auto"
-                                                  IsCheckable="True"
-                                                  Click="ThemeMenuItem_Click"/>
-                                        <MenuItem x:Name="LightThemeMenuItem"
-                                                  Header="Light"
-                                                  Tag="Light"
-                                                  IsCheckable="True"
-                                                  Click="ThemeMenuItem_Click"/>
-                                        <MenuItem x:Name="DarkThemeMenuItem"
-                                                  Header="Dark"
-                                                  Tag="Dark"
-                                                  IsCheckable="True"
-                                                  Click="ThemeMenuItem_Click"/>
-                                    </MenuItem>
-                                    <MenuItem x:Name="ListenMenuItem"
-                                              Header="Listen for live readings"
-                                              IsCheckable="True"
-                                              Click="ListenMenuItem_Click"/>
-                                    <MenuItem x:Name="ShowNumberMenuItem"
-                                              Header="Show number in tray icon"
-                                              IsCheckable="True"
-                                              Click="ShowNumberMenuItem_Click"/>
-                                    <MenuItem x:Name="LargePopupsMenuItem"
-                                              Header="Large pop-ups"
-                                              IsCheckable="True"
-                                              Click="LargePopupsMenuItem_Click"/>
-                                    <MenuItem x:Name="StartWithWindowsMenuItem"
-                                              Header="Start with Windows"
-                                              IsCheckable="True"
-                                              Click="StartWithWindowsMenuItem_Click"/>
-                                    <MenuItem Header="Bluetooth diagnostics"
-                                              Click="BluetoothDiagnostics_Click"/>
-                                    <Separator/>
-                                    <MenuItem Header="Forget detected devices…"
-                                              Foreground="{DynamicResource Danger}"
-                                              Click="ClearButton_Click"/>
-                                    <MenuItem Header="Exit Aranet4 Monitor"
-                                              ToolTip="Closing the window keeps the app running in the tray."
-                                              Click="ExitMenuItem_Click"/>
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                        </Button>
-
-                        <StackPanel Grid.Column="6"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="6,0,0,0"
@@ -513,76 +405,18 @@
                             </Border>
                         </Popup>
 
-                        <Popup x:Name="AlertSettingsPopup"
-                               PlacementTarget="{Binding ElementName=MoreButton}"
-                               Placement="Bottom"
-                               StaysOpen="False"
-                               AllowsTransparency="True"
-                               PopupAnimation="Fade">
-                            <Border Width="360"
-                                    Margin="8"
-                                    Style="{StaticResource PopoverCard}">
-                                <StackPanel>
-                                    <TextBlock Text="Alert settings"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimary}"/>
-                                    <WrapPanel VerticalAlignment="Center"
-                                               Margin="0,12,0,0">
-                                        <TextBlock Text="Notify above"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,6,0"/>
-                                        <TextBox x:Name="AlertThresholdTextBox"
-                                                 Style="{StaticResource NumberInput}"
-                                                 Text="1500"
-                                                 Width="64"
-                                                 Padding="4,2"
-                                                 HorizontalContentAlignment="Right"
-                                                 VerticalAlignment="Center"
-                                                 LostFocus="AlertThreshold_LostFocus"
-                                                 ToolTip="Ventilation alert threshold in ppm"/>
-                                        <TextBlock Text="ppm for"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   VerticalAlignment="Center"
-                                                   Margin="6,0,4,0"/>
-                                        <TextBox x:Name="AlertDurationTextBox"
-                                                 Style="{StaticResource NumberInput}"
-                                                 Text="10"
-                                                 Width="44"
-                                                 Padding="4,2"
-                                                 HorizontalContentAlignment="Right"
-                                                 VerticalAlignment="Center"
-                                                 LostFocus="AlertThreshold_LostFocus"
-                                                 ToolTip="Required sustained alert duration in minutes"/>
-                                        <TextBlock Text="min"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   VerticalAlignment="Center"
-                                                   Margin="4,0,0,0"/>
-                                    </WrapPanel>
-                                    <WrapPanel Margin="0,8,0,0">
-                                        <Button Content="Send test"
-                                                Style="{StaticResource SmallLinkButton}"
-                                                Click="SendTestAlert_Click"
-                                                ToolTip="Preview the notification"/>
-                                        <Button x:Name="PauseAlertsButton"
-                                                Content="Pause 1 h"
-                                                Style="{StaticResource SmallLinkButton}"
-                                                Click="PauseAlerts_Click"
-                                                ToolTip="Silence ventilation alerts for one hour"/>
-                                    </WrapPanel>
-                                    <TextBlock x:Name="AlertStatusText"
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="12"
-                                               Margin="0,8,0,0"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Border>
-                        </Popup>
                     </Grid>
                 </Border>
+            </Grid>
+
+            <Grid x:Name="BannerHost"
+                  Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Border x:Name="NoticeBar"
-                        Grid.Row="1"
+                        Grid.Row="0"
                         Style="{StaticResource StatusBanner}"
                         Margin="22,0,22,10"
                         Visibility="Collapsed">
@@ -612,7 +446,7 @@
                     </Grid>
                 </Border>
                 <Border x:Name="SyncProblemBanner"
-                        Grid.Row="2"
+                        Grid.Row="1"
                         Style="{StaticResource StatusBanner}"
                         Margin="22,0,22,10"
                         Background="{DynamicResource DangerBackground}"
@@ -641,18 +475,10 @@
                     </Grid>
                 </Border>
             </Grid>
-
-            <ScrollViewer x:Name="DashboardScrollViewer"
-                          Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+            <Grid Grid.Row="2">
+                <views:LivePage x:Name="LivePage"
+                                Visibility="{Binding Shell.CurrentPage, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource AppPageVisibilityConverter}, ConverterParameter={x:Static presentation:AppPage.Live}}">
                     <Grid x:Name="DashboardGrid"
-                          Grid.Row="0"
                           Margin="26,24,26,18">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"
@@ -695,21 +521,21 @@
                                     <StackPanel Grid.Row="0">
                                         <Grid>
                                             <Border x:Name="QualityBadge"
-                                                Padding="11,3"
-                                                CornerRadius="12"
-                                                BorderThickness="1"
-                                                HorizontalAlignment="Left"
-                                                Visibility="Collapsed">
+                                                    Padding="11,3"
+                                                    CornerRadius="12"
+                                                    BorderThickness="1"
+                                                    HorizontalAlignment="Left"
+                                                    Visibility="Collapsed">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock x:Name="QualityIcon"
-                                                           FontSize="9"
-                                                           FontWeight="Bold"
-                                                           Foreground="{DynamicResource TextPrimary}"
-                                                           Margin="0,0,6,0"/>
+                                                               FontSize="9"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource TextPrimary}"
+                                                               Margin="0,0,6,0"/>
                                                     <TextBlock x:Name="QualityText"
-                                                           FontSize="13"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimary}"/>
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimary}"/>
                                                 </StackPanel>
                                             </Border>
                                         </Grid>
@@ -1178,92 +1004,12 @@
                             </RadioButton>
                         </Grid>
 
-                        <!-- Bottom strip: alert settings and sensor/system details -->
-                        <Grid x:Name="StatusStripGrid"
-                              Grid.Row="2"
-                              Grid.ColumnSpan="2"
-                              Margin="-26,0,-26,-18">
-                            <Border Style="{StaticResource StatusStrip}"
-                                    Padding="24,8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal"
-                                                VerticalAlignment="Center"
-                                                Margin="0,0,14,0">
-                                        <Ellipse x:Name="FooterStatusDot"
-                                                 Width="8"
-                                                 Height="8"
-                                                 Fill="{DynamicResource Muted}"
-                                                 Margin="0,0,8,0"
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="FooterStatusText"
-                                                   Text="Searching"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="13"
-                                                   FontWeight="Medium"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1"
-                                                Orientation="Horizontal"
-                                                VerticalAlignment="Center"
-                                                Margin="0,0,14,0">
-                                        <StackPanel Orientation="Horizontal"
-                                                    VerticalAlignment="Center">
-                                            <controls:SignalBars x:Name="DetailSignal"
-                                                                 VerticalAlignment="Center"
-                                                                 Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="RssiText"
-                                                       Text="—"
-                                                       Foreground="{DynamicResource TextSecondary}"
-                                                       FontSize="13"
-                                                       Visibility="Collapsed"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <Button x:Name="FooterBatteryButton"
-                                            Grid.Column="3"
-                                            Style="{StaticResource SmallLinkButton}"
-                                            Click="DeviceChip_Click"
-                                            ToolTipService.ShowDuration="12000"
-                                            ToolTip="Aranet4 uses 2 × AA batteries (replaceable). A longer measurement interval extends battery life.">
-                                        <StackPanel Orientation="Horizontal"
-                                                    VerticalAlignment="Center">
-                                            <TextBlock Text="Battery"
-                                                       Foreground="{DynamicResource TextSecondary}"
-                                                       VerticalAlignment="Center"/>
-                                            <Border Width="24"
-                                                    Height="10"
-                                                    BorderBrush="{DynamicResource TextSecondary}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="2"
-                                                    Margin="8,0,0,0"
-                                                    Padding="1">
-                                                <ProgressBar x:Name="FooterBatteryBar"
-                                                             Style="{StaticResource ThinBar}"
-                                                             Height="6"
-                                                             VerticalAlignment="Center"/>
-                                            </Border>
-                                            <TextBlock x:Name="FooterBatteryText"
-                                                       Text="—"
-                                                       Foreground="{DynamicResource TextPrimary}"
-                                                       FontWeight="SemiBold"
-                                                       Margin="6,0,0,0"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </Grid>
                     </Grid>
+                </views:LivePage>
+                <views:HistoryPage x:Name="HistoryPage"
+                                   Visibility="{Binding Shell.CurrentPage, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource AppPageVisibilityConverter}, ConverterParameter={x:Static presentation:AppPage.History}}">
                     <Grid x:Name="HistoryView"
-                          Grid.Row="1"
-                          Margin="24,18,24,18"
-                          Visibility="Collapsed">
+                          Margin="24,18,24,18">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -1318,8 +1064,6 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="300"/>
                                         <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="40"/>
-                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -1366,128 +1110,131 @@
                                                           KeyboardNavigation.IsTabStop="True"
                                                           AutomationProperties.Name="CO₂ history over the selected range"
                                                           AutomationProperties.HelpText="Use left and right arrow keys to inspect readings."/>
-                                    <StackPanel Grid.Row="2"
-                                                Margin="0,12,0,8">
-                                        <TextBlock Text="Day at a glance"
-                                                   Foreground="{DynamicResource TextPrimary}"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"/>
-                                        <TextBlock Text="One stripe every 20 minutes · ● airing detected"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="12"
-                                                   Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <UniformGrid x:Name="HistoryDayStrip"
-                                                 Grid.Row="3"
-                                                 Rows="1"
-                                                 Columns="72"
-                                                 Height="40"/>
-                                    <Grid Grid.Row="4"
-                                          Margin="0,5,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="HistoryStartTimeText"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="11"/>
-                                        <TextBlock x:Name="HistoryQuarterTimeText"
-                                                   Grid.Column="1"
-                                                   TextAlignment="Center"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="11"/>
-                                        <TextBlock x:Name="HistoryHalfTimeText"
-                                                   Grid.Column="2"
-                                                   TextAlignment="Center"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="11"/>
-                                        <TextBlock x:Name="HistoryThreeQuarterTimeText"
-                                                   Grid.Column="3"
-                                                   TextAlignment="Center"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="11"/>
-                                        <TextBlock Text="Now"
-                                                   Grid.Column="4"
-                                                   TextAlignment="Right"
-                                                   Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="11"/>
-                                    </Grid>
+                                    <history:DayStripSection x:Name="DayStripSection"
+                                                             Grid.Row="2"/>
                                 </Grid>
                             </Border>
-                            <Border x:Name="HistorySummaryCard"
-                                    Grid.Column="1"
-                                    Style="{StaticResource CardStyle}"
-                                    Padding="18">
-                                <StackPanel>
-                                    <TextBlock Text="Time in each zone"
-                                               Foreground="{DynamicResource TextPrimary}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"/>
-                                    <Grid x:Name="HistoryZoneShareBar"
-                                          Height="12"
-                                          Margin="0,12,0,8"
-                                          ClipToBounds="True"/>
-                                    <TextBlock x:Name="HistoryZoneShareText"
-                                               Text="No readings yet"
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"/>
-                                    <Border Height="1"
-                                            Background="{DynamicResource Border}"
-                                            Margin="0,16,0,14"/>
-                                    <TextBlock Text="Worth knowing"
-                                               Foreground="{DynamicResource TextPrimary}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="HistoryOvernightText"
-                                               Text="Overnight: no readings yet."
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"
-                                               Margin="0,8,0,0"/>
-                                    <TextBlock x:Name="HistoryAiringText"
-                                               Text="No clear airing detected in the last 24 hours."
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"
-                                               Margin="0,8,0,0"/>
-                                    <TextBlock x:Name="HistoryPeakText"
-                                               Text="Highest: no readings yet."
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"
-                                               Margin="0,8,0,0"/>
-                                    <Border Height="1"
-                                            Background="{DynamicResource Border}"
-                                            Margin="0,16,0,14"/>
-                                    <TextBlock Text="Export"
-                                               Foreground="{DynamicResource TextPrimary}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Raw measurements for the selected range."
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"
-                                               Margin="0,4,0,10"/>
-                                    <Button x:Name="HistoryExportButton"
-                                            Content="Export CSV"
-                                            Tag="visible"
-                                            Style="{StaticResource GhostButton}"
-                                            Click="ExportCsv_Click"/>
-                                </StackPanel>
-                            </Border>
+                            <history:HistorySidebar x:Name="HistorySidebar"
+                                                    Grid.Column="1"/>
                         </Grid>
                     </Grid>
-                </Grid>
-            </ScrollViewer>
+                </views:HistoryPage>
+                <views:SettingsPage x:Name="SettingsPage"
+                                    Visibility="{Binding Shell.CurrentPage, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource AppPageVisibilityConverter}, ConverterParameter={x:Static presentation:AppPage.Settings}}"/>
+            </Grid>
+            <Grid x:Name="StatusStripGrid"
+                  Grid.Row="3">
+                <Border Style="{StaticResource StatusStrip}"
+                        Padding="24,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0">
+                            <Ellipse x:Name="FooterStatusDot"
+                                     Width="8"
+                                     Height="8"
+                                     Fill="{DynamicResource Muted}"
+                                     Margin="0,0,8,0"
+                                     VerticalAlignment="Center"/>
+                            <TextBlock x:Name="FooterStatusText"
+                                       Text="Searching"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <controls:SignalBars x:Name="DetailSignal"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,8,0"/>
+                                <TextBlock x:Name="RssiText"
+                                           Text="—"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="13"
+                                           Visibility="Collapsed"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <StackPanel x:Name="SyncProgressPanel"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed">
+                                <ProgressBar Width="24"
+                                             Height="4"
+                                             IsIndeterminate="True"
+                                             Foreground="{DynamicResource Co2Good}"
+                                             Background="{DynamicResource Border}"/>
+                                <TextBlock x:Name="SyncStatusText"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           MaxWidth="190"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <Button x:Name="CancelHistorySyncButton"
+                                    Content="Cancel"
+                                    Style="{StaticResource HeaderActionButton}"
+                                    Click="CancelHistorySync_Click"
+                                    IsEnabled="False"
+                                    Visibility="Collapsed"
+                                    Margin="6,0,0,0"/>
+                        </StackPanel>
+                        <Button x:Name="FooterBatteryButton"
+                                Grid.Column="3"
+                                Style="{StaticResource SmallLinkButton}"
+                                Click="DeviceChip_Click"
+                                ToolTipService.ShowDuration="12000"
+                                ToolTip="Aranet4 uses 2 × AA batteries (replaceable). A longer measurement interval extends battery life.">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Battery"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           VerticalAlignment="Center"/>
+                                <Border Width="24"
+                                        Height="10"
+                                        BorderBrush="{DynamicResource TextSecondary}"
+                                        BorderThickness="1"
+                                        CornerRadius="2"
+                                        Margin="8,0,0,0"
+                                        Padding="1">
+                                    <ProgressBar x:Name="FooterBatteryBar"
+                                                 Style="{StaticResource ThinBar}"
+                                                 Height="6"
+                                                 VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock x:Name="FooterBatteryText"
+                                           Text="—"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           FontWeight="SemiBold"
+                                           Margin="6,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
             <Border x:Name="SyncToast"
-                    Grid.Row="1"
+                    Grid.Row="0"
+                    Grid.RowSpan="4"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Margin="12"
+                    VerticalAlignment="Bottom"
+                    Margin="12,12,12,56"
                     Style="{StaticResource ToastCard}"
                     Padding="12,8"
                     Visibility="Collapsed"

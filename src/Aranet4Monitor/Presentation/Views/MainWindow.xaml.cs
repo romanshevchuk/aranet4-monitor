@@ -23,7 +23,9 @@ public partial class MainWindow : Window
     private readonly ISensorSource sensorSource;
     private readonly SensorMonitor sensorMonitor;
     private readonly TrayIconService notifications = new();
+    private readonly SettingsViewModel settings;
     public DashboardViewModel Dashboard { get; } = new();
+    public ShellViewModel Shell { get; } = new();
     private bool startHiddenInTray = Environment.GetCommandLineArgs().Contains(StartupRegistration.TrayArgument);
     private DateTime? alertsPausedUntil;
     private CancellationTokenSource? syncCancellation;
@@ -39,10 +41,6 @@ public partial class MainWindow : Window
     private static Brush DotIdle => ThemeService.GetBrush("Disabled");
     private static Brush SeenStale => ThemeService.GetBrush("Warning");
     private static readonly AccentBrushSet AccentBrushes = new();
-    private static Brush alertStatusNeutral => ThemeService.GetBrush("TextSecondary");
-    private static Brush alertStatusSuccess => ThemeService.GetBrush("Positive");
-    private static Brush alertStatusWarning => ThemeService.GetBrush("Warning");
-    private static Brush alertStatusDanger => ThemeService.GetBrush("Danger");
 
     private sealed class AccentBrushSet
     {
@@ -57,40 +55,45 @@ public partial class MainWindow : Window
         sensorMonitor = services.SensorMonitor;
 
         InitializeComponent();
+        HistorySidebar.ExportRequested += ExportCsv_Click;
         DataContext = Dashboard;
+        settings = new SettingsViewModel(
+            preferences,
+            preferencesStore.Save,
+            new SettingsActions(
+                ApplyTemperatureUnit,
+                ApplyTheme,
+                SetListeningFromSettings,
+                SetShowNumberFromSettings,
+                SetLargePopupsFromSettings,
+                SetStartWithWindowsFromSettings,
+                SendTestAlertFromSettings,
+                ToggleAlertPause,
+                ForgetDetectedDevices,
+                OpenBluetoothDiagnostics),
+            sensorSource.IsActive,
+            StartupRegistration.IsEnabled);
+        SettingsPage.DataContext = settings;
         GoodZoneText.Text = "Good";
         FairZoneText.Text = "Elevated";
         PoorZoneText.Text = "High";
-        CelsiusUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Celsius;
-        FahrenheitUnitMenuItem.IsChecked = preferences.TemperatureDisplayUnit == TemperatureUnit.Fahrenheit;
-        UpdateThemeMenu();
         ThemeService.Changed += ThemeService_Changed;
-        ShowNumberMenuItem.IsChecked = preferences.TrayShowNumber;
-        LargePopupsMenuItem.IsChecked = preferences.LargePopups;
-        StartWithWindowsMenuItem.IsChecked = StartupRegistration.IsEnabled;
         HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
-        AlertThresholdTextBox.Text = preferences.AlertThresholdPpm.ToString(CultureInfo.InvariantCulture);
-        AlertDurationTextBox.Text = preferences.AlertDurationMinutes.ToString(CultureInfo.InvariantCulture);
         SetAlertStatus(
             preferences.LastCo2AlertAt is { } lastAlert
                 ? $"Last notification: {preferences.LastCo2AlertPpm:N0} ppm at {lastAlert:t}"
-                : "No high-CO₂ alerts sent yet.",
-            alertStatusNeutral);
+                : "No high-CO₂ alerts sent yet.");
         notifications.RestoreRequested += (_, _) => RestoreFromTray();
         notifications.ExitRequested += (_, _) => ExitFromTray();
         notifications.PauseToggleRequested += (_, _) => ToggleAlertPause();
         notifications.StartWithWindowsToggled += (_, enabled) =>
         {
             // If Windows refuses the change, put the menu check mark back to the real state.
-            if (!StartupRegistration.SetEnabled(enabled))
-            {
-                notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
-                StartWithWindowsMenuItem.IsChecked = StartupRegistration.IsEnabled;
-            }
-            else
-            {
-                StartWithWindowsMenuItem.IsChecked = enabled;
-            }
+            var actual = StartupRegistration.SetEnabled(enabled)
+                ? enabled
+                : StartupRegistration.IsEnabled;
+            notifications.SetStartWithWindows(actual);
+            settings.SetStartWithWindowsFromSystem(actual);
         };
         notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
         notifications.SetShowNumber(preferences.TrayShowNumber);
@@ -101,13 +104,13 @@ public partial class MainWindow : Window
         {
             preferences.TrayShowNumber = enabled;
             preferencesStore.Save(preferences);
-            ShowNumberMenuItem.IsChecked = enabled;
+            settings.SetShowNumberFromTray(enabled);
         };
         notifications.LargePopupsToggled += (_, enabled) =>
         {
             preferences.LargePopups = enabled;
             preferencesStore.Save(preferences);
-            LargePopupsMenuItem.IsChecked = enabled;
+            settings.SetLargePopupsFromTray(enabled);
         };
 
         if (startHiddenInTray)
@@ -221,7 +224,6 @@ public partial class MainWindow : Window
             DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             Grid.SetRow(Co2HeroPanel, 0);
             Grid.SetColumn(Co2HeroPanel, 0);
@@ -230,14 +232,10 @@ public partial class MainWindow : Window
             Grid.SetRow(SecondaryMetricsGrid, 2);
             Grid.SetColumn(SecondaryMetricsGrid, 0);
             Grid.SetColumnSpan(SecondaryMetricsGrid, 1);
-            Grid.SetRow(StatusStripGrid, 3);
-            Grid.SetColumn(StatusStripGrid, 0);
-            Grid.SetColumnSpan(StatusStripGrid, 1);
             Co2HeroPanel.Margin = new Thickness(0, 0, 0, 12);
             HistoryChartCard.Margin = new Thickness(0, 0, 0, 12);
             HistoryChart.MinHeight = 190;
             DashboardGrid.Margin = new Thickness(16, 14, 16, 14);
-            StatusStripGrid.Margin = new Thickness(-16, 0, -16, -14);
             HistoryView.Margin = new Thickness(16, 14, 16, 14);
             HistoryContentGrid.ColumnDefinitions.Clear();
             HistoryContentGrid.RowDefinitions.Clear();
@@ -247,15 +245,15 @@ public partial class MainWindow : Window
             Grid.SetRow(HistoryMainCard, 0);
             Grid.SetColumn(HistoryMainCard, 0);
             HistoryMainCard.Margin = new Thickness(0, 0, 0, 14);
-            Grid.SetRow(HistorySummaryCard, 1);
-            Grid.SetColumn(HistorySummaryCard, 0);
+            Grid.SetRow(HistorySidebar, 1);
+            Grid.SetColumn(HistorySidebar, 0);
+            HistorySidebar.Margin = new Thickness(0, 0, 0, 14);
         }
         else
         {
             DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.82, GridUnitType.Star), MinWidth = 330 });
             DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star), MinWidth = 420 });
             DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star), MinHeight = 300 });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             Grid.SetRow(Co2HeroPanel, 0);
@@ -265,14 +263,10 @@ public partial class MainWindow : Window
             Grid.SetRow(SecondaryMetricsGrid, 1);
             Grid.SetColumn(SecondaryMetricsGrid, 0);
             Grid.SetColumnSpan(SecondaryMetricsGrid, 2);
-            Grid.SetRow(StatusStripGrid, 2);
-            Grid.SetColumn(StatusStripGrid, 0);
-            Grid.SetColumnSpan(StatusStripGrid, 2);
             Co2HeroPanel.Margin = new Thickness(0, 0, 16, 14);
             HistoryChartCard.Margin = new Thickness(0, 0, 0, 14);
             HistoryChart.MinHeight = 150;
             DashboardGrid.Margin = new Thickness(26, 24, 26, 18);
-            StatusStripGrid.Margin = new Thickness(-26, 0, -26, -18);
             HistoryView.Margin = new Thickness(26, 24, 26, 18);
             HistoryContentGrid.ColumnDefinitions.Clear();
             HistoryContentGrid.RowDefinitions.Clear();
@@ -282,8 +276,9 @@ public partial class MainWindow : Window
             Grid.SetRow(HistoryMainCard, 0);
             Grid.SetColumn(HistoryMainCard, 0);
             HistoryMainCard.Margin = new Thickness(0, 0, 14, 0);
-            Grid.SetRow(HistorySummaryCard, 0);
-            Grid.SetColumn(HistorySummaryCard, 1);
+            Grid.SetRow(HistorySidebar, 0);
+            Grid.SetColumn(HistorySidebar, 1);
+            HistorySidebar.Margin = new Thickness(0);
         }
     }
 

@@ -2,7 +2,10 @@ using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
+using Aranet4Monitor.Presentation.Formatting;
+using WpfEllipse = System.Windows.Shapes.Ellipse;
 
 namespace Aranet4Monitor;
 
@@ -38,6 +41,7 @@ public partial class MainWindow
         LongHistoryChart.Metric = MetricKind.Co2;
         LongHistoryChart.Samples = device?.History;
         LongHistoryChart.Range = selectedHistoryRange;
+        LongHistoryChart.TimeAxisLabels = HistoryTimeAxisLabels.ForRange(now, selectedHistoryRange);
         LongHistoryChart.InvalidateVisual();
 
         HistoryHeaderSummaryText.Text = recentCo2.Length == 0
@@ -51,7 +55,7 @@ public partial class MainWindow
                 ? $"Last synced {DescribeAge(now - syncedThrough.ToLocalTime())} · {allCo2.Length:N0} readings"
                 : $"Not synced yet · {allCo2.Length:N0} readings";
         SyncHistoryButton.IsEnabled = device is not null && syncCancellation is null;
-        HistoryExportButton.IsEnabled = allCo2.Length > 0;
+        HistorySidebar.SetExportEnabled(allCo2.Length > 0);
         HistoryChartStatsText.Text = device is null
             ? "No readings yet"
             : Metrics.Describe(device.History, selectedHistoryRange, now, MetricKind.Co2);
@@ -69,7 +73,7 @@ public partial class MainWindow
             .ToArray() ?? [];
         var airingEvents = AiringDetector.Detect(daySamples);
 
-        HistoryDayStrip.Children.Clear();
+        DayStripSection.ClearCells();
         for (var index = 0; index < bucketCount; index++)
         {
             var bucketStart = start + TimeSpan.FromMinutes(index * 20);
@@ -78,96 +82,106 @@ public partial class MainWindow
                 .Where(sample => sample.Time >= bucketStart && sample.Time < bucketEnd)
                 .ToArray();
 
-            var border = new Border
+            var cell = new Grid
+            {
+                Margin = new Thickness(1.5, 0, 1.5, 0),
+            };
+            var stripe = new Border
             {
                 Background = (Brush)FindResource("SurfaceSecondary"),
                 CornerRadius = new CornerRadius(3),
-                Margin = new Thickness(1),
-                ToolTip = $"{bucketStart:t}–{bucketEnd:t}: no CO₂ readings",
+                Margin = new Thickness(0, 8, 0, 0),
+                ToolTip = $"{bucketStart:HH:mm} · no reading",
             };
+            cell.Children.Add(stripe);
             if (bucket.Length > 0)
             {
                 var average = (int)Math.Round(bucket.Average(sample => sample.Ppm));
                 var level = Co2Quality.Classify(average);
-                border.Background = (Brush)FindResource(level switch
+                stripe.Background = (Brush)FindResource(level switch
                 {
                     Co2Level.Good => "Co2GoodZone",
                     Co2Level.Fair => "Co2FairZone",
                     _ => "Co2PoorZone",
                 });
-                border.ToolTip = $"{bucketStart:t}–{bucketEnd:t}: average {average:N0} ppm · {Co2Quality.Describe(level)}";
-
-                if (airingEvents.Any(item => item.Start >= bucketStart && item.Start < bucketEnd))
-                {
-                    border.BorderBrush = (Brush)FindResource("TextPrimary");
-                    border.BorderThickness = new Thickness(1);
-                    border.ToolTip += " · airing detected";
-                }
+                stripe.ToolTip = $"{bucketStart:HH:mm} · {average:N0} ppm";
             }
 
-            HistoryDayStrip.Children.Add(border);
+            if (airingEvents.Any(item => item.Start >= bucketStart && item.Start < bucketEnd))
+            {
+                cell.Children.Add(new WpfEllipse
+                {
+                    Width = 5,
+                    Height = 5,
+                    Fill = (Brush)FindResource("TextPrimary"),
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                    ToolTip = "Airing detected",
+                });
+            }
+
+            DayStripSection.AddCell(cell);
         }
 
-        HistoryStartTimeText.Text = start.ToString("ddd HH:mm", CultureInfo.CurrentCulture);
-        HistoryQuarterTimeText.Text = (start + TimeSpan.FromHours(6)).ToString("HH:mm", CultureInfo.CurrentCulture);
-        HistoryHalfTimeText.Text = (start + TimeSpan.FromHours(12)).ToString("HH:mm", CultureInfo.CurrentCulture);
-        HistoryThreeQuarterTimeText.Text = (start + TimeSpan.FromHours(18)).ToString("HH:mm", CultureInfo.CurrentCulture);
+        DayStripSection.SetTimeLabels(
+            "Yesterday " + start.ToString("HH:mm", CultureInfo.CurrentCulture),
+            (start + TimeSpan.FromHours(6)).ToString("HH:mm", CultureInfo.CurrentCulture),
+            (start + TimeSpan.FromHours(12)).ToString("HH:mm", CultureInfo.CurrentCulture),
+            (start + TimeSpan.FromHours(18)).ToString("HH:mm", CultureInfo.CurrentCulture));
 
-        var good = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Good);
-        var elevated = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Fair);
-        var high = daySamples.Count(sample => Co2Quality.Classify(sample.Ppm) == Co2Level.Poor);
-        var total = daySamples.Length;
-        HistoryZoneShareBar.Children.Clear();
-        HistoryZoneShareBar.ColumnDefinitions.Clear();
-        if (total == 0)
+        HistorySidebar.ClearZoneShare();
+        if (daySamples.Length == 0)
         {
-            HistoryZoneShareText.Text = "No readings in the last 24 hours.";
-            HistoryOvernightText.Text = "Overnight: no readings yet.";
-            HistoryAiringText.Text = "No clear airing detected in the last 24 hours.";
-            HistoryPeakText.Text = "Highest: no readings yet.";
+            HistorySidebar.SetZoneShareText("No readings in the last 24 hours.");
+            HistorySidebar.SetOvernight(": no readings yet.");
+            HistorySidebar.SetAiring(" was not detected in the last 24 hours.");
+            HistorySidebar.SetPeak(": no readings yet.");
             return;
+        }
+
+        var zoneShares = HistoryZoneShareCalculator.Calculate(daySamples, now);
+        var total = zoneShares.Total;
+        if (total <= TimeSpan.Zero)
+        {
+            HistorySidebar.SetZoneShareText("Not enough time-spaced readings to estimate zone share.");
         }
 
         var zones = new[]
         {
-            (Count: good, Resource: "Co2GoodZone"),
-            (Count: elevated, Resource: "Co2FairZone"),
-            (Count: high, Resource: "Co2PoorZone"),
+            (Duration: zoneShares.Good, Percent: zoneShares.GoodPercent, Resource: "Co2GoodZone"),
+            (Duration: zoneShares.Elevated, Percent: zoneShares.ElevatedPercent, Resource: "Co2FairZone"),
+            (Duration: zoneShares.High, Percent: zoneShares.HighPercent, Resource: "Co2PoorZone"),
         };
-        var column = 0;
-        foreach (var zone in zones.Where(zone => zone.Count > 0))
+        foreach (var zone in zones.Where(zone => zone.Duration > TimeSpan.Zero))
         {
-            HistoryZoneShareBar.ColumnDefinitions.Add(new ColumnDefinition
-            {
-                Width = new GridLength(zone.Count, GridUnitType.Star),
-            });
-            var segment = new Border
-            {
-                Background = (Brush)FindResource(zone.Resource),
-                CornerRadius = new CornerRadius(6),
-                Margin = new Thickness(1, 0, 1, 0),
-                ToolTip = $"{Math.Round(zone.Count * 100.0 / total):0}% of readings",
-            };
-            Grid.SetColumn(segment, column++);
-            HistoryZoneShareBar.Children.Add(segment);
+            HistorySidebar.AddZoneShareSegment(
+                (Brush)FindResource(zone.Resource),
+                zone.Duration.TotalSeconds,
+                $"{zone.Percent}% of observed time");
         }
 
-        HistoryZoneShareText.Text = $"{Share(good, total)}% good · {Share(elevated, total)}% elevated · {Share(high, total)}% high · of readings";
+        if (total > TimeSpan.Zero)
+        {
+            HistorySidebar.SetZoneShareText(
+                $"{zoneShares.GoodPercent}% good · {zoneShares.ElevatedPercent}% elevated · {zoneShares.HighPercent}% high");
+        }
 
         var overnight = daySamples
             .Where(sample => sample.Time.Hour >= 23 || sample.Time.Hour < 7)
             .ToArray();
-        HistoryOvernightText.Text = overnight.Length == 0
-            ? "Overnight (23:00–07:00): no readings yet."
-            : $"Overnight (23:00–07:00): average {overnight.Average(sample => sample.Ppm):N0} ppm, peaking at {overnight.Max(sample => sample.Ppm):N0} ppm.";
+        var overnightDetail = overnight.Length == 0
+            ? " (23:00–07:00): no readings yet."
+            : $" (23:00–07:00): average {overnight.Average(sample => sample.Ppm):N0} ppm, peaking at {overnight.Max(sample => sample.Ppm):N0} ppm.";
+        HistorySidebar.SetOvernight(overnightDetail);
 
         AiringEvent? latestAiring = airingEvents.Count > 0 ? airingEvents[^1] : null;
-        HistoryAiringText.Text = latestAiring is { } airing
-            ? $"Airing detected {airingEvents.Count} time{(airingEvents.Count == 1 ? string.Empty : "s")}. Latest at {airing.Start:t}: CO₂ fell about {airing.DropPpm:N0} ppm over {DescribeDuration(airing.Duration)}."
-            : "No clear airing detected in the last 24 hours.";
+        var airingDetail = latestAiring is { } airing
+            ? $" detected {airingEvents.Count} time{(airingEvents.Count == 1 ? string.Empty : "s")}. Latest at {airing.Start:t}: CO₂ fell about {airing.DropPpm:N0} ppm over {DescribeDuration(airing.Duration)}."
+            : " was not detected in the last 24 hours.";
+        HistorySidebar.SetAiring(airingDetail);
 
         var peak = daySamples.MaxBy(sample => sample.Ppm)!;
-        HistoryPeakText.Text = $"Highest: {peak.Ppm:N0} ppm at {peak.Time:t}.";
+        HistorySidebar.SetPeak($": {peak.Ppm:N0} ppm at {peak.Time:t}.");
     }
 
     private static int Share(int count, int total) => total == 0 ? 0 : (int)Math.Round(count * 100.0 / total);
@@ -223,7 +237,9 @@ public partial class MainWindow
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV file (*.csv)|*.csv",
-            FileName = $"aranet4-{device.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? device.Address}-{DescribeExportRange(visibleRange)}",
+            DefaultExt = ".csv",
+            AddExtension = true,
+            FileName = $"aranet4-{device.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? device.Address}-{DescribeExportRange(visibleRange)}.csv",
         };
         if (dialog.ShowDialog(this) != true)
         {

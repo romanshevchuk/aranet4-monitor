@@ -109,65 +109,40 @@ public partial class MainWindow
         catch (System.Runtime.InteropServices.COMException) { /* clipboard busy */ }
     }
 
-    private void MoreButton_Click(object sender, RoutedEventArgs e)
-    {
-        MoreMenu.PlacementTarget = MoreButton;
-        MoreMenu.IsOpen = true;
-    }
-
-    private void OpenAlertSettings_Click(object sender, RoutedEventArgs e) => AlertSettingsPopup.IsOpen = true;
-
     private void LiveNavigation_Click(object sender, RoutedEventArgs e)
     {
-        DashboardGrid.Visibility = Visibility.Visible;
-        HistoryView.Visibility = Visibility.Collapsed;
         LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
         HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        DashboardScrollViewer.ScrollToTop();
+        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        LivePage.ScrollToTop();
         Co2Tab.Focus();
     }
 
     private void HistoryNavigation_Click(object sender, RoutedEventArgs e)
     {
-        DashboardGrid.Visibility = Visibility.Collapsed;
-        HistoryView.Visibility = Visibility.Visible;
         LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
         HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
         RefreshHistoryView();
-        DashboardScrollViewer.ScrollToTop();
+        HistoryPage.ScrollToTop();
         LongHistoryChart.Focus();
     }
 
     private void SettingsNavigation_Click(object sender, RoutedEventArgs e)
     {
-        MoreMenu.PlacementTarget = SettingsNavigationButton;
-        MoreMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        MoreMenu.IsOpen = true;
+        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        SettingsPage.ScrollToTop();
     }
 
     private void MinimizeWindow_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void CloseWindow_Click(object sender, RoutedEventArgs e) => Close();
 
-    private void ThemeMenuItem_Click(object sender, RoutedEventArgs e)
+    private void ApplyTheme(AppTheme mode)
     {
-        if (sender is not System.Windows.Controls.MenuItem { Tag: string tag }
-            || !Enum.TryParse<AppTheme>(tag, out var mode))
-        {
-            return;
-        }
-
-        preferences.Theme = mode;
-        preferencesStore.Save(preferences);
-        UpdateThemeMenu();
         ThemeService.SetMode(mode);
-    }
-
-    private void UpdateThemeMenu()
-    {
-        AutoThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Auto;
-        LightThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Light;
-        DarkThemeMenuItem.IsChecked = preferences.Theme == AppTheme.Dark;
     }
 
     private void ThemeService_Changed(object? sender, EventArgs e)
@@ -190,56 +165,48 @@ public partial class MainWindow
             : WindowState.Maximized;
     }
 
-    private void ListenMenuItem_Click(object sender, RoutedEventArgs e)
+    private bool SetListeningFromSettings(bool enabled)
     {
-        if (ListenMenuItem.IsChecked)
+        if (enabled)
         {
             StartListening();
         }
+        else if (sensorSource.IsActive)
+        {
+            StopWatching();
+        }
         else
         {
-            if (!sensorSource.IsActive)
-            {
-                SetStatus("Stopped", StatusKind.Idle);
-            }
-            else
-            {
-                StopWatching();
-            }
-        }
-    }
-
-    private void ShowNumberMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        preferences.TrayShowNumber = ShowNumberMenuItem.IsChecked;
-        preferencesStore.Save(preferences);
-        notifications.SetShowNumber(ShowNumberMenuItem.IsChecked);
-    }
-
-    private void LargePopupsMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        preferences.LargePopups = LargePopupsMenuItem.IsChecked;
-        preferencesStore.Save(preferences);
-        notifications.SetLargePopups(LargePopupsMenuItem.IsChecked);
-    }
-
-    private void StartWithWindowsMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (!StartupRegistration.SetEnabled(StartWithWindowsMenuItem.IsChecked))
-        {
-            StartWithWindowsMenuItem.IsChecked = StartupRegistration.IsEnabled;
+            SetStatus("Stopped", StatusKind.Idle);
         }
 
-        notifications.SetStartWithWindows(StartupRegistration.IsEnabled);
+        return sensorSource.IsActive;
     }
 
-    private void BluetoothDiagnostics_Click(object sender, RoutedEventArgs e)
+    private void SetShowNumberFromSettings(bool enabled)
+    {
+        notifications.SetShowNumber(enabled);
+    }
+
+    private void SetLargePopupsFromSettings(bool enabled)
+    {
+        notifications.SetLargePopups(enabled);
+    }
+
+    private bool SetStartWithWindowsFromSettings(bool enabled)
+    {
+        var actual = StartupRegistration.SetEnabled(enabled)
+            ? enabled
+            : StartupRegistration.IsEnabled;
+        notifications.SetStartWithWindows(actual);
+        return actual;
+    }
+
+    private void OpenBluetoothDiagnostics()
     {
         DiagnosticsExpander.IsExpanded = true;
         DevicePopup.IsOpen = true;
     }
-
-    private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => ExitFromTray();
 
     private void NoticeAction_Click(object sender, RoutedEventArgs e) => StartListening();
 
@@ -260,18 +227,8 @@ public partial class MainWindow
     private void DismissSyncProblem_Click(object sender, RoutedEventArgs e) =>
         SyncProblemBanner.Visibility = Visibility.Collapsed;
 
-    private void TemperatureUnit_Click(object sender, RoutedEventArgs e)
+    private void ApplyTemperatureUnit(TemperatureUnit temperatureUnit)
     {
-        if (sender is not System.Windows.Controls.MenuItem { Tag: string tag }
-            || !Enum.TryParse<TemperatureUnit>(tag, ignoreCase: true, out var temperatureUnit))
-        {
-            return;
-        }
-
-        preferences.TemperatureDisplayUnit = temperatureUnit;
-        preferencesStore.Save(preferences);
-        CelsiusUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Celsius;
-        FahrenheitUnitMenuItem.IsChecked = temperatureUnit == TemperatureUnit.Fahrenheit;
         HistoryChart.TemperatureDisplayUnit = temperatureUnit;
 
         foreach (var device in Dashboard.Devices)

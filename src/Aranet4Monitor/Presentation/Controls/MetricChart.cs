@@ -5,6 +5,8 @@ using System.Windows.Media;
 
 namespace Aranet4Monitor.Presentation.Controls;
 
+public readonly record struct MetricChartAxisLabel(double Position, string Text);
+
 /// <summary>
 /// Lightweight line chart for one metric at a time (CO₂, temperature, humidity or pressure).
 /// CO₂ gets air-quality bands and a level-coloured line; the others use their accent colour.
@@ -58,6 +60,10 @@ public sealed class MetricChart : FrameworkElement
         nameof(Range), typeof(TimeSpan?), typeof(MetricChart),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty TimeAxisLabelsProperty = DependencyProperty.Register(
+        nameof(TimeAxisLabels), typeof(IReadOnlyList<MetricChartAxisLabel>), typeof(MetricChart),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public static readonly DependencyProperty MetricProperty = DependencyProperty.Register(
         nameof(Metric), typeof(MetricKind), typeof(MetricChart),
         new FrameworkPropertyMetadata(MetricKind.Co2, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((MetricChart)d).hover = -1));
@@ -73,6 +79,11 @@ public sealed class MetricChart : FrameworkElement
     public TimeSpan? Range
     {
         get => (TimeSpan?)GetValue(RangeProperty); set => SetValue(RangeProperty, value);
+    }
+    public IReadOnlyList<MetricChartAxisLabel>? TimeAxisLabels
+    {
+        get => (IReadOnlyList<MetricChartAxisLabel>?)GetValue(TimeAxisLabelsProperty);
+        set => SetValue(TimeAxisLabelsProperty, value);
     }
     public MetricKind Metric
     {
@@ -507,6 +518,27 @@ public sealed class MetricChart : FrameworkElement
 
     private void DrawTimeAxis(DrawingContext dc, Func<DateTime, double> x, DateTime t0, DateTime t1)
     {
+        if (TimeAxisLabels is { Count: > 0 } labels)
+        {
+            var previousRight = double.NegativeInfinity;
+            foreach (var axisLabel in labels)
+            {
+                var text = Text(axisLabel.Text, 12, AxisText);
+                var px = plot.Left + plot.Width * Math.Clamp(axisLabel.Position, 0, 1);
+                var maxLeft = Math.Max(plot.Left, plot.Right - text.Width);
+                var left = Math.Clamp(px - text.Width / 2, plot.Left, maxLeft);
+                if (left < previousRight + 8)
+                {
+                    continue;
+                }
+
+                dc.DrawText(text, new Point(left, plot.Bottom + 6));
+                previousRight = left + text.Width;
+            }
+
+            return;
+        }
+
         var span = t1 - t0;
         var maxTicks = Math.Max(2, (int)(plot.Width / 80));
         var step = TickSteps.Cast<TimeSpan?>().FirstOrDefault(s => span.TotalSeconds / s!.Value.TotalSeconds <= maxTicks) ?? TickSteps[^1];
@@ -514,7 +546,13 @@ public sealed class MetricChart : FrameworkElement
         // Align ticks to local "round" times (e.g. 14:00, 14:30).
         var n = Math.Ceiling((t0 - t0.Date).TotalSeconds / step.TotalSeconds);
         var tick = t0.Date + TimeSpan.FromSeconds(n * step.TotalSeconds);
-        var format = step >= TimeSpan.FromDays(1) ? "d MMM" : span.TotalHours > 36 ? "ddd HH:mm" : "HH:mm";
+        var format = Range is { TotalDays: > 1 }
+            ? "ddd"
+            : step >= TimeSpan.FromDays(1)
+                ? "d MMM"
+                : span.TotalHours > 36
+                    ? "ddd HH:mm"
+                    : "HH:mm";
 
         // The cap guards against a corrupt, far-away timestamp turning the axis into millions of ticks.
         for (var drawn = 0; tick <= t1 && drawn < 200; tick += step, drawn++)
