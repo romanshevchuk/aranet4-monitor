@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Aranet4 Monitor"
-        Height="760"
+        Height="730"
         Width="1200"
         MinHeight="640"
         MinWidth="760"
@@ -695,20 +695,21 @@
                                     <StackPanel Grid.Row="0">
                                         <Grid>
                                             <Border x:Name="QualityBadge"
-                                                    CornerRadius="99"
-                                                    Padding="12,4"
-                                                    Visibility="Collapsed"
-                                                    HorizontalAlignment="Left">
+                                                Padding="11,3"
+                                                CornerRadius="12"
+                                                BorderThickness="1"
+                                                HorizontalAlignment="Left"
+                                                Visibility="Collapsed">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock x:Name="QualityIcon"
-                                                               FontSize="9"
-                                                               FontWeight="Bold"
-                                                               Foreground="{DynamicResource TextPrimary}"
-                                                               Margin="0,0,6,0"/>
+                                                           FontSize="9"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource TextPrimary}"
+                                                           Margin="0,0,6,0"/>
                                                     <TextBlock x:Name="QualityText"
-                                                               FontWeight="Bold"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextPrimary}"/>
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimary}"/>
                                                 </StackPanel>
                                             </Border>
                                         </Grid>
