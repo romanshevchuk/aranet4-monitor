@@ -1,0 +1,335 @@
+<UserControl x:Class="Aranet4Monitor.Presentation.Views.Chrome.DevicePopupControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls">
+                            <Popup x:Name="PopupControl"
+                               Placement="Bottom"
+                               StaysOpen="False"
+                               AllowsTransparency="True"
+                               PopupAnimation="Fade"
+                               Closed="Popup_Closed">
+                             <Border Width="340"
+                                    Margin="12,4,18,18"
+                                    Style="{StaticResource PopoverCard}"
+                                    Padding="16"
+                                    PreviewKeyDown="Popover_PreviewKeyDown">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="18"
+                                                      ShadowDepth="3"
+                                                      Opacity="0.25"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                     <Grid Margin="2,0,2,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                         <TextBlock x:Name="DevicesTitleTextControl"
+                                                    Text="SENSORS"
+                                                   Foreground="{DynamicResource Ink}"
+                                                   FontSize="13"
+                                                   FontWeight="Bold"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1"
+                                                Background="{DynamicResource SurfaceSelected}"
+                                                CornerRadius="10"
+                                                Padding="9,2">
+                                            <TextBlock x:Name="DevicesCountTextControl"
+                                                       Text="0"
+                                                       Foreground="{DynamicResource Accent}"
+                                                       FontWeight="Bold"
+                                                       FontSize="12"/>
+                                        </Border>
+                                    </Grid>
+                                    <ListBox x:Name="DevicesListControl"
+                                             ItemsSource="{Binding Devices}"
+                                             SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                                             SelectionChanged="DevicesList_SelectionChanged"
+                                             MaxHeight="230"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemTemplate>
+                                             <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Ellipse Width="10"
+                                                             Height="10"
+                                                              Margin="0,0,0,0"
+                                                              VerticalAlignment="Center">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill"
+                                                                        Value="{DynamicResource Disabled}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsLive}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Fill"
+                                                                                Value="{DynamicResource Positive}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                     <StackPanel Grid.Column="1"
+                                                                 Margin="12,0,8,0">
+                                                         <TextBlock Text="{Binding Name}"
+                                                                    Foreground="{DynamicResource TextPrimary}"
+                                                                    FontWeight="SemiBold"
+                                                                    TextTrimming="CharacterEllipsis"/>
+                                                         <StackPanel Orientation="Horizontal">
+                                                             <TextBlock Text="Aranet4"
+                                                                        Foreground="{DynamicResource TextSecondary}"
+                                                                        FontSize="12"/>
+                                                             <TextBlock Text=" · "
+                                                                        Foreground="{DynamicResource TextSecondary}"
+                                                                        FontSize="12"/>
+                                                             <TextBlock Text="{Binding LastSeenAgo}"
+                                                                        Foreground="{DynamicResource TextSecondary}"
+                                                                        FontSize="12"
+                                                                        TextTrimming="CharacterEllipsis"/>
+                                                         </StackPanel>
+                                                     </StackPanel>
+                                                     <StackPanel Grid.Column="2"
+                                                                 Orientation="Horizontal"
+                                                                 VerticalAlignment="Center">
+                                                         <TextBlock Foreground="{DynamicResource TextPrimary}"
+                                                                    FontSize="18"
+                                                                    FontWeight="Medium"
+                                                                    VerticalAlignment="Center">
+                                                             <TextBlock.Style>
+                                                                 <Style TargetType="TextBlock">
+                                                                     <Setter Property="Text"
+                                                                             Value="{Binding Co2Ppm, StringFormat={}{0:N0}}"/>
+                                                                     <Style.Triggers>
+                                                                         <DataTrigger Binding="{Binding Co2Ppm}"
+                                                                                      Value="0">
+                                                                             <Setter Property="Text"
+                                                                                     Value="—"/>
+                                                                         </DataTrigger>
+                                                                     </Style.Triggers>
+                                                                 </Style>
+                                                             </TextBlock.Style>
+                                                         </TextBlock>
+                                                         <TextBlock Text="ppm"
+                                                                    Foreground="{DynamicResource TextSecondary}"
+                                                                    FontSize="11"
+                                                                    Margin="3,4,0,0"
+                                                                    VerticalAlignment="Center"/>
+                                                     </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                     <Border Margin="2,4,2,0"
+                                             Padding="10,8"
+                                             Background="{DynamicResource SurfaceSecondary}"
+                                             CornerRadius="8">
+                                         <Grid>
+                                             <Grid.ColumnDefinitions>
+                                                 <ColumnDefinition Width="*"/>
+                                                 <ColumnDefinition Width="Auto"/>
+                                             </Grid.ColumnDefinitions>
+                                             <StackPanel>
+                                                 <TextBlock Text="{Binding SelectedDevice.Name, TargetNullValue=No sensor selected}"
+                                                            Foreground="{DynamicResource TextPrimary}"
+                                                            FontWeight="SemiBold"
+                                                            TextTrimming="CharacterEllipsis"/>
+                                                 <StackPanel Orientation="Horizontal"
+                                                             Margin="0,4,0,0">
+                                                     <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"
+                                                                          VerticalAlignment="Center"/>
+                                                     <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
+                                                                Foreground="{DynamicResource TextSecondary}"
+                                                                FontSize="12"
+                                                                Margin="7,0,0,0"/>
+                                                     <TextBlock Text="·"
+                                                                Foreground="{DynamicResource TextSecondary}"
+                                                                Margin="8,0"/>
+                                                 <TextBlock Text="Every"
+                                                            Foreground="{DynamicResource TextSecondary}"
+                                                            FontSize="12"/>
+                                                 <TextBlock Text="{Binding SelectedDevice.MeasurementInterval}"
+                                                            Foreground="{DynamicResource TextSecondary}"
+                                                            FontSize="12"
+                                                            Margin="4,0,0,0"/>
+                                                 </StackPanel>
+                                             </StackPanel>
+                                             <StackPanel Grid.Column="1"
+                                                         Orientation="Horizontal"
+                                                         VerticalAlignment="Center">
+                                                 <Button Content="Add device"
+                                                         Style="{StaticResource SmallLinkButton}"
+                                                         Click="ScanDevices_Click"/>
+                                                 <Button Content="Manage…"
+                                                         Style="{StaticResource SmallLinkButton}"
+                                                         Margin="6,0,0,0"
+                                                         Click="ManageDevices_Click"/>
+                                             </StackPanel>
+                                         </Grid>
+                                     </Border>
+                                     <Expander x:Name="DeviceDetailsExpander"
+                                               Header="Selected sensor details"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               FontSize="12"
+                                               Margin="2,6,2,0">
+                                    <StackPanel x:Name="DeviceDetailsPanelControl"
+                                                Margin="0,8,0,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse x:Name="DeviceStatusDotControl"
+                                                     Width="8"
+                                                     Height="8"
+                                                     Fill="{DynamicResource Muted}"
+                                                     Margin="0,0,8,0"
+                                                     VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="DeviceStatusTextControl"
+                                                       Text="Waiting for a sensor"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       FontWeight="SemiBold"/>
+                                     </StackPanel>
+                                        <TextBlock Text="Last measurement"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="DeviceLastMeasurementTextControl"
+                                                   Text="—"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="Measurement age"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <TextBlock x:Name="DeviceMeasurementAgeTextControl"
+                                                   Text="—"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="Battery"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="BatteryTextControl"
+                                                       Text="—"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       VerticalAlignment="Center"/>
+                                            <ProgressBar x:Name="BatteryBarControl"
+                                                         Style="{StaticResource ThinBar}"
+                                                         Foreground="{DynamicResource Co2Good}"
+                                                         Width="64"
+                                                         Margin="10,0,0,0"
+                                                         VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Signal"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"/>
+                                            <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       Margin="8,0,0,0"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Measurement interval"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <TextBlock x:Name="DeviceIntervalTextControl"
+                                                   Text="—"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="Firmware"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <TextBlock Text="{Binding SelectedDevice.Firmware}"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="Address"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock x:Name="DeviceAddressTextControl"
+                                                       Text="—"
+                                                       FontFamily="Cascadia Mono, Consolas"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       VerticalAlignment="Center"/>
+                                            <Button DockPanel.Dock="Right"
+                                                    Content="Copy"
+                                                    Click="CopyAddress_Click"
+                                                    Style="{StaticResource SmallLinkButton}"
+                                                    ToolTip="Copy address"/>
+                                        </DockPanel>
+                                        <TextBlock Text="Last synced"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Margin="0,8,0,0"/>
+                                        <TextBlock x:Name="DeviceLastSyncedTextControl"
+                                                   Text="Not synced yet"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <Button Content="Sync history"
+                                                Style="{StaticResource GhostButton}"
+                                                HorizontalAlignment="Left"
+                                                Click="SyncHistory_Click"
+                                                Margin="0,12,0,0"/>
+                                    </StackPanel>
+                                     </Expander>
+                                    <TextBlock x:Name="EmptyHintTextControl"
+                                               Text="Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app."
+                                               Foreground="{DynamicResource Muted}"
+                                               TextWrapping="Wrap"
+                                               Margin="2,2,2,8"/>
+                                    <Expander x:Name="DiagnosticsExpanderControl"
+                                              Header="Advanced · Bluetooth diagnostics"
+                                              Foreground="{DynamicResource TextSecondary}"
+                                              FontWeight="SemiBold"
+                                              Margin="0,4,0,0">
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBlock x:Name="PacketCountTextControl"
+                                                       Text="0 packets received"
+                                                       Foreground="{DynamicResource Muted}"
+                                                       Margin="0,0,0,8"/>
+                                            <DockPanel Margin="0,0,0,4"
+                                                       LastChildFill="False">
+                                                <TextBlock Text="ADVERTISEMENT"
+                                                           Style="{StaticResource SectionLabel}"
+                                                           VerticalAlignment="Center"/>
+                                                <Button DockPanel.Dock="Right"
+                                                        Content="Copy"
+                                                        Tag="adv"
+                                                        Click="CopyPacket_Click"
+                                                        Style="{StaticResource SmallLinkButton}"
+                                                        ToolTip="Copy advertisement packet"/>
+                                            </DockPanel>
+                                            <TextBox x:Name="AdvertisementTextControl"
+                                                     IsReadOnly="True"
+                                                     TextWrapping="Wrap"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     Height="88"
+                                                     FontFamily="Cascadia Mono, Consolas"
+                                                     FontSize="12"
+                                                     BorderThickness="0"
+                                                     Background="{DynamicResource SurfaceSecondary}"
+                                                     Padding="8"
+                                                     Foreground="{DynamicResource Ink}"/>
+                                            <DockPanel Margin="0,10,0,4"
+                                                       LastChildFill="False">
+                                                <TextBlock Text="SCAN RESPONSE"
+                                                           Style="{StaticResource SectionLabel}"
+                                                           VerticalAlignment="Center"/>
+                                                <Button DockPanel.Dock="Right"
+                                                        Content="Copy"
+                                                        Tag="scan"
+                                                        Click="CopyPacket_Click"
+                                                        Style="{StaticResource SmallLinkButton}"
+                                                        ToolTip="Copy scan response packet"/>
+                                            </DockPanel>
+                                            <TextBox x:Name="ScanResponseTextControl"
+                                                     IsReadOnly="True"
+                                                     TextWrapping="Wrap"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     Height="88"
+                                                     FontFamily="Cascadia Mono, Consolas"
+                                                     FontSize="12"
+                                                     BorderThickness="0"
+                                                     Background="{DynamicResource SurfaceSecondary}"
+                                                     Padding="8"
+                                                     Foreground="{DynamicResource Ink}"/>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+</UserControl>

@@ -25,9 +25,12 @@
     <Color x:Key="Co2GoodColor">#45D99A</Color>
     <Color x:Key="Co2FairColor">#F5B94F</Color>
     <Color x:Key="Co2PoorColor">#F0786B</Color>
-    <Color x:Key="Co2GoodZoneColor">#2045D99A</Color>
-    <Color x:Key="Co2FairZoneColor">#26F5B94F</Color>
-    <Color x:Key="Co2PoorZoneColor">#28F0786B</Color>
+    <Color x:Key="Co2GoodStrokeColor">#45D99A</Color>
+    <Color x:Key="Co2FairStrokeColor">#F5B94F</Color>
+    <Color x:Key="Co2PoorStrokeColor">#F0786B</Color>
+    <Color x:Key="Co2GoodZoneColor">#45D99A</Color>
+    <Color x:Key="Co2FairZoneColor">#F5B94F</Color>
+    <Color x:Key="Co2PoorZoneColor">#F0786B</Color>
     <Color x:Key="DisabledColor">#5C6B77</Color>
 
     <SolidColorBrush x:Key="TextPrimary"
@@ -78,6 +81,12 @@
             Color="{StaticResource Co2FairColor}"/>
     <SolidColorBrush x:Key="Co2Poor"
             Color="{StaticResource Co2PoorColor}"/>
+    <SolidColorBrush x:Key="Co2GoodStroke"
+            Color="{StaticResource Co2GoodStrokeColor}"/>
+    <SolidColorBrush x:Key="Co2FairStroke"
+            Color="{StaticResource Co2FairStrokeColor}"/>
+    <SolidColorBrush x:Key="Co2PoorStroke"
+            Color="{StaticResource Co2PoorStrokeColor}"/>
     <SolidColorBrush x:Key="Co2GoodZone"
             Color="{StaticResource Co2GoodZoneColor}"/>
     <SolidColorBrush x:Key="Co2FairZone"

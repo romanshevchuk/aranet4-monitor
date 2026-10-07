@@ -29,4 +29,6 @@ public sealed class AppPreferences
     /// <summary>Show alerts as the app's own large pop-up instead of the small Windows notification.</summary>
     public bool LargePopups { get; set; } = true;
 
+    public bool NotificationsEnabled { get; set; }
+
 }

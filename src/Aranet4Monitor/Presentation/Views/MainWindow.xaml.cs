@@ -24,17 +24,17 @@ public partial class MainWindow : Window
     private readonly SensorMonitor sensorMonitor;
     private readonly TrayIconService notifications = new();
     private readonly SettingsViewModel settings;
-    public DashboardViewModel Dashboard { get; } = new();
-    public ShellViewModel Shell { get; } = new();
+    public ShellViewModel Shell { get; }
+    public LiveViewModel Live => Shell.Live;
+    public HistoryViewModel History => Shell.History;
+    public StatusBarViewModel StatusBar { get; } = new();
     private bool startHiddenInTray = Environment.GetCommandLineArgs().Contains(StartupRegistration.TrayArgument);
     private DateTime? alertsPausedUntil;
-    private CancellationTokenSource? syncCancellation;
     private DateTime devicePopupClosedAt;
     private int tickCount;
     private bool allowClose;
     private bool listenerHasBeenStarted;
     private bool isNarrowDashboardLayout;
-    private StatusKind statusKind = StatusKind.Idle;
 
     private static Brush DotLive => ThemeService.GetBrush("Co2Good");
     private static Brush DotStale => ThemeService.GetBrush("Co2Fair");
@@ -51,12 +51,55 @@ public partial class MainWindow : Window
         preferencesStore = services.PreferencesStore;
         preferences = services.Preferences;
         historySyncService = services.HistorySyncService;
+        Shell = new ShellViewModel(historySyncService, sensorMonitor);
         sensorSource = services.SensorSource;
         sensorMonitor = services.SensorMonitor;
 
         InitializeComponent();
-        HistorySidebar.ExportRequested += ExportCsv_Click;
-        DataContext = Dashboard;
+        LivePageControl.MetricTabChecked += MetricTab_Checked;
+        LivePageControl.RangeButtonChecked += RangeButton_Checked;
+        HeaderBar.LiveNavigationRequested += (_, args) => LiveNavigation_Click(this, args);
+        HeaderBar.HistoryNavigationRequested += (_, args) => HistoryNavigation_Click(this, args);
+        HeaderBar.SettingsNavigationRequested += (_, args) => SettingsNavigation_Click(this, args);
+        HeaderBar.DeviceChipRequested += (_, args) => DeviceChip_Click(this, args);
+        HeaderBar.MinimizeRequested += (_, args) => MinimizeWindow_Click(this, args);
+        HeaderBar.ToggleWindowStateRequested += (_, args) => ToggleWindowState_Click(this, args);
+        HeaderBar.CloseRequested += (_, args) => CloseWindow_Click(this, args);
+        StatusBarControl.CancelHistorySyncRequested += (_, args) => CancelHistorySync_Click(this, args);
+        StatusBarControl.DeviceChipRequested += (_, args) => DeviceChip_Click(this, args);
+        DevicePopupControl.PopupClosed += DevicePopup_Closed;
+        DevicePopupControl.DevicesSelectionChanged += DevicesList_SelectionChanged;
+        DevicePopupControl.CopyAddressRequested += CopyAddress_Click;
+        DevicePopupControl.SyncHistoryRequested += SyncHistory_Click;
+        DevicePopupControl.CopyPacketRequested += CopyPacket_Click;
+        DevicePopupControl.ScanDevicesRequested += ScanDevices_Click;
+        DevicePopupControl.ManageDevicesRequested += ManageDevices_Click;
+        DevicePopupControl.PopupPreviewKeyDown += DevicePopup_PreviewKeyDown;
+        BannerHost.StartListeningRequested += (_, args) => NoticeAction_Click(this, args);
+        BannerHost.BluetoothSettingsRequested += (_, args) => BluetoothSettings_Click(this, args);
+        BannerHost.RetrySyncRequested += (_, args) => RetrySync_Click(this, args);
+        BannerHost.DismissSyncProblemRequested += (_, args) => DismissSyncProblem_Click(this, args);
+        HistoryPageControl.ExportRequested += ExportCsv_Click;
+        HistoryPageControl.SyncHistoryRequested += SyncHistory_Click;
+        History.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(HistoryViewModel.SelectedRange))
+            {
+                RefreshHistoryView();
+            }
+            else if (args.PropertyName == nameof(HistoryViewModel.SyncProgressText))
+            {
+                SetSyncStatus(History.SyncProgressText);
+            }
+            else if (args.PropertyName == nameof(HistoryViewModel.IsSyncing))
+            {
+                RefreshHistoryView();
+                StatusBarControl.CancelHistorySyncButton.Content = "Cancel";
+                StatusBarControl.CancelHistorySyncButton.IsEnabled = History.IsSyncing;
+                StatusBarControl.CancelHistorySyncButton.Visibility = History.IsSyncing ? Visibility.Visible : Visibility.Collapsed;
+            }
+        };
+        DataContext = Live;
         settings = new SettingsViewModel(
             preferences,
             preferencesStore.Save,
@@ -74,11 +117,11 @@ public partial class MainWindow : Window
             sensorSource.IsActive,
             StartupRegistration.IsEnabled);
         SettingsPage.DataContext = settings;
-        GoodZoneText.Text = "Good";
-        FairZoneText.Text = "Elevated";
-        PoorZoneText.Text = "High";
+        LivePageControl.GoodZoneText.Text = "Good";
+        LivePageControl.FairZoneText.Text = "Elevated";
+        LivePageControl.PoorZoneText.Text = "High";
         ThemeService.Changed += ThemeService_Changed;
-        HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
+        LivePageControl.HistoryChart.TemperatureDisplayUnit = preferences.TemperatureDisplayUnit;
         SetAlertStatus(
             preferences.LastCo2AlertAt is { } lastAlert
                 ? $"Last notification: {preferences.LastCo2AlertPpm:N0} ppm at {lastAlert:t}"
@@ -124,7 +167,7 @@ public partial class MainWindow : Window
         {
             tickTimer.Stop();
             syncToastTimer.Stop();
-            syncCancellation?.Cancel();
+            History.CancelSync();
             StopWatching();
             sensorSource.AdvertisementReceived -= SensorSource_AdvertisementReceived;
             sensorSource.Stopped -= SensorSource_Stopped;
@@ -134,39 +177,42 @@ public partial class MainWindow : Window
         };
         StateChanged += (_, _) =>
         {
+            WindowSurface.Padding = WindowState == WindowState.Maximized
+                ? SystemParameters.WindowResizeBorderThickness
+                : new Thickness(0);
             if (WindowState == WindowState.Minimized && !startHiddenInTray)
             {
                 HideToTray();
             }
         };
 
-        Dashboard.Devices.CollectionChanged += (_, _) =>
+        Live.Devices.CollectionChanged += (_, _) =>
         {
-            DevicesCountText.Text = Dashboard.Devices.Count.ToString(CultureInfo.InvariantCulture);
-            EmptyHintText.Visibility = Dashboard.Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            DevicePopupControl.DevicesCountText.Text = Live.Devices.Count.ToString(CultureInfo.InvariantCulture);
+            DevicePopupControl.EmptyHintText.Visibility = Live.Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             UpdateDevicePopover();
         };
 
         syncToastTimer.Tick += (_, _) =>
         {
             syncToastTimer.Stop();
-            SyncToast.Visibility = Visibility.Collapsed;
+            StatusBar.HideSyncToast();
         };
 
         // Keeps "3s ago" labels and the live dots fresh between packets.
         tickTimer.Tick += (_, _) =>
         {
-            foreach (var device in Dashboard.Devices)
+            foreach (var device in Live.Devices)
             {
                 device.Tick();
             }
 
-            if (DevicePopup.IsOpen)
+            if (DevicePopupControl.DevicePopup.IsOpen)
             {
                 UpdateDevicePopover();
             }
 
-            if (Dashboard.SelectedDevice is { } selected)
+            if (Live.SelectedDevice is { } selected)
             {
                 ShowLastSeen(selected);
             }
@@ -203,184 +249,61 @@ public partial class MainWindow : Window
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (DashboardGrid is null)
-        {
-            return;
-        }
-
         var useNarrowLayout = ActualWidth < 1060;
         if (useNarrowLayout == isNarrowDashboardLayout)
         {
             return;
         }
-
         isNarrowDashboardLayout = useNarrowLayout;
-        DashboardGrid.RowDefinitions.Clear();
-        DashboardGrid.ColumnDefinitions.Clear();
-
-        if (useNarrowLayout)
-        {
-            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition());
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            Grid.SetRow(Co2HeroPanel, 0);
-            Grid.SetColumn(Co2HeroPanel, 0);
-            Grid.SetRow(HistoryChartCard, 1);
-            Grid.SetColumn(HistoryChartCard, 0);
-            Grid.SetRow(SecondaryMetricsGrid, 2);
-            Grid.SetColumn(SecondaryMetricsGrid, 0);
-            Grid.SetColumnSpan(SecondaryMetricsGrid, 1);
-            Co2HeroPanel.Margin = new Thickness(0, 0, 0, 12);
-            HistoryChartCard.Margin = new Thickness(0, 0, 0, 12);
-            HistoryChart.MinHeight = 190;
-            DashboardGrid.Margin = new Thickness(16, 14, 16, 14);
-            HistoryView.Margin = new Thickness(16, 14, 16, 14);
-            HistoryContentGrid.ColumnDefinitions.Clear();
-            HistoryContentGrid.RowDefinitions.Clear();
-            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
-            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            Grid.SetRow(HistoryMainCard, 0);
-            Grid.SetColumn(HistoryMainCard, 0);
-            HistoryMainCard.Margin = new Thickness(0, 0, 0, 14);
-            Grid.SetRow(HistorySidebar, 1);
-            Grid.SetColumn(HistorySidebar, 0);
-            HistorySidebar.Margin = new Thickness(0, 0, 0, 14);
-        }
-        else
-        {
-            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.82, GridUnitType.Star), MinWidth = 330 });
-            DashboardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.45, GridUnitType.Star), MinWidth = 420 });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star), MinHeight = 300 });
-            DashboardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            Grid.SetRow(Co2HeroPanel, 0);
-            Grid.SetColumn(Co2HeroPanel, 0);
-            Grid.SetRow(HistoryChartCard, 0);
-            Grid.SetColumn(HistoryChartCard, 1);
-            Grid.SetRow(SecondaryMetricsGrid, 1);
-            Grid.SetColumn(SecondaryMetricsGrid, 0);
-            Grid.SetColumnSpan(SecondaryMetricsGrid, 2);
-            Co2HeroPanel.Margin = new Thickness(0, 0, 16, 14);
-            HistoryChartCard.Margin = new Thickness(0, 0, 0, 14);
-            HistoryChart.MinHeight = 150;
-            DashboardGrid.Margin = new Thickness(26, 24, 26, 18);
-            HistoryView.Margin = new Thickness(26, 24, 26, 18);
-            HistoryContentGrid.ColumnDefinitions.Clear();
-            HistoryContentGrid.RowDefinitions.Clear();
-            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
-            HistoryContentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(280) });
-            HistoryContentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            Grid.SetRow(HistoryMainCard, 0);
-            Grid.SetColumn(HistoryMainCard, 0);
-            HistoryMainCard.Margin = new Thickness(0, 0, 14, 0);
-            Grid.SetRow(HistorySidebar, 0);
-            Grid.SetColumn(HistorySidebar, 1);
-            HistorySidebar.Margin = new Thickness(0);
-        }
+        LivePageControl.ApplyNarrowLayout(useNarrowLayout);
+        HistoryPageControl.ApplyNarrowLayout(useNarrowLayout);
     }
 
-    private enum StatusKind
+    private void SetStatus(string text, ListenerStatusKind kind, string? details = null)
     {
-        Idle, Listening, Error, BluetoothUnavailable
-    }
-
-    private void SetStatus(string text, StatusKind kind, string? details = null)
-    {
-        statusKind = kind;
-        NoticeBar.Visibility = kind == StatusKind.Listening || !listenerHasBeenStarted
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-        switch (kind)
-        {
-            case StatusKind.Idle:
-                NoticeText.Text = "Live readings are off.";
-                NoticeActionButton.Content = "Start listening";
-                BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.SetResourceReference(Border.BackgroundProperty, "SurfaceSecondary");
-                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Border");
-                NoticeBar.ToolTip = null;
-                break;
-            case StatusKind.Error:
-                NoticeText.Text = "Live readings stopped. Check Bluetooth settings or permissions, then try again.";
-                NoticeActionButton.Content = "Try again";
-                BluetoothSettingsButton.Visibility = Visibility.Collapsed;
-                NoticeBar.SetResourceReference(Border.BackgroundProperty, "DangerBackground");
-                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Danger");
-                NoticeBar.ToolTip = details ?? text;
-                break;
-            case StatusKind.BluetoothUnavailable:
-                NoticeText.Text = "Bluetooth is off. Turn it on in Windows settings to see live readings.";
-                NoticeActionButton.Visibility = Visibility.Collapsed;
-                BluetoothSettingsButton.Visibility = Visibility.Visible;
-                NoticeBar.SetResourceReference(Border.BackgroundProperty, "WarningBackground");
-                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Warning");
-                NoticeBar.ToolTip = details ?? text;
-                break;
-            default:
-                NoticeActionButton.Visibility = Visibility.Visible;
-                NoticeBar.SetResourceReference(Border.BackgroundProperty, "PositiveBackground");
-                NoticeBar.SetResourceReference(Border.BorderBrushProperty, "Positive");
-                NoticeBar.ToolTip = details;
-                break;
-        }
-
-        NoticeActionButton.Visibility = kind == StatusKind.BluetoothUnavailable
-            ? Visibility.Collapsed
-            : Visibility.Visible;
+        StatusBar.SetListenerStatus(text, kind, details, listenerHasBeenStarted);
         UpdateHeaderSensorState();
     }
 
     private void SetSyncStatus(string text, string? details = null)
     {
-        SyncStatusText.Text = text;
-        SyncStatusText.ToolTip = details ?? text;
-        SyncProgressPanel.Visibility = string.IsNullOrWhiteSpace(text) ? Visibility.Collapsed : Visibility.Visible;
+        StatusBar.SetSyncStatus(text, details);
     }
 
     private void ShowSyncToast(string text)
     {
-        SyncToastText.Text = text;
-        SyncToast.Visibility = Visibility.Visible;
+        StatusBar.ShowSyncToast(text);
         syncToastTimer.Stop();
         syncToastTimer.Start();
     }
 
     private void ShowSyncProblem(string text, string details)
     {
-        SyncProblemText.Text = text;
-        SyncProblemText.ToolTip = details;
-        SyncProblemBanner.Visibility = Visibility.Visible;
+        StatusBar.ShowSyncProblem(text, details);
     }
 
     private void UpdateHeaderSensorState()
     {
-        if (statusKind == StatusKind.Error)
+        if (StatusBar.ListenerStatus == ListenerStatusKind.Error)
         {
             UpdateFooterStatus("Listener error", "Danger");
-            DeviceDot.Fill = ThemeService.GetBrush("Danger");
-            DeviceChipButton.ToolTip = "Live readings stopped. Try starting the listener again.";
+            HeaderBar.DeviceChipButton.ToolTip = "Live readings stopped. Try starting the listener again.";
             return;
         }
 
-        if (statusKind is StatusKind.Idle or StatusKind.BluetoothUnavailable)
+        if (StatusBar.ListenerStatus is ListenerStatusKind.Idle or ListenerStatusKind.BluetoothUnavailable)
         {
-            UpdateFooterStatus(statusKind == StatusKind.BluetoothUnavailable ? "Bluetooth unavailable" : "Stopped", "Muted");
-            DeviceDot.Fill = DotIdle;
-            DeviceChipButton.ToolTip = statusKind == StatusKind.BluetoothUnavailable
+            UpdateFooterStatus(StatusBar.ListenerStatus == ListenerStatusKind.BluetoothUnavailable ? "Bluetooth unavailable" : "Stopped", "Muted");
+            HeaderBar.DeviceChipButton.ToolTip = StatusBar.ListenerStatus == ListenerStatusKind.BluetoothUnavailable
                 ? "Bluetooth is unavailable. Turn it on in Windows settings to see live readings."
                 : "Live readings are off.";
             return;
         }
 
-        if (Dashboard.SelectedDevice is not { } device || GetLastReadingTime(device) == default)
+        if (Live.SelectedDevice is not { } device || GetLastReadingTime(device) == default)
         {
             UpdateFooterStatus("Searching", "Muted");
-            DeviceDot.Fill = DotIdle;
-            DeviceChipButton.ToolTip = "Looking for your Aranet4. Make sure Smart Home Integration is enabled in the Aranet Home app.";
+            HeaderBar.DeviceChipButton.ToolTip = "Looking for your Aranet4. Make sure Smart Home Integration is enabled in the Aranet Home app.";
             return;
         }
 
@@ -389,15 +312,13 @@ public partial class MainWindow : Window
             GetLastReadingTime(device),
             DateTime.Now);
         UpdateFooterStatus(stale ? "Waiting for sensor" : "Live", stale ? "Warning" : "Positive");
-        DeviceDot.Fill = stale ? DotStale : DotLive;
-        DeviceChipButton.ToolTip = stale
+        HeaderBar.DeviceChipButton.ToolTip = stale
             ? "No recent readings from this sensor. Move it closer and check its battery."
             : "Receiving live readings from this sensor.";
     }
 
     private void UpdateFooterStatus(string text, string brushKey)
     {
-        FooterStatusText.Text = text;
-        FooterStatusDot.Fill = (Brush)FindResource(brushKey);
+        StatusBar.SetFooterStatus(text, brushKey);
     }
 }

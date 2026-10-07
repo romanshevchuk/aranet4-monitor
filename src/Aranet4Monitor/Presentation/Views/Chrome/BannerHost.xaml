@@ -1,0 +1,70 @@
+<UserControl x:Class="Aranet4Monitor.Presentation.Views.Chrome.BannerHost"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Border Grid.Row="0"
+                Style="{StaticResource StatusBanner}"
+                Margin="22,0,22,10"
+                Visibility="{Binding StatusBar.NoticeVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                Background="{Binding StatusBar.NoticeBackground, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                BorderBrush="{Binding StatusBar.NoticeBorder, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                ToolTip="{Binding StatusBar.NoticeToolTip, RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusBar.NoticeText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                           Foreground="{DynamicResource TextPrimary}"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="12,0,0,0">
+                    <Button Content="{Binding StatusBar.NoticeActionText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                            Visibility="{Binding StatusBar.NoticeActionVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                            Style="{StaticResource SmallLinkButton}"
+                            Click="NoticeAction_Click"/>
+                    <Button Content="Bluetooth settings"
+                            Style="{StaticResource SmallLinkButton}"
+                            Click="BluetoothSettings_Click"
+                            Visibility="{Binding StatusBar.BluetoothSettingsVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Grid.Row="1"
+                Style="{StaticResource StatusBanner}"
+                Margin="22,0,22,10"
+                Background="{DynamicResource DangerBackground}"
+                BorderBrush="{DynamicResource Danger}"
+                Visibility="{Binding StatusBar.SyncProblemVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusBar.SyncProblemText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                           ToolTip="{Binding StatusBar.SyncProblemToolTip, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                           Foreground="{DynamicResource TextPrimary}"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="12,0,0,0">
+                    <Button Content="Retry"
+                            Style="{StaticResource SmallLinkButton}"
+                            Click="RetrySync_Click"/>
+                    <Button Content="Dismiss"
+                            Style="{StaticResource SmallLinkButton}"
+                            Click="DismissSyncProblem_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

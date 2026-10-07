@@ -133,6 +133,12 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <Style x:Key="NeutralLinkButton"
+           TargetType="Button"
+           BasedOn="{StaticResource SmallLinkButton}">
+        <Setter Property="Foreground"
+                Value="{DynamicResource TextPrimary}"/>
+    </Style>
     <Style x:Key="HeaderActionButton"
            TargetType="Button"
            BasedOn="{StaticResource BtnBase}">

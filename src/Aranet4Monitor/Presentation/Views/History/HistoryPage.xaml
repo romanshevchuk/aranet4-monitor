@@ -1,0 +1,121 @@
+<UserControl x:Class="Aranet4Monitor.Presentation.Views.History.HistoryPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls"
+             xmlns:history="clr-namespace:Aranet4Monitor.Presentation.Views.History">
+    <ScrollViewer x:Name="HistoryScrollViewer"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+                    <Grid x:Name="HistoryViewControl"
+                          Margin="24,18,24,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0"
+                              Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="How the room breathed"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           FontSize="23"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock x:Name="HistoryHeaderSummaryTextControl"
+                                           Text="No saved readings yet"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="13"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock x:Name="HistoryLastSyncTextControl"
+                                           Text="Not synced yet"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,12,0"/>
+                                <Button x:Name="SyncHistoryButtonControl"
+                                        Content="Sync history"
+                                        Style="{StaticResource GhostButton}"
+                                        Click="SyncHistory_Click"
+                                        IsEnabled="False"
+                                        ToolTip="Download readings stored on the selected sensor"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid x:Name="HistoryContentGridControl"
+                              Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"
+                                                  MinWidth="420"/>
+                                <ColumnDefinition Width="280"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="HistoryMainCardControl"
+                                    Style="{StaticResource CardStyle}"
+                                    Padding="20"
+                                    Margin="0,0,14,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="CO₂"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="HistoryChartStatsTextControl"
+                                                       Text="No readings yet"
+                                                       Foreground="{DynamicResource TextSecondary}"
+                                                       FontSize="13"
+                                                       Margin="0,3,0,0"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                Background="{DynamicResource SurfaceSecondary}"
+                                                CornerRadius="10"
+                                                Padding="3">
+                                            <StackPanel Orientation="Horizontal">
+                                                <RadioButton x:Name="History24HoursButtonControl"
+                                                             Content="24h"
+                                                             Tag="24"
+                                                             GroupName="HistoryRange"
+                                                             Style="{StaticResource SegmentButton}"
+                                                             IsChecked="True"
+                                                             Command="{Binding History.SelectRangeCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" CommandParameter="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                                                <RadioButton Content="7d"
+                                                             Tag="168"
+                                                             GroupName="HistoryRange"
+                                                             Style="{StaticResource SegmentButton}"
+                                                             Command="{Binding History.SelectRangeCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" CommandParameter="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                    <controls:MetricChart x:Name="LongHistoryChartControl"
+                                                          Grid.Row="1"
+                                                          Margin="0,10,0,0"
+                                                          MinHeight="220"
+                                                          Focusable="True"
+                                                          KeyboardNavigation.IsTabStop="True"
+                                                          AutomationProperties.Name="CO₂ history over the selected range"
+                                                          AutomationProperties.HelpText="Use left and right arrow keys to inspect readings."/>
+                                    <history:DayStripSection x:Name="DayStripSectionControl"
+                                                             Grid.Row="2"/>
+                                </Grid>
+                            </Border>
+                            <history:HistorySidebar x:Name="HistorySidebarControl"
+                                                    Grid.Column="1"/>
+                        </Grid>
+                    </Grid>
+
+    </ScrollViewer>
+</UserControl>

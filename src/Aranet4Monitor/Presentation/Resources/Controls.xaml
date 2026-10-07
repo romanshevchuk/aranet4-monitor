@@ -185,7 +185,7 @@
                             Background="{DynamicResource MetricCard}"
                             BorderBrush="{DynamicResource Border}"
                             BorderThickness="1"
-                            CornerRadius="14"
+                            CornerRadius="{StaticResource CardRadius}"
                             Padding="21,18">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
@@ -201,7 +201,7 @@
                                  Value="True">
                             <Setter TargetName="Bd"
                                     Property="Background"
-                                    Value="{DynamicResource SurfaceSelected}"/>
+                                    Value="{DynamicResource Surface}"/>
                             <Setter TargetName="Bd"
                                     Property="BorderBrush"
                                     Value="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
@@ -226,7 +226,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="Bd"
-                            CornerRadius="17"
+                            CornerRadius="{StaticResource CardRadius}"
                             Padding="22,18"
                             BorderThickness="1"
                             BorderBrush="{DynamicResource Border}"
@@ -239,6 +239,61 @@
                             <Setter TargetName="Bd"
                                     Property="BorderBrush"
                                     Value="{DynamicResource TextSecondary}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked"
+                                 Value="True">
+                            <Setter TargetName="Bd"
+                                    Property="BorderBrush"
+                                    Value="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <Setter TargetName="Bd"
+                                    Property="BorderThickness"
+                                    Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="SwitchCheckBox"
+           TargetType="CheckBox">
+        <Setter Property="Width"
+                Value="42"/>
+        <Setter Property="Height"
+                Value="24"/>
+        <Setter Property="Cursor"
+                Value="Hand"/>
+        <Setter Property="FocusVisualStyle"
+                Value="{DynamicResource KeyboardFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid Width="42"
+                          Height="24">
+                        <Border x:Name="Track"
+                                Background="{DynamicResource Border}"
+                                CornerRadius="12"/>
+                        <Ellipse x:Name="Thumb"
+                                 Width="18"
+                                 Height="18"
+                                 Fill="{DynamicResource Surface}"
+                                 HorizontalAlignment="Left"
+                                 Margin="3"/>
+                        <ContentPresenter/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked"
+                                 Value="True">
+                            <Setter TargetName="Track"
+                                    Property="Background"
+                                    Value="{DynamicResource Positive}"/>
+                            <Setter TargetName="Thumb"
+                                    Property="HorizontalAlignment"
+                                    Value="Right"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled"
+                                 Value="False">
+                            <Setter Property="Opacity"
+                                    Value="0.45"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

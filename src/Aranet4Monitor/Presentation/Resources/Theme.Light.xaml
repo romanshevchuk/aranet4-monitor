@@ -12,9 +12,9 @@
     <Color x:Key="SurfaceSelectedColor">#E7F2EE</Color>
     <Color x:Key="BorderColor">#D9E2E7</Color>
     <Color x:Key="TextPrimaryColor">#17232C</Color>
-    <Color x:Key="TextSecondaryColor">#61727E</Color>
+    <Color x:Key="TextSecondaryColor">#566873</Color>
     <Color x:Key="AccentColor">#176BC4</Color>
-    <Color x:Key="PositiveColor">#087B51</Color>
+    <Color x:Key="PositiveColor">#066B46</Color>
     <Color x:Key="OnPositiveColor">#FFFFFF</Color>
     <Color x:Key="WarningColor">#8A5700</Color>
     <Color x:Key="DangerColor">#B83A30</Color>
@@ -25,9 +25,12 @@
     <Color x:Key="Co2GoodColor">#24B77C</Color>
     <Color x:Key="Co2FairColor">#E7A52F</Color>
     <Color x:Key="Co2PoorColor">#D85A50</Color>
-    <Color x:Key="Co2GoodZoneColor">#1F24B77C</Color>
-    <Color x:Key="Co2FairZoneColor">#29E7A52F</Color>
-    <Color x:Key="Co2PoorZoneColor">#26D85A50</Color>
+    <Color x:Key="Co2GoodStrokeColor">#1BA06B</Color>
+    <Color x:Key="Co2FairStrokeColor">#C9810B</Color>
+    <Color x:Key="Co2PoorStrokeColor">#B83A30</Color>
+    <Color x:Key="Co2GoodZoneColor">#24B77C</Color>
+    <Color x:Key="Co2FairZoneColor">#E7A52F</Color>
+    <Color x:Key="Co2PoorZoneColor">#D85A50</Color>
     <Color x:Key="DisabledColor">#9AA8B0</Color>
 
     <SolidColorBrush x:Key="TextPrimary"
@@ -78,6 +81,12 @@
             Color="{StaticResource Co2FairColor}"/>
     <SolidColorBrush x:Key="Co2Poor"
             Color="{StaticResource Co2PoorColor}"/>
+    <SolidColorBrush x:Key="Co2GoodStroke"
+            Color="{StaticResource Co2GoodStrokeColor}"/>
+    <SolidColorBrush x:Key="Co2FairStroke"
+            Color="{StaticResource Co2FairStrokeColor}"/>
+    <SolidColorBrush x:Key="Co2PoorStroke"
+            Color="{StaticResource Co2PoorStrokeColor}"/>
     <SolidColorBrush x:Key="Co2GoodZone"
             Color="{StaticResource Co2GoodZoneColor}"/>
     <SolidColorBrush x:Key="Co2FairZone"

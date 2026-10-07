@@ -3,12 +3,12 @@ using Xunit;
 
 namespace Aranet4Monitor.Tests.Presentation;
 
-public sealed class DashboardViewModelTests
+public sealed class LiveViewModelTests
 {
     [Fact]
-    public void StartsWithDashboardDefaults()
+    public void StartsWithLiveDefaults()
     {
-        var viewModel = new DashboardViewModel();
+        var viewModel = new LiveViewModel();
 
         Assert.Empty(viewModel.Devices);
         Assert.Null(viewModel.SelectedDevice);
@@ -19,7 +19,7 @@ public sealed class DashboardViewModelTests
     [Fact]
     public void NotifiesWhenPresentationStateChanges()
     {
-        var viewModel = new DashboardViewModel();
+        var viewModel = new LiveViewModel();
         var changedProperties = new List<string?>();
         viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
 

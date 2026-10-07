@@ -3,6 +3,8 @@ using System.Windows;
 using Aranet4Monitor.Abstractions;
 using Aranet4Monitor.Application.Monitoring;
 
+using Aranet4Monitor.Presentation.ViewModels;
+
 namespace Aranet4Monitor;
 
 public partial class MainWindow
@@ -21,8 +23,8 @@ public partial class MainWindow
         {
             sensorSource.Start();
             settings.SetListeningState(true);
-            SetStatus("Listening for Aranet4 beacon packets…", StatusKind.Listening);
-            EmptyHintText.Text = "Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app.";
+            SetStatus("Listening for Aranet4 beacon packets…", ListenerStatusKind.Listening);
+            DevicePopupControl.EmptyHintText.Text = "Looking for your Aranet4… Make sure Smart Home Integration is enabled in the Aranet Home app.";
         }
         catch (Exception ex)
         {
@@ -32,18 +34,18 @@ public partial class MainWindow
                 || ex.Message.Contains("Bluetooth", StringComparison.OrdinalIgnoreCase)
                 || ex.Message.Contains("radio", StringComparison.OrdinalIgnoreCase))
             {
-                SetStatus("Bluetooth unavailable", StatusKind.BluetoothUnavailable, ex.ToString());
+                SetStatus("Bluetooth unavailable", ListenerStatusKind.BluetoothUnavailable, ex.ToString());
             }
             else
             {
-                SetStatus($"Could not start: {ex.Message}", StatusKind.Error, ex.ToString());
+                SetStatus($"Could not start: {ex.Message}", ListenerStatusKind.Error, ex.ToString());
             }
         }
     }
 
     private void ForgetDetectedDevices()
     {
-        if (Dashboard.Devices.Count == 0)
+        if (Live.Devices.Count == 0)
         {
             return;
         }
@@ -63,8 +65,8 @@ public partial class MainWindow
         devicesByAddress.Clear();
         sensorSource.ClearKnownAddresses();
         sensorMonitor.ClearSensorTracking();
-        Dashboard.Devices.Clear();
-        Dashboard.SelectedDevice = null;
+        Live.Devices.Clear();
+        Live.SelectedDevice = null;
         ClearDetails();
     }
 
@@ -77,7 +79,7 @@ public partial class MainWindow
 
         sensorSource.Stop();
         settings.SetListeningState(false);
-        SetStatus("Stopped", StatusKind.Idle);
+        SetStatus("Stopped", ListenerStatusKind.Idle);
     }
 
     private void SensorSource_Stopped(object? sender, SensorSourceStoppedEventArgs args) => Dispatcher.InvokeAsync(() =>
@@ -85,15 +87,15 @@ public partial class MainWindow
         settings.SetListeningState(false);
         if (args.RadioUnavailable)
         {
-            SetStatus("Bluetooth radio unavailable", StatusKind.BluetoothUnavailable, args.Error);
+            SetStatus("Bluetooth radio unavailable", ListenerStatusKind.BluetoothUnavailable, args.Error);
         }
         else if (args.Successful)
         {
-            SetStatus("Listener stopped", StatusKind.Idle);
+            SetStatus("Listener stopped", ListenerStatusKind.Idle);
         }
         else
         {
-            SetStatus($"Listener stopped: {args.Error}", StatusKind.Error, args.Error);
+            SetStatus($"Listener stopped: {args.Error}", ListenerStatusKind.Error, args.Error);
         }
     });
 
@@ -108,13 +110,13 @@ public partial class MainWindow
             device.LoadHistory(sensorMonitor.LoadHistory(device.Address));
             devicesByAddress.Add(args.BluetoothAddress, device);
             sensorSource.RegisterKnownAddress(args.BluetoothAddress);
-            Dashboard.Devices.Add(device);
+            Live.Devices.Add(device);
 
             // The dashboard is designed around the primary sensor; keep the first one in focus.
-            if (Dashboard.SelectedDevice is null)
+            if (Live.SelectedDevice is null)
             {
-                Dashboard.SelectedDevice = device;
-                DevicesList.ScrollIntoView(device);
+                Live.SelectedDevice = device;
+                DevicePopupControl.DevicesList.ScrollIntoView(device);
             }
         }
 
@@ -162,7 +164,7 @@ public partial class MainWindow
             {
                 device.ReplaceHistory(observation.History);
                 var monitoring = observation.Monitoring!;
-                if (monitoring.NotificationReady)
+                if (monitoring.NotificationReady && preferences.NotificationsEnabled)
                 {
                     preferences.LastCo2AlertAt = now;
                     preferences.LastCo2AlertPpm = measurement.Co2;
@@ -181,7 +183,7 @@ public partial class MainWindow
                 else if (measurement.Co2 <= monitoring.ResetThresholdPpm)
                 {
                     // Air is fine again. If we had raised the alarm, celebrate with a short all-clear.
-                    if (monitoring.RecoveryNotificationDue)
+                    if (monitoring.RecoveryNotificationDue && preferences.NotificationsEnabled)
                     {
                         notifications.NotifyRecovered(measurement.Co2);
                     }
@@ -203,12 +205,12 @@ public partial class MainWindow
         }
 
         // Don't overwrite a sync progress/result message the user is still reading.
-        if (syncCancellation is null && sensorSource.IsActive)
+        if (!History.IsSyncing && sensorSource.IsActive)
         {
-            SetStatus("Listening", StatusKind.Listening);
+            SetStatus("Listening", ListenerStatusKind.Listening);
         }
 
-        if (Dashboard.SelectedDevice == device)
+        if (Live.SelectedDevice == device)
         {
             ShowDetails(device);
             UpdateTray();
@@ -222,7 +224,7 @@ public partial class MainWindow
             return;
         }
 
-        var text = which == "adv" ? AdvertisementText.Text : ScanResponseText.Text;
+        var text = which == "adv" ? DevicePopupControl.AdvertisementText.Text : DevicePopupControl.ScanResponseText.Text;
         if (string.IsNullOrWhiteSpace(text))
         {
             return;

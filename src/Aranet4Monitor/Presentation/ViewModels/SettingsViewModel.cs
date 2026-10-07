@@ -28,6 +28,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool listenForLiveReadings;
     private bool showNumberInTray;
     private bool largePopups;
+    private bool notificationsEnabled;
     private bool startWithWindows;
     private string alertStatus = string.Empty;
     private string snoozeButtonText = "Pause 1 h";
@@ -48,6 +49,7 @@ public sealed class SettingsViewModel : ObservableObject
         alertDurationMinutes = preferences.AlertDurationMinutes;
         showNumberInTray = preferences.TrayShowNumber;
         largePopups = preferences.LargePopups;
+        notificationsEnabled = preferences.NotificationsEnabled;
         this.listenForLiveReadings = listenForLiveReadings;
         this.startWithWindows = startWithWindows;
 
@@ -223,6 +225,24 @@ public sealed class SettingsViewModel : ObservableObject
             actions.SetLargePopups(value);
         }
     }
+
+    public bool NotificationsEnabled
+    {
+        get => notificationsEnabled;
+        set
+        {
+            if (!SetProperty(ref notificationsEnabled, value))
+            {
+                return;
+            }
+
+            preferences.NotificationsEnabled = value;
+            savePreferences(preferences);
+            OnPropertyChanged(nameof(IsAlertConfigurationEnabled));
+        }
+    }
+
+    public bool IsAlertConfigurationEnabled => NotificationsEnabled;
 
     public bool StartWithWindows
     {

@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
+using Aranet4Monitor.Presentation.ViewModels;
 using Aranet4Monitor.Storage;
 using Aranet4Monitor.Windows;
 
@@ -14,9 +15,9 @@ public partial class MainWindow
 {
     private void DeviceChip_Click(object sender, RoutedEventArgs e)
     {
-        if (DevicePopup.IsOpen)
+        if (DevicePopupControl.DevicePopup.IsOpen)
         {
-            DevicePopup.IsOpen = false;
+            DevicePopupControl.DevicePopup.IsOpen = false;
             return;
         }
         // The same click that dismissed the popup (it closes on any outside press) must not reopen it.
@@ -25,79 +26,91 @@ public partial class MainWindow
             return;
         }
 
-        DevicePopup.IsOpen = true;
+        DevicePopupControl.DevicePopup.IsOpen = true;
+    }
+
+    private void ScanDevices_Click(object sender, RoutedEventArgs e)
+    {
+        DevicePopupControl.DevicePopup.IsOpen = false;
+        StartListening();
+    }
+
+    private void ManageDevices_Click(object sender, RoutedEventArgs e)
+    {
+        DevicePopupControl.DevicePopup.IsOpen = false;
+        SettingsNavigation_Click(sender, e);
     }
 
     private void DevicePopup_Closed(object? sender, EventArgs e)
     {
         devicePopupClosedAt = DateTime.UtcNow;
-        DeviceChipButton.Focus();
+        HeaderBar.DeviceChipButton.Focus();
     }
 
     private void DevicePopup_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
-            DevicePopup.IsOpen = false;
-            DeviceChipButton.Focus();
+            DevicePopupControl.DevicePopup.IsOpen = false;
+            HeaderBar.DeviceChipButton.Focus();
             e.Handled = true;
         }
     }
 
     private void UpdateDevicePopover()
     {
-        var count = Dashboard.Devices.Count;
-        DevicesCountText.Text = count.ToString(CultureInfo.InvariantCulture);
-        DevicesTitleText.Text = count > 1 ? "YOUR SENSORS" : "SENSOR";
-        DevicesList.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyHintText.Visibility = count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        PacketCountText.Text = Dashboard.SelectedDevice is { } current
+        var count = Live.Devices.Count;
+        DevicePopupControl.DevicesCountText.Text = count.ToString(CultureInfo.InvariantCulture);
+        DevicePopupControl.DevicesTitleText.Text = count > 1 ? "YOUR SENSORS" : "SENSORS";
+        DevicePopupControl.DevicesList.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        DevicePopupControl.EmptyHintText.Visibility = count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        DevicePopupControl.PacketCountText.Text = Live.SelectedDevice is { } current
             ? $"{current.Packets:N0} packets received"
             : "0 packets received";
 
-        if (Dashboard.SelectedDevice is not { } device)
+        if (Live.SelectedDevice is not { } device)
         {
-            DeviceDetailsPanel.Visibility = Visibility.Collapsed;
+            DevicePopupControl.DeviceDetailsPanel.Visibility = Visibility.Collapsed;
             return;
         }
 
-        DeviceDetailsPanel.Visibility = Visibility.Visible;
+        DevicePopupControl.DeviceDetailsPanel.Visibility = Visibility.Visible;
         var lastReading = GetLastReadingTime(device);
         var stale = sensorMonitor.IsStale(device.Address, lastReading, DateTime.Now);
-        DeviceStatusText.Text = lastReading == default
+        DevicePopupControl.DeviceStatusText.Text = lastReading == default
             ? "Waiting for live readings"
             : stale
                 ? "No recent readings"
                 : "Receiving live data";
-        DeviceStatusText.Foreground = lastReading == default
+        DevicePopupControl.DeviceStatusText.Foreground = lastReading == default
             ? (Brush)FindResource("TextSecondary")
             : stale
                 ? (Brush)FindResource("Warning")
                 : (Brush)FindResource("Positive");
-        DeviceStatusDot.Fill = lastReading == default
+        DevicePopupControl.DeviceStatusDot.Fill = lastReading == default
             ? DotIdle
             : stale
                 ? DotStale
                 : DotLive;
-        DeviceLastMeasurementText.Text = lastReading == default
+        DevicePopupControl.DeviceLastMeasurementText.Text = lastReading == default
             ? "No measurement yet"
             : lastReading.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
-        DeviceAddressText.Text = device.Address;
-        DeviceLastSyncedText.Text = historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
+        DevicePopupControl.DeviceAddressText.Text = device.Address;
+        DevicePopupControl.DeviceLastSyncedText.Text = historySyncService.LoadSyncCursor(device.Address) is { } syncedThrough
             ? syncedThrough.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
             : "Not synced yet";
-        BatteryText.Foreground = device.BatteryValue switch
+        DevicePopupControl.BatteryText.Foreground = device.BatteryValue switch
         {
             <= 15 => (Brush)FindResource("Danger"),
             <= 35 => (Brush)FindResource("Warning"),
             _ => (Brush)FindResource("TextPrimary"),
         };
-        FooterBatteryText.Foreground = BatteryText.Foreground;
+        StatusBarControl.FooterBatteryText.Foreground = DevicePopupControl.BatteryText.Foreground;
     }
 
     private void CopyAddress_Click(object sender, RoutedEventArgs e)
     {
-        if (Dashboard.SelectedDevice is not { } device)
+        if (Live.SelectedDevice is not { } device)
         {
             return;
         }
@@ -111,28 +124,28 @@ public partial class MainWindow
 
     private void LiveNavigation_Click(object sender, RoutedEventArgs e)
     {
-        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
-        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        LivePage.ScrollToTop();
-        Co2Tab.Focus();
+        HeaderBar.LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        HeaderBar.HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HeaderBar.SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        LivePageControl.ScrollToTop();
+        LivePageControl.Co2Tab.Focus();
     }
 
     private void HistoryNavigation_Click(object sender, RoutedEventArgs e)
     {
-        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
-        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HeaderBar.LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HeaderBar.HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        HeaderBar.SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
         RefreshHistoryView();
-        HistoryPage.ScrollToTop();
-        LongHistoryChart.Focus();
+        HistoryPageControl.ScrollToTop();
+        HistoryPageControl.LongHistoryChart.Focus();
     }
 
     private void SettingsNavigation_Click(object sender, RoutedEventArgs e)
     {
-        LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
-        SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
+        HeaderBar.LiveNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HeaderBar.HistoryNavigationButton.Style = (Style)FindResource("HeaderNavigationButton");
+        HeaderBar.SettingsNavigationButton.Style = (Style)FindResource("HeaderNavigationSelectedButton");
         SettingsPage.ScrollToTop();
     }
 
@@ -147,8 +160,9 @@ public partial class MainWindow
 
     private void ThemeService_Changed(object? sender, EventArgs e)
     {
+        StatusBar.RefreshTheme();
         UpdateHeaderSensorState();
-        if (Dashboard.SelectedDevice is { } device)
+        if (Live.SelectedDevice is { } device)
         {
             ShowDetails(device);
         }
@@ -177,7 +191,7 @@ public partial class MainWindow
         }
         else
         {
-            SetStatus("Stopped", StatusKind.Idle);
+            SetStatus("Stopped", ListenerStatusKind.Idle);
         }
 
         return sensorSource.IsActive;
@@ -204,8 +218,8 @@ public partial class MainWindow
 
     private void OpenBluetoothDiagnostics()
     {
-        DiagnosticsExpander.IsExpanded = true;
-        DevicePopup.IsOpen = true;
+        DevicePopupControl.DiagnosticsExpander.IsExpanded = true;
+        DevicePopupControl.DevicePopup.IsOpen = true;
     }
 
     private void NoticeAction_Click(object sender, RoutedEventArgs e) => StartListening();
@@ -218,20 +232,20 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            NoticeBar.ToolTip = ex.Message;
+            StatusBar.NoticeToolTip = ex.Message;
         }
     }
 
     private void RetrySync_Click(object sender, RoutedEventArgs e) => SyncHistory_Click(sender, e);
 
     private void DismissSyncProblem_Click(object sender, RoutedEventArgs e) =>
-        SyncProblemBanner.Visibility = Visibility.Collapsed;
+        StatusBar.HideSyncProblem();
 
     private void ApplyTemperatureUnit(TemperatureUnit temperatureUnit)
     {
-        HistoryChart.TemperatureDisplayUnit = temperatureUnit;
+        LivePageControl.HistoryChart.TemperatureDisplayUnit = temperatureUnit;
 
-        foreach (var device in Dashboard.Devices)
+        foreach (var device in Live.Devices)
         {
             if (device.TemperatureCelsius is { } celsius)
             {
@@ -239,7 +253,7 @@ public partial class MainWindow
             }
         }
 
-        if (Dashboard.SelectedDevice is { } selected)
+        if (Live.SelectedDevice is { } selected)
         {
             ShowDetails(selected);
         }
@@ -257,8 +271,8 @@ public partial class MainWindow
         }
 
         var hours = int.Parse(tag, CultureInfo.InvariantCulture);
-        Dashboard.HistoryRange = hours == 0 ? null : TimeSpan.FromHours(hours);
-        if (HistoryChart is null)
+        Live.HistoryRange = hours == 0 ? null : TimeSpan.FromHours(hours);
+        if (LivePageControl.HistoryChart is null)
         {
             return; // Checked fires once while the XAML is still being loaded
         }

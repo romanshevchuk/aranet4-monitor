@@ -4,7 +4,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/DashboardResources.xaml" />
+                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/Tokens.xaml" />
+                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/Typography.xaml" />
+                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/Cards.xaml" />
+                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/Buttons.xaml" />
+                <ResourceDictionary Source="/Aranet4Monitor;component/Presentation/Resources/Controls.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

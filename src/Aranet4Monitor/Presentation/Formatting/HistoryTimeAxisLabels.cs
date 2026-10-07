@@ -12,14 +12,23 @@ public static class HistoryTimeAxisLabels
         var start = now - range;
         if (range == TimeSpan.FromDays(1))
         {
-            return
-            [
-                new(0, "Yesterday " + start.ToString("HH:mm", CultureInfo.CurrentCulture)),
-                new(0.25, (start + TimeSpan.FromHours(6)).ToString("HH:mm", CultureInfo.CurrentCulture)),
-                new(0.5, (start + TimeSpan.FromHours(12)).ToString("HH:mm", CultureInfo.CurrentCulture)),
-                new(0.75, (start + TimeSpan.FromHours(18)).ToString("HH:mm", CultureInfo.CurrentCulture)),
-                new(1, "Now"),
-            ];
+            var clockLabels = new List<MetricChartAxisLabel>();
+            var tick = start.Date;
+            if (tick < start)
+            {
+                tick = tick.AddHours(6 * Math.Ceiling((start - tick).TotalHours / 6));
+            }
+
+            for (; tick < now; tick = tick.AddHours(6))
+            {
+                var label = tick.TimeOfDay == TimeSpan.Zero
+                    ? tick.ToString("ddd HH:mm", CultureInfo.CurrentCulture)
+                    : tick.ToString("HH:mm", CultureInfo.CurrentCulture);
+                clockLabels.Add(new MetricChartAxisLabel((tick - start).TotalSeconds / range.TotalSeconds, label));
+            }
+
+            clockLabels.Add(new MetricChartAxisLabel(1, "Now"));
+            return clockLabels;
         }
 
         var labels = new List<MetricChartAxisLabel>

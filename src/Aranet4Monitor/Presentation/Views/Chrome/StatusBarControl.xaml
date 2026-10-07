@@ -1,0 +1,111 @@
+<UserControl x:Class="Aranet4Monitor.Presentation.Views.Chrome.StatusBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls">
+    <Border Style="{StaticResource StatusStrip}"
+            Padding="24,8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="0,0,14,0">
+                <Ellipse x:Name="FooterStatusDot"
+                         Width="8"
+                         Height="8"
+                         Fill="{Binding StatusBar.FooterStatusBrush, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                         Margin="0,0,8,0"
+                         VerticalAlignment="Center"/>
+                <TextBlock x:Name="FooterStatusText"
+                           Text="{Binding StatusBar.FooterStatusText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontSize="13"
+                           FontWeight="Medium"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="0,0,14,0">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <controls:SignalBars x:Name="DetailSignalControl"
+                                         VerticalAlignment="Center"
+                                         Margin="0,0,8,0"/>
+                    <TextBlock x:Name="RssiLabel"
+                               Text="—"
+                               Foreground="{DynamicResource TextSecondary}"
+                               FontSize="13"
+                               Visibility="Collapsed"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <StackPanel x:Name="SyncProgressPanel"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding StatusBar.SyncProgressVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
+                    <ProgressBar Width="24"
+                                 Height="4"
+                                 IsIndeterminate="True"
+                                 Foreground="{DynamicResource Co2Good}"
+                                 Background="{DynamicResource Border}"/>
+                    <TextBlock x:Name="SyncStatusText"
+                               Text="{Binding StatusBar.SyncStatusText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                               ToolTip="{Binding StatusBar.SyncStatusToolTip, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextPrimary}"
+                               Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               MaxWidth="190"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <Button x:Name="CancelHistorySyncControl"
+                        Content="Cancel"
+                        Style="{StaticResource HeaderActionButton}"
+                        Click="CancelHistorySync_Click"
+                        IsEnabled="False"
+                        Visibility="Collapsed"
+                        Margin="6,0,0,0"/>
+            </StackPanel>
+            <Button x:Name="FooterBatteryControl"
+                    Grid.Column="3"
+                    Style="{StaticResource SmallLinkButton}"
+                    Click="DeviceChip_Click"
+                    ToolTipService.ShowDuration="12000"
+                    ToolTip="Aranet4 uses 2 × AA batteries (replaceable). A longer measurement interval extends battery life.">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Battery"
+                               Foreground="{DynamicResource TextSecondary}"
+                               VerticalAlignment="Center"/>
+                    <Border Width="24"
+                            Height="10"
+                            BorderBrush="{DynamicResource TextSecondary}"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            Margin="8,0,0,0"
+                            Padding="1">
+                        <ProgressBar x:Name="FooterBatteryProgress"
+                                     Style="{StaticResource ThinBar}"
+                                     Height="6"
+                                     VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock x:Name="FooterBatteryLabel"
+                               Text="—"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontWeight="SemiBold"
+                               Margin="6,0,0,0"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

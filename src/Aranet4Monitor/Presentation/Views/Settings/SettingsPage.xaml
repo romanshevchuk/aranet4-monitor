@@ -6,6 +6,41 @@
     <ScrollViewer x:Name="SettingsScrollViewer"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer.Resources>
+            <Style TargetType="ScrollBar">
+                <Setter Property="Width"
+                        Value="8"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Track x:Name="PART_Track"
+                                   IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb Margin="1,2">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border x:Name="ThumbBorder"
+                                                        Background="{DynamicResource TextSecondary}"
+                                                        CornerRadius="4"
+                                                        Opacity="0.45"/>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver"
+                                                             Value="True">
+                                                        <Setter TargetName="ThumbBorder"
+                                                                Property="Opacity"
+                                                                Value="0.8"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ScrollViewer.Resources>
         <Grid Margin="26,24,26,24">
             <StackPanel MaxWidth="860"
                         HorizontalAlignment="Center">
@@ -27,6 +62,29 @@
                                 BorderThickness="0,0,0,1"
                                 Padding="0,14">
                             <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Notifications"
+                                               Foreground="{DynamicResource TextPrimary}"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Enable CO₂ alerts and notification controls."
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               Margin="0,2,16,0"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SwitchCheckBox}"
+                                          IsChecked="{Binding NotificationsEnabled, Mode=TwoWay}"
+                                          VerticalAlignment="Center"
+                                          AutomationProperties.Name="Enable notifications"/>
+                            </Grid>
+                        </Border>
+                        <Border BorderBrush="{DynamicResource Line}"
+                                BorderThickness="0,0,0,1"
+                                Padding="0,14">
+                            <Grid IsEnabled="{Binding IsAlertConfigurationEnabled}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -67,7 +125,7 @@
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
                                 Padding="0,14">
-                            <Grid>
+                            <Grid IsEnabled="{Binding IsAlertConfigurationEnabled}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -87,7 +145,8 @@
                                         Command="{Binding TestNotificationCommand}"/>
                             </Grid>
                         </Border>
-                        <Grid Margin="0,12,0,0">
+                        <Grid Margin="0,12,0,0"
+                              IsEnabled="{Binding IsAlertConfigurationEnabled}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -98,7 +157,7 @@
                                        TextWrapping="Wrap"/>
                             <Button Grid.Column="1"
                                     Content="{Binding SnoozeButtonText}"
-                                    Style="{StaticResource SmallLinkButton}"
+                                    Style="{StaticResource NeutralLinkButton}"
                                     Command="{Binding SnoozeCommand}"/>
                         </Grid>
                     </StackPanel>
@@ -189,6 +248,7 @@
                                                Margin="0,2,16,0"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SwitchCheckBox}"
                                           IsChecked="{Binding LargePopups, Mode=TwoWay}"
                                           VerticalAlignment="Center"
                                           AutomationProperties.Name="Use large notification pop-ups"/>
@@ -215,6 +275,7 @@
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                                 <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SwitchCheckBox}"
                                           IsChecked="{Binding ShowNumberInTray, Mode=TwoWay}"
                                           VerticalAlignment="Center"
                                           AutomationProperties.Name="Show CO₂ number in tray icon"/>
@@ -238,6 +299,7 @@
                                                Margin="0,2,16,0"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SwitchCheckBox}"
                                           IsChecked="{Binding ListenForLiveReadings, Mode=TwoWay}"
                                           VerticalAlignment="Center"
                                           AutomationProperties.Name="Listen for live sensor readings"/>
@@ -254,6 +316,7 @@
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                                 <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SwitchCheckBox}"
                                           IsChecked="{Binding StartWithWindows, Mode=TwoWay}"
                                           VerticalAlignment="Center"
                                           AutomationProperties.Name="Start Air Pulse with Windows"/>

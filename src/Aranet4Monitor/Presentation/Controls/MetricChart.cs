@@ -413,7 +413,7 @@ public sealed class MetricChart : FrameworkElement
         if (kind == MetricKind.Co2)
         {
             lineBrush = LevelGradient(lo, hi, 255);
-            areaBrush = LevelGradient(lo, hi, 46);
+            areaBrush = LevelGradient(lo, hi, 28);
         }
         else
         {
@@ -429,16 +429,6 @@ public sealed class MetricChart : FrameworkElement
         var pen = new Pen(lineBrush, 2.25) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         dc.DrawGeometry(null, pen, line);
         dc.Pop();
-
-        // Secondary metrics show sparse points so isolated measurements remain visible.
-        if (kind != MetricKind.Co2 && end - first <= 80)
-        {
-            for (var i = first; i < end; i++)
-            {
-                dc.DrawEllipse(SurfaceFill, new Pen(Solid(PointColor(kind, pts[i].Value, accent)), 1.75),
-                    new Point(X(pts[i].Time), Y(pts[i].Value)), 3, 3);
-            }
-        }
 
         // Latest reading marker, or the hover read-out.
         if (hover == -1)
@@ -487,7 +477,7 @@ public sealed class MetricChart : FrameworkElement
             labelY = yPosition + 3; // line sits at the top edge (e.g. "High · 1,400" with axis max 1,400): draw below it
         }
 
-        dc.DrawText(text, new Point(plot.Right - text.Width - 6, labelY));
+        dc.DrawText(text, new Point(plot.Left + 6, labelY));
     }
 
     private void DrawHumidityComfort(DrawingContext dc, Func<double, double> y, double from, double to)
@@ -507,13 +497,8 @@ public sealed class MetricChart : FrameworkElement
         }
 
         var text = Text($"Comfortable · {from:0}-{to:0}%", 11, MutedText);
-        var labelY = top - text.Height - 3;
-        if (labelY < plot.Top)
-        {
-            labelY = top + 3;
-        }
-
-        dc.DrawText(text, new Point(plot.Right - text.Width - 6, labelY));
+        var labelY = Math.Max(plot.Top + 3, top + 3);
+        dc.DrawText(text, new Point(plot.Left + 6, labelY));
     }
 
     private void DrawTimeAxis(DrawingContext dc, Func<DateTime, double> x, DateTime t0, DateTime t1)
@@ -541,7 +526,9 @@ public sealed class MetricChart : FrameworkElement
 
         var span = t1 - t0;
         var maxTicks = Math.Max(2, (int)(plot.Width / 80));
-        var step = TickSteps.Cast<TimeSpan?>().FirstOrDefault(s => span.TotalSeconds / s!.Value.TotalSeconds <= maxTicks) ?? TickSteps[^1];
+        var step = Range is { } visibleRange && visibleRange >= TimeSpan.FromHours(6) && visibleRange <= TimeSpan.FromHours(36)
+            ? TimeSpan.FromHours(6)
+            : TickSteps.Cast<TimeSpan?>().FirstOrDefault(s => span.TotalSeconds / s!.Value.TotalSeconds <= maxTicks) ?? TickSteps[^1];
 
         // Align ticks to local "round" times (e.g. 14:00, 14:30).
         var n = Math.Ceiling((t0 - t0.Date).TotalSeconds / step.TotalSeconds);
@@ -558,7 +545,10 @@ public sealed class MetricChart : FrameworkElement
         for (var drawn = 0; tick <= t1 && drawn < 200; tick += step, drawn++)
         {
             var px = Math.Round(x(tick)) + 0.5;
-            var label = Text(tick.ToString(format, CultureInfo.CurrentCulture), 12, AxisText);
+            var labelText = tick.TimeOfDay == TimeSpan.Zero && span.TotalHours >= 6
+                ? tick.ToString("ddd HH:mm", CultureInfo.CurrentCulture)
+                : tick.ToString(format, CultureInfo.CurrentCulture);
+            var label = Text(labelText, 12, AxisText);
             var left = px - label.Width / 2;
             if (left < plot.Left - 12 || left + label.Width > plot.Right + 14)
             {
@@ -567,6 +557,9 @@ public sealed class MetricChart : FrameworkElement
 
             dc.DrawText(label, new Point(left, plot.Bottom + 6));
         }
+
+        var nowLabel = Text("Now", 12, AxisText);
+        dc.DrawText(nowLabel, new Point(plot.Right - nowLabel.Width, plot.Bottom + 6));
     }
 
     private void DrawHover(DrawingContext dc, MetricKind kind, Color accent, Pt point, double px, double py, bool includeDay)
@@ -621,8 +614,8 @@ public sealed class MetricChart : FrameworkElement
             StartPoint = new Point(0, plot.Top),
             EndPoint = new Point(0, plot.Bottom),
         };
-        brush.GradientStops.Add(new GradientStop(Color.FromArgb(70, color.R, color.G, color.B), 0));
-        brush.GradientStops.Add(new GradientStop(Color.FromArgb(4, color.R, color.G, color.B), 1));
+        brush.GradientStops.Add(new GradientStop(Color.FromArgb(30, color.R, color.G, color.B), 0));
+        brush.GradientStops.Add(new GradientStop(Color.FromArgb(3, color.R, color.G, color.B), 1));
         brush.Freeze();
         return brush;
     }
@@ -693,9 +686,9 @@ public sealed class MetricChart : FrameworkElement
             return new Palette
             {
                 Version = ThemeService.Version,
-                Good = ThemeService.GetColor("Co2GoodColor"),
-                Warn = ThemeService.GetColor("Co2FairColor"),
-                Bad = ThemeService.GetColor("Co2PoorColor"),
+                Good = ThemeService.GetColor("Co2GoodStrokeColor"),
+                Warn = ThemeService.GetColor("Co2FairStrokeColor"),
+                Bad = ThemeService.GetColor("Co2PoorStrokeColor"),
                 Ink = Solid(ThemeService.GetColor("TextPrimaryColor")),
                 Muted = muted,
                 Surface = Solid(ThemeService.GetColor("SurfaceColor")),

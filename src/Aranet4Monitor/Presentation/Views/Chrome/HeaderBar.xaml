@@ -1,0 +1,112 @@
+<UserControl x:Class="Aranet4Monitor.Presentation.Views.Chrome.HeaderBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+             xmlns:presentation="clr-namespace:Aranet4Monitor.Presentation">
+    <Border Padding="22,17"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Border}"
+            BorderThickness="0,0,0,1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <Grid Width="30"
+                      Height="30"
+                      Margin="0,0,12,0">
+                    <Ellipse Stroke="{DynamicResource Co2Good}"
+                             StrokeThickness="2.5"/>
+                    <Ellipse Width="10"
+                             Height="10"
+                             Fill="{DynamicResource Co2Good}"/>
+                </Grid>
+                <TextBlock Text="Air Pulse"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="16,0,12,0">
+                <Button x:Name="LiveNavigationControl"
+                        Content="Live"
+                        Style="{StaticResource HeaderNavigationSelectedButton}"
+                        Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        CommandParameter="{x:Static presentation:AppPage.Live}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="LiveNavigation_Click"
+                        AutomationProperties.Name="Show live dashboard"/>
+                <Button x:Name="HistoryNavigationControl"
+                        Content="History"
+                        Style="{StaticResource HeaderNavigationButton}"
+                        Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        CommandParameter="{x:Static presentation:AppPage.History}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="HistoryNavigation_Click"
+                        AutomationProperties.Name="Show sensor history chart"/>
+                <Button x:Name="SettingsNavigationControl"
+                        Content="Settings"
+                        Style="{StaticResource HeaderNavigationButton}"
+                        Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        CommandParameter="{x:Static presentation:AppPage.Settings}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="SettingsNavigation_Click"
+                        ToolTip="Application settings and options"
+                        AutomationProperties.Name="Open settings"/>
+            </StackPanel>
+            <Button x:Name="DeviceChipControl"
+                    Grid.Column="3"
+                    Style="{StaticResource DeviceChip}"
+                    MinWidth="170"
+                    HorizontalAlignment="Right"
+                    Margin="0,0,4,0"
+                    VerticalAlignment="Center"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="DeviceChip_Click"
+                    ToolTip="Sensor details and device list">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="ChipNameControl"
+                               Text="Searching for sensor…"
+                               MaxWidth="125"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="▾"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Margin="9,0,0,0"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <StackPanel Grid.Column="4"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="6,0,0,0"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Content="&#xE921;"
+                        Style="{StaticResource CaptionButton}"
+                        Click="MinimizeWindow_Click"
+                        ToolTip="Minimize"
+                        AutomationProperties.Name="Minimize window"/>
+                <Button Content="&#xE922;"
+                        Style="{StaticResource CaptionButton}"
+                        Click="ToggleWindowState_Click"
+                        ToolTip="Maximize or restore"
+                        AutomationProperties.Name="Maximize or restore window"/>
+                <Button Content="&#xE8BB;"
+                        Style="{StaticResource CaptionButton}"
+                        Click="CloseWindow_Click"
+                        ToolTip="Close (keeps running in the tray)"
+                        AutomationProperties.Name="Close window"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
