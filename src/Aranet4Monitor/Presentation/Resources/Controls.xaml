@@ -230,7 +230,7 @@
                             Padding="22,18"
                             BorderThickness="1"
                             BorderBrush="{DynamicResource Border}"
-                            Background="{DynamicResource SurfaceSecondary}">
+                            Background="{DynamicResource HeroSurface}">
                         <ContentPresenter/>
                     </Border>
                     <ControlTemplate.Triggers>

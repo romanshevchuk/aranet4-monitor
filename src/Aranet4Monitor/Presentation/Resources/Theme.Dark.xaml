@@ -5,6 +5,7 @@
     <Color x:Key="SurfaceColor">#111820</Color>
     <Color x:Key="SurfaceSecondaryColor">#18222C</Color>
     <Color x:Key="MetricCardColor">#141C25</Color>
+    <Color x:Key="HeroSurfaceColor">#18222C</Color>
     <Color x:Key="DangerBackgroundColor">#26F0786B</Color>
     <Color x:Key="WarningBackgroundColor">#26F5B94F</Color>
     <Color x:Key="PositiveBackgroundColor">#2045D99A</Color>
@@ -43,6 +44,8 @@
             Color="{StaticResource SurfaceSecondaryColor}"/>
     <SolidColorBrush x:Key="MetricCard"
             Color="{StaticResource MetricCardColor}"/>
+    <SolidColorBrush x:Key="HeroSurface"
+            Color="{StaticResource HeroSurfaceColor}"/>
     <SolidColorBrush x:Key="DangerBackground"
             Color="{StaticResource DangerBackgroundColor}"/>
     <SolidColorBrush x:Key="WarningBackground"

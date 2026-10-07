@@ -1,0 +1,332 @@
+<html lang="en-US" class="light" data-chat-theme="blue" data-app-block-surface="inline" data-app-block-style-mode="default" style="color-scheme: light; background-color: transparent;" data-ready=""><head><style>@layer sandbox-defaults{html,body,#root{margin:0;padding:0}}</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <script>
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = { darkMode: "class" };
+    </script>
+    <script id="app-block-tailwind" src="https://cdn.tailwindcss.com" defer=""></script>
+    <script>
+      (() => {
+        const tailwindScript = document.getElementById("app-block-tailwind");
+        const markFatal = () => {
+          document.documentElement.setAttribute("data-fatal", "");
+        };
+
+        if (!(tailwindScript instanceof HTMLScriptElement)) {
+          markFatal();
+          return;
+        }
+
+        tailwindScript.addEventListener("error", markFatal, { once: true });
+        tailwindScript.addEventListener(
+          "load",
+          () => {
+            const readinessProbe = document.createElement("div");
+            readinessProbe.className = "hidden";
+            readinessProbe.setAttribute("aria-hidden", "true");
+
+            const markReadyWhenStyled = () => {
+              if (getComputedStyle(readinessProbe).display !== "none") {
+                return;
+              }
+
+              styleObserver.disconnect();
+              readinessProbe.remove();
+              document.documentElement.setAttribute("data-ready", "");
+            };
+            const styleObserver = new MutationObserver(markReadyWhenStyled);
+            styleObserver.observe(document.head, {
+              childList: true,
+              characterData: true,
+              subtree: true,
+            });
+
+            document.body.append(readinessProbe);
+            markReadyWhenStyled();
+          },
+          { once: true }
+        );
+      })();
+    </script>
+    <link rel="stylesheet" href="https://chatgpt.com/cdn/assets/app-block-sandbox-b1cs4d5m.css">
+    <style>
+  @media (prefers-reduced-motion: no-preference) {
+    [data-app-block-stream-enter] {
+      animation: app-block-stream-enter 160ms ease-out both;
+    }
+
+    @keyframes app-block-stream-enter {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  }
+</style>
+  <style>html, body, #root {
+      margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0;
+      
+    }
+html,body,#root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}html,body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif!important}button,input,textarea,select{font-family:inherit}html{background-color:transparent}html.chatgptOled.dark,html.mobileSkybridge.dark{background-color:#000}@supports (font: -apple-system-body){html.mobileSkybridge{font:-apple-system-body}}html.desktopSkybridge.dark{background-color:#1e1e1e}html.transparentSkybridgeBackground,html.transparentSkybridgeBackground.dark{background-color:transparent}html.androidSkybridge,html.androidSkybridge body,html.androidSkybridge *{-webkit-tap-highlight-color:rgba(255,255,255,0)}html.androidSkybridge *::selection,html.androidSkybridge *::-moz-selection{background:#fff0;color:inherit}</style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.mb-7{margin-bottom:1.75rem}.ml-2{margin-left:0.5rem}.mt-4{margin-top:1rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.w-full{width:100%}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-3{gap:0.75rem}.gap-1{gap:0.25rem}.gap-4{gap:1rem}.gap-2{gap:0.5rem}</style></head>
+  <body>
+    <main><div id="air-pulse-demo" class="w-full" style="--viz-panel:#f7f8f6;--viz-card:#ffffff;--viz-text:#17212b;--viz-muted:#66727c;--viz-border:#e4e9eb;--viz-accent:#18a978;--viz-accent-bg:#e8f7f1;--viz-series-2:#d67a25;--viz-series-3:#c9564e;--viz-series-4:#6e55b8;background:var(--viz-panel);color:var(--viz-text);border-radius:20px;padding:22px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" data-ready="1">
+<style>
+#air-pulse-demo button{font:inherit}#air-pulse-demo .btn{border:0;background:transparent;color:var(--viz-muted);padding:8px 12px;border-radius:9px;cursor:pointer}#air-pulse-demo .btn.active{background:#fff;color:var(--viz-text);box-shadow:0 1px 3px rgba(23,33,43,.08)}#air-pulse-demo .action{background:var(--viz-text);color:#fff;border:0;border-radius:10px;padding:10px 15px;font-weight:600;cursor:pointer}#air-pulse-demo .action:hover{opacity:.92}#air-pulse-demo button:focus-visible{outline:2px solid var(--viz-accent);outline-offset:2px}.spark{width:100%;height:190px}.metric{min-width:0}.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.soft{background:rgba(255,255,255,.72);border:1px solid var(--viz-border)}
+</style>
+<div class="flex flex-wrap items-center justify-between gap-3 mb-7">
+  <div class="flex items-center gap-3"><div style="width:28px;height:28px;border:3px solid var(--viz-accent);border-radius:50%;display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:var(--viz-accent)"></span></div><strong style="font-size:16px;letter-spacing:-.02em">Air Pulse</strong><nav class="flex gap-1 ml-2" aria-label="Sections"><button class="btn active" type="button">Live</button><button class="btn" type="button">History</button><button class="btn" type="button">Settings</button></nav></div>
+  <button class="soft" style="padding:9px 13px;border-radius:10px;color:var(--viz-text);font-size:13px" type="button">Aranet 4 0A0B3⌄</button>
+</div>
+<div class="grid gap-4" style="grid-template-columns:minmax(250px,.82fr) minmax(0,1.8fr)">
+<section class="soft" style="border-radius:18px;padding:25px;position:relative;overflow:hidden">
+  <div id="stateLabel" style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(22, 134, 95); margin-bottom: 18px;"><span class="dot" style="background:#18a978;margin-right:7px"></span>Good</div>
+  <div style="font-size:clamp(48px,8vw,76px);line-height:.95;letter-spacing:-.055em;font-weight:350" id="co2">650</div>
+  <div style="color:var(--viz-muted);font-size:14px;margin-top:5px">ppm CO₂</div>
+  <div style="font-size:13px;margin-top:22px;color:var(--viz-text)"><span id="trendArrow">▲</span> <strong id="trend">Improving · fresh air</strong> <span style="color:var(--viz-muted)">over 62 min</span></div>
+  <p id="message" style="font-size:13px;line-height:1.55;color:var(--viz-muted);margin:7px 0 0">CO₂ is in a comfortable range.</p>
+  <button id="vent" class="action" type="button" style="margin-top:18px">Ventilate room</button>
+  <div style="margin-top:25px;height:7px;background:linear-gradient(90deg,#25b77e 0 38%,#e2a034 38% 65%,#d85b53 65%);border-radius:10px;position:relative"><span id="marker" style="position: absolute; top: 50%; left: 28%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: rgb(255, 255, 255); border: 3px solid rgb(41, 54, 64);"></span></div>
+  <div class="flex justify-between" style="font-size:11px;color:var(--viz-muted);margin-top:7px"><span>Good</span><span>Elevated</span><span>High</span></div>
+  <div class="grid grid-cols-3 gap-3" style="border-top:1px solid var(--viz-border);margin-top:27px;padding-top:18px"><div><strong style="font-size:16px">34%</strong><div style="font-size:10px;color:var(--viz-muted);margin-top:2px">Good · 24 h</div></div><div><strong style="font-size:16px">1,666</strong><div style="font-size:10px;color:var(--viz-muted);margin-top:2px">Peak · 11:36</div></div><div><strong style="font-size:16px">9:00 AM</strong><div style="font-size:10px;color:var(--viz-muted);margin-top:2px">Last aired</div></div></div>
+</section>
+<section class="soft" style="border-radius:18px;padding:22px;min-width:0">
+  <div class="flex flex-wrap items-start justify-between gap-3"><div><div style="font-size:16px;font-weight:650">CO₂ <span style="font-size:12px;color:var(--viz-muted);font-weight:400">ppm</span></div><div id="rangeSummary" style="font-size:12px;color:var(--viz-muted);margin-top:4px">Low 1,475 · average 1,520 · high 1,554</div></div><div class="flex gap-1" style="background:#eef2f3;border-radius:10px;padding:3px"><button class="btn active range" data-range="1h" type="button">1h</button><button class="btn range" data-range="6h" type="button">6h</button><button class="btn range" data-range="24h" type="button">24h</button></div></div>
+  <svg class="spark" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="CO2 trend chart" style="margin-top:14px"><line x1="35" y1="45" x2="700" y2="45" stroke="#e7ebed"></line><line x1="35" y1="95" x2="700" y2="95" stroke="#e7ebed"></line><line x1="35" y1="145" x2="700" y2="145" stroke="#e7ebed"></line><line x1="35" y1="95" x2="700" y2="95" stroke="#d7a6a2" stroke-dasharray="5 5"></line><text x="40" y="88" font-size="11" fill="#7a858c">1,400 · high</text><text x="40" y="181" font-size="10" fill="#89939a">16:20</text><text x="235" y="181" font-size="10" fill="#89939a">16:40</text><text x="430" y="181" font-size="10" fill="#89939a">17:00</text><text x="620" y="181" font-size="10" fill="#89939a">17:20</text><path id="chartPath" d="M80 73 C145 67 175 79 225 70 S320 72 365 64 S450 67 500 61 S590 67 670 57" fill="none" stroke="#c9564e" stroke-width="3" stroke-linecap="round"></path><circle id="chartDot" cx="670" cy="57" r="5" fill="#fff" stroke="#c9564e" stroke-width="3"></circle></svg>
+  <div style="border-top:1px solid var(--viz-border);padding-top:13px;font-size:12px;color:var(--viz-muted)"><strong style="color:var(--viz-text)">● Outdoor reference · about 420 ppm</strong><div style="margin-top:4px">Fresh outdoor air is the lowest level a room can reach.</div></div>
+</section>
+</div>
+<div class="grid gap-4 mt-4" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+<div class="soft metric" style="border-radius:16px;padding:18px"><div style="font-size:12px;color:var(--viz-muted)"><span class="dot" style="background:#d67a25;margin-right:7px"></span>Temperature</div><div style="font-size:28px;letter-spacing:-.04em;margin-top:8px">22.1<span style="font-size:13px;color:var(--viz-muted);margin-left:4px">°C</span></div><div style="font-size:11px;color:var(--viz-muted);margin-top:3px">Steady this hour</div></div>
+<div class="soft metric" style="border-radius:16px;padding:18px"><div style="font-size:12px;color:var(--viz-muted)"><span class="dot" style="background:#3779bd;margin-right:7px"></span>Humidity</div><div style="font-size:28px;letter-spacing:-.04em;margin-top:8px">50<span style="font-size:13px;color:var(--viz-muted);margin-left:4px">%</span></div><div style="font-size:11px;color:var(--viz-muted);margin-top:3px">Comfortable · ideal 30–50%</div></div>
+<div class="soft metric" style="border-radius:16px;padding:18px"><div style="font-size:12px;color:var(--viz-muted)"><span class="dot" style="background:#7655bd;margin-right:7px"></span>Pressure</div><div style="font-size:28px;letter-spacing:-.04em;margin-top:8px">982.2<span style="font-size:13px;color:var(--viz-muted);margin-left:4px">hPa</span></div><div style="font-size:11px;color:var(--viz-muted);margin-top:3px">Steady this hour</div></div>
+</div>
+<div class="flex flex-wrap justify-between gap-2" style="margin-top:17px;color:var(--viz-muted);font-size:11px"><span>● Live · sensor connected</span><span>Battery <strong style="color:var(--viz-text)">65%</strong></span></div>
+</div><script>
+(function(){const root=document.getElementById('air-pulse-demo');if(!root||root.dataset.ready)return;root.dataset.ready='1';const co2=root.querySelector('#co2'),label=root.querySelector('#stateLabel'),trend=root.querySelector('#trend'),msg=root.querySelector('#message'),marker=root.querySelector('#marker'),summary=root.querySelector('#rangeSummary'),vent=root.querySelector('#vent'),path=root.querySelector('#chartPath'),dot=root.querySelector('#chartDot');let value=1527;const ranges={"1h":{v:1527,s:'Low 1,475 · average 1,520 · high 1,554',d:'M80 73 C145 67 175 79 225 70 S320 72 365 64 S450 67 500 61 S590 67 670 57'},"6h":{v:1488,s:'Low 1,182 · average 1,398 · high 1,612',d:'M80 115 C135 108 175 122 225 94 S300 105 350 77 S420 90 470 63 S550 82 670 71'},"24h":{v:1396,s:'Low 936 · average 1,274 · high 1,666',d:'M80 142 C145 130 180 145 230 110 S310 128 360 96 S430 118 490 84 S575 98 670 89'}};function render(){co2.textContent=value.toLocaleString();if(value>=1400){label.innerHTML='<span class="dot" style="background:#c9564e;margin-right:7px"></span>High';label.style.color='#b84e47';msg.textContent='CO₂ is above the recommended indoor level.';marker.style.left=Math.min(92,65+(value-1400)/10)+'%'}else if(value>=1000){label.innerHTML='<span class="dot" style="background:#d7952f;margin-right:7px"></span>Elevated';label.style.color='#a66a17';msg.textContent='CO₂ is elevated. A little fresh air would help.';marker.style.left='55%'}else{label.innerHTML='<span class="dot" style="background:#18a978;margin-right:7px"></span>Good';label.style.color='#16865f';msg.textContent='CO₂ is in a comfortable range.';marker.style.left='28%'}trend.textContent=value>1500?'Rising 44 ppm':value>1300?'Stable · slightly elevated':'Improving · fresh air';}root.querySelectorAll('.range').forEach(b=>b.addEventListener('click',()=>{root.querySelectorAll('.range').forEach(x=>x.classList.remove('active'));b.classList.add('active');const r=ranges[b.dataset.range];value=r.v;summary.textContent=r.s;path.setAttribute('d',r.d);dot.setAttribute('cy',b.dataset.range==='1h'?'57':b.dataset.range==='6h'?'71':'89');render()}));vent.addEventListener('click',()=>{value=Math.max(650,value-420);render();vent.textContent='Fresh air introduced ✓';setTimeout(()=>vent.textContent='Ventilate room',2200)});render()})();
+</script></main>
+    <script>
+  (() => {
+    function updateSurface(surface) {
+      if (surface !== "inline" && surface !== "stage") {
+        return;
+      }
+
+      const root = document.documentElement;
+      const isDarkMode = root.classList.contains("dark");
+      const stageBackground = isDarkMode ? "#212121" : "#ffffff";
+      root.setAttribute("data-app-block-surface", surface);
+      root.style.backgroundColor =
+        surface === "inline"
+          ? "transparent"
+          : "var(--main-surface-primary, " + stageBackground + ")";
+    }
+
+    window.addEventListener("openai:set_globals", (event) => {
+      const surface = event.detail?.globals?.__appBlockSurface;
+      if (surface != null) {
+        updateSurface(surface);
+      }
+    });
+
+    const initialSurface =
+      window.openai?.__appBlockSurface ??
+      document.documentElement.getAttribute("data-app-block-surface") ??
+      "inline";
+    updateSurface(initialSurface);
+  })();
+</script>
+    <script>
+  (() => {
+    const root = document.querySelector("main");
+    if (!(root instanceof HTMLElement)) {
+      return;
+    }
+
+    let hasFinalized = false;
+    let previousHtml = null;
+
+    function getRenderableHtml(html, isFinal) {
+      if (isFinal) {
+        return html;
+      }
+
+      let renderableHtml = html;
+      const trailingTagStart = renderableHtml.lastIndexOf("<");
+      if (trailingTagStart >= 0) {
+        const trailingTag = renderableHtml.slice(trailingTagStart).toLowerCase();
+        if ("</appblock>".startsWith(trailingTag)) {
+          renderableHtml = renderableHtml.slice(0, trailingTagStart);
+        }
+      }
+
+      const lowercaseHtml = renderableHtml.toLowerCase();
+      const lastStyleStart = lowercaseHtml.lastIndexOf("<style");
+      const lastStyleEnd = lowercaseHtml.lastIndexOf("</style");
+      if (lastStyleStart > lastStyleEnd) {
+        return renderableHtml.slice(0, lastStyleStart);
+      }
+
+      return renderableHtml;
+    }
+
+    function removePartialExecutionAttributes(fragment) {
+      for (const element of fragment.querySelectorAll("*")) {
+        for (const attribute of Array.from(element.attributes)) {
+          const attributeName = attribute.name.toLowerCase();
+          if (attributeName.startsWith("on") || attributeName === "srcdoc") {
+            element.removeAttribute(attribute.name);
+            continue;
+          }
+
+          if (
+            /^(?:href|src|action|formaction|xlink:href)$/i.test(attribute.name) &&
+            /^\s*javascript:/i.test(attribute.value)
+          ) {
+            element.removeAttribute(attribute.name);
+          }
+        }
+
+        if (element.matches("button, input, select, textarea, fieldset")) {
+          element.setAttribute("disabled", "");
+        }
+        if (element.matches("a[href]")) {
+          element.removeAttribute("href");
+          element.setAttribute("aria-disabled", "true");
+        }
+        if (element.hasAttribute("contenteditable")) {
+          element.setAttribute("contenteditable", "false");
+        }
+      }
+    }
+
+    function markNewElement(node) {
+      if (!(node instanceof Element) || node.tagName === "STYLE") {
+        return;
+      }
+
+      node.setAttribute("data-app-block-stream-enter", "");
+      node.addEventListener(
+        "animationend",
+        () => node.removeAttribute("data-app-block-stream-enter"),
+        { once: true }
+      );
+    }
+
+    function synchronizeAttributes(currentElement, nextElement) {
+      for (const attribute of Array.from(currentElement.attributes)) {
+        if (
+          attribute.name !== "data-app-block-stream-enter" &&
+          !nextElement.hasAttribute(attribute.name)
+        ) {
+          currentElement.removeAttribute(attribute.name);
+        }
+      }
+
+      for (const attribute of Array.from(nextElement.attributes)) {
+        if (currentElement.getAttribute(attribute.name) !== attribute.value) {
+          currentElement.setAttribute(attribute.name, attribute.value);
+        }
+      }
+    }
+
+    function synchronizeChildren(currentParent, nextParent, isFinal) {
+      let currentChild = currentParent.firstChild;
+
+      for (const nextChild of Array.from(nextParent.childNodes)) {
+        if (currentChild === null) {
+          const insertedChild = nextChild.cloneNode(true);
+          currentParent.appendChild(insertedChild);
+          markNewElement(insertedChild);
+          continue;
+        }
+
+        const isMatchingNode =
+          currentChild.nodeType === nextChild.nodeType &&
+          currentChild.nodeName === nextChild.nodeName;
+        if (!isMatchingNode) {
+          const insertedChild = nextChild.cloneNode(true);
+          currentParent.replaceChild(insertedChild, currentChild);
+          markNewElement(insertedChild);
+          currentChild = insertedChild.nextSibling;
+          continue;
+        }
+
+        if (currentChild instanceof Element && nextChild instanceof Element) {
+          synchronizeAttributes(currentChild, nextChild);
+          synchronizeChildren(currentChild, nextChild, isFinal);
+        } else if (currentChild.nodeValue !== nextChild.nodeValue) {
+          currentChild.nodeValue = nextChild.nodeValue;
+        }
+
+        currentChild = currentChild.nextSibling;
+      }
+
+      if (!isFinal) {
+        return;
+      }
+
+      while (currentChild !== null) {
+        const nextCurrentChild = currentChild.nextSibling;
+        currentChild.remove();
+        currentChild = nextCurrentChild;
+      }
+    }
+
+    function applyStreamUpdate(update) {
+      if (
+        hasFinalized ||
+        update === null ||
+        typeof update !== "object" ||
+        typeof update.html !== "string"
+      ) {
+        return;
+      }
+
+      const isFinal = update.isFinal === true;
+      if (!isFinal && previousHtml === update.html) {
+        return;
+      }
+      previousHtml = update.html;
+
+      const template = document.createElement("template");
+      template.innerHTML = getRenderableHtml(update.html, isFinal);
+      const scripts = Array.from(template.content.querySelectorAll("script"));
+      for (const script of scripts) {
+        script.remove();
+      }
+
+      if (!isFinal) {
+        removePartialExecutionAttributes(template.content);
+      }
+
+      synchronizeChildren(root, template.content, isFinal);
+
+      if (!isFinal) {
+        return;
+      }
+
+      hasFinalized = true;
+      for (const sourceScript of scripts) {
+        const executableScript = document.createElement("script");
+        for (const attribute of Array.from(sourceScript.attributes)) {
+          executableScript.setAttribute(attribute.name, attribute.value);
+        }
+        executableScript.textContent = sourceScript.textContent;
+        root.appendChild(executableScript);
+      }
+    }
+
+    window.addEventListener("openai:set_globals", (event) => {
+      const globals = event.detail && event.detail.globals;
+      if (globals && Object.hasOwn(globals, "__appBlockStream")) {
+        applyStreamUpdate(globals.__appBlockStream);
+      }
+    });
+
+    if (window.openai && window.openai.__appBlockStream) {
+      applyStreamUpdate(window.openai.__appBlockStream);
+    }
+  })();
+</script>
+  
+</body></html>
