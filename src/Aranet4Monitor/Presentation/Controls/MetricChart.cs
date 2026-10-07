@@ -321,7 +321,7 @@ public sealed class MetricChart : FrameworkElement
         if (kind == MetricKind.Co2)
         {
             lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 200) * 200);
-            hi = Math.Ceiling(Math.Max(max, 1100) / 200) * 200;
+            hi = Math.Ceiling(Math.Max(max, 1600) / 200) * 200;
             step = hi <= 3000 ? 200 : NiceStep((hi - lo) / 5);
         }
 
@@ -434,7 +434,7 @@ public sealed class MetricChart : FrameworkElement
         if (hover == -1)
         {
             var newest = pts[end - 1];
-            dc.DrawEllipse(Solid(PointColor(kind, newest.Value, accent)), new Pen(SurfaceFill, 2.5), new Point(X(newest.Time), Y(newest.Value)), 5, 5);
+            dc.DrawEllipse(SurfaceFill, new Pen(Solid(PointColor(kind, newest.Value, accent)), 2), new Point(X(newest.Time), Y(newest.Value)), 5, 5);
         }
         else
         {
@@ -540,6 +540,8 @@ public sealed class MetricChart : FrameworkElement
                 : span.TotalHours > 36
                     ? "ddd HH:mm"
                     : "HH:mm";
+        var nowLabel = Text("Now", 12, AxisText);
+        var nowLeft = plot.Right - nowLabel.Width;
 
         // The cap guards against a corrupt, far-away timestamp turning the axis into millions of ticks.
         for (var drawn = 0; tick <= t1 && drawn < 200; tick += step, drawn++)
@@ -550,7 +552,7 @@ public sealed class MetricChart : FrameworkElement
                 : tick.ToString(format, CultureInfo.CurrentCulture);
             var label = Text(labelText, 12, AxisText);
             var left = px - label.Width / 2;
-            if (left < plot.Left - 12 || left + label.Width > plot.Right + 14)
+            if (left < plot.Left - 12 || left + label.Width > plot.Right + 14 || left + label.Width > nowLeft - 8)
             {
                 continue;
             }
@@ -558,7 +560,6 @@ public sealed class MetricChart : FrameworkElement
             dc.DrawText(label, new Point(left, plot.Bottom + 6));
         }
 
-        var nowLabel = Text("Now", 12, AxisText);
         dc.DrawText(nowLabel, new Point(plot.Right - nowLabel.Width, plot.Bottom + 6));
     }
 

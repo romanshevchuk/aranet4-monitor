@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:windows="clr-namespace:System.Windows;assembly=PresentationFramework">
-    <windows:CornerRadius x:Key="CardRadius">14</windows:CornerRadius>
+    <windows:CornerRadius x:Key="CardRadius">16</windows:CornerRadius>
     <windows:CornerRadius x:Key="ControlRadius">8</windows:CornerRadius>
     <windows:CornerRadius x:Key="PillRadius">999</windows:CornerRadius>
     <windows:CornerRadius x:Key="TightRadius">2</windows:CornerRadius>
@@ -33,10 +33,10 @@
     <sys:Double x:Key="FontSizeBody">13</sys:Double>
     <sys:Double x:Key="FontSizeTitle">23</sys:Double>
     <sys:Double x:Key="FontSizeSettingsTitle">22</sys:Double>
-    <sys:Double x:Key="FontSizeHeroValue">118</sys:Double>
+    <sys:Double x:Key="FontSizeHeroValue">80</sys:Double>
     <sys:Double x:Key="FontSizeLarge">18</sys:Double>
-    <sys:Double x:Key="FontSizeMetricLabel">17</sys:Double>
-    <sys:Double x:Key="FontSizeMetricValue">31</sys:Double>
+    <sys:Double x:Key="FontSizeMetricLabel">16</sys:Double>
+    <sys:Double x:Key="FontSizeMetricValue">30</sys:Double>
     <sys:Double x:Key="FontSizeEmphasis">14</sys:Double>
     <sys:Double x:Key="FontSizeHeading">16</sys:Double>
     <sys:Double x:Key="FontSizeMicro">11</sys:Double>
