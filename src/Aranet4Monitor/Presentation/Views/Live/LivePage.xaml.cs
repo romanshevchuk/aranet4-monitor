@@ -20,7 +20,7 @@ public partial class LivePage : System.Windows.Controls.UserControl
 
     public System.Windows.Controls.RadioButton Co2Tab => Co2TabControl;
 
-    public Border QualityBadge => QualityBadgeControl;
+    public StackPanel QualityBadge => QualityBadgeControl;
 
     public System.Windows.Shapes.Ellipse QualityIcon => QualityIconControl;
 
@@ -510,12 +510,12 @@ public partial class LivePage : System.Windows.Controls.UserControl
             Co2Level.Fair => (Color)FindResource("Co2FairColor"),
             _ => (Color)FindResource("Co2PoorColor"),
         };
-        QualityText.Text = level switch
+        QualityText.Text = (level switch
         {
             Co2Level.Good => "Good",
             Co2Level.Fair => "Elevated",
             _ => "High",
-        };
+        }).ToUpperInvariant();
         var statusColor = level switch
         {
             Co2Level.Good => (Color)FindResource("PositiveColor"),
@@ -528,10 +528,7 @@ public partial class LivePage : System.Windows.Controls.UserControl
             Co2Level.Fair => "Co2FairStroke",
             _ => "Co2PoorStroke",
         });
-        QualityBadge.Background = new SolidColorBrush(Color.FromArgb(0x1F, color.R, color.G, color.B));
         QualityIcon.Fill = new SolidColorBrush(statusColor);
-        QualityBadge.BorderBrush = new SolidColorBrush(color);
-        QualityBadge.BorderThickness = new Thickness(1);
         QualityText.Foreground = new SolidColorBrush(statusColor);
         QualityBadge.Visibility = Visibility.Visible;
         Co2AdviceText.Text = ppm < Co2Quality.FairFromPpm

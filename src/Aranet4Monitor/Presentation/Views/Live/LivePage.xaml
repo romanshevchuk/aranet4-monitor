@@ -49,25 +49,22 @@
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0">
                             <Grid>
-                                <Border x:Name="QualityBadgeControl"
-                                        Padding="9,2"
-                                        CornerRadius="{StaticResource PillRadius}"
-                                        BorderThickness="1"
-                                        HorizontalAlignment="Left"
-                                        Visibility="Collapsed">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse x:Name="QualityIconControl"
-                                                 Width="7"
-                                                 Height="7"
-                                                 Fill="{DynamicResource Positive}"
-                                                 Margin="0,0,6,0"
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="QualityTextControl"
-                                                   FontSize="{StaticResource FontSizeSmall}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimary}"/>
-                                    </StackPanel>
-                                </Border>
+                                <StackPanel x:Name="QualityBadgeControl"
+            Orientation="Horizontal"
+            HorizontalAlignment="Left"
+            Margin="0,0,0,14"
+            Visibility="Collapsed">
+                                    <Ellipse x:Name="QualityIconControl"
+             Width="7"
+             Height="7"
+             Fill="{DynamicResource Positive}"
+             Margin="0,0,7,0"
+             VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="QualityTextControl"
+               FontSize="{StaticResource FontSizeSmall}"
+               FontWeight="Bold"
+               Foreground="{DynamicResource TextPrimary}"/>
+                                </StackPanel>
                             </Grid>
                             <StackPanel>
                                 <TextBlock x:Name="Co2TextControl"

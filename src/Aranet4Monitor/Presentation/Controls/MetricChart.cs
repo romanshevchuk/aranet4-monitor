@@ -320,9 +320,9 @@ public sealed class MetricChart : FrameworkElement
 
         if (kind == MetricKind.Co2)
         {
-            lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 200) * 200);
-            hi = Math.Ceiling(Math.Max(max, 1600) / 200) * 200;
-            step = hi <= 3000 ? 200 : NiceStep((hi - lo) / 5);
+            lo = Math.Max(400, Math.Floor(Math.Min(min, 400) / 400) * 400);
+            hi = Math.Ceiling(Math.Max(max, 1600) / 400) * 400;
+            step = hi <= 3200 ? 400 : NiceStep((hi - lo) / 5);
         }
 
         double X(DateTime t) => plot.Left + (t - t0).TotalSeconds / (t1 - t0).TotalSeconds * plot.Width;
@@ -331,13 +331,13 @@ public sealed class MetricChart : FrameworkElement
         // ---- background bands ----
         if (kind == MetricKind.Co2)
         {
-            DrawBand(dc, Y, lo, hi, double.NegativeInfinity, Co2Quality.FairFromPpm, Good);
-            DrawBand(dc, Y, lo, hi, Co2Quality.FairFromPpm, Co2Quality.PoorFromPpm, Warn);
-            DrawBand(dc, Y, lo, hi, Co2Quality.PoorFromPpm, double.PositiveInfinity, Bad);
+            DrawBand(dc, Y, lo, hi, double.NegativeInfinity, Co2Quality.FairFromPpm, Good, 0);
+            DrawBand(dc, Y, lo, hi, Co2Quality.FairFromPpm, Co2Quality.PoorFromPpm, Warn, 16);
+            DrawBand(dc, Y, lo, hi, Co2Quality.PoorFromPpm, double.PositiveInfinity, Bad, 22);
         }
         else if (kind == MetricKind.Humidity)
         {
-            DrawBand(dc, Y, lo, hi, 30, 50, Good); // matches the "ideal 30-50%" on the humidity card
+            DrawBand(dc, Y, lo, hi, 30, 50, Good, 14); // matches the "ideal 30-50%" on the humidity card
         }
 
         // ---- horizontal grid + y labels ----
@@ -442,7 +442,7 @@ public sealed class MetricChart : FrameworkElement
         }
     }
 
-    private void DrawBand(DrawingContext dc, Func<double, double> y, double lo, double hi, double from, double to, Color color)
+    private void DrawBand(DrawingContext dc, Func<double, double> y, double lo, double hi, double from, double to, Color color, byte alpha)
     {
         var a = Math.Max(from, lo);
         var b = Math.Min(to, hi);
@@ -453,7 +453,7 @@ public sealed class MetricChart : FrameworkElement
 
         var top = y(b);
         var bottom = y(a);
-        dc.DrawRectangle(Solid(color, 20), null, new Rect(plot.Left, top, plot.Width, bottom - top));
+        dc.DrawRectangle(Solid(color, alpha), null, new Rect(plot.Left, top, plot.Width, bottom - top));
     }
 
     private void DrawCo2Threshold(DrawingContext dc, Func<double, double> y, int value, string label)
