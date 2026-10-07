@@ -1,3 +1,4 @@
+using Aranet4Monitor.Abstractions;
 using Aranet4Monitor.Application.History;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
@@ -11,9 +12,10 @@ public sealed class ShellViewModel : ObservableObject
     public ShellViewModel(
         HistorySyncService? historySyncService = null,
         SensorMonitor? sensorMonitor = null,
-        LiveViewModel? live = null)
+        LiveViewModel? live = null,
+        ISensorSource? sensorSource = null)
     {
-        Live = live ?? new LiveViewModel();
+        Live = live ?? new LiveViewModel(sensorSource, sensorMonitor);
         History = new HistoryViewModel(historySyncService, sensorMonitor);
         NavigateCommand = new RelayCommand(
             parameter =>

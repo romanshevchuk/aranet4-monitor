@@ -15,6 +15,7 @@ public sealed class HistoryViewModel : ObservableObject
     private CancellationTokenSource? syncCancellation;
     private bool isSyncing;
     private string syncProgressText = string.Empty;
+    private Aranet4Device? selectedDevice;
 
     public HistoryViewModel(HistorySyncService? historySyncService = null, SensorMonitor? sensorMonitor = null)
     {
@@ -43,6 +44,21 @@ public sealed class HistoryViewModel : ObservableObject
         get => selectedRange;
         set => SetProperty(ref selectedRange, value);
     }
+
+    public Aranet4Device? SelectedDevice
+    {
+        get => selectedDevice;
+        set => SetProperty(ref selectedDevice, value);
+    }
+
+    public DateTime? GetSyncCursor(Aranet4Device? device) =>
+        device is null ? null : historySyncService?.LoadSyncCursor(device.Address);
+
+    public HistoryPageState CreatePageState() => new(
+        SelectedDevice,
+        SelectedRange,
+        GetSyncCursor(SelectedDevice),
+        IsSyncing);
 
     public bool IsSyncing
     {
@@ -99,8 +115,37 @@ public sealed class HistoryViewModel : ObservableObject
 
     public void CancelSync() => syncCancellation?.Cancel();
 
-    public HistoryCsvExport? CreateCsvExport(Aranet4Device device, TimeSpan? visibleRange, DateTime now)
+    public HistorySyncFailure ClassifySyncFailure(Exception exception)
     {
+        if (exception.Message.Contains("nearby", StringComparison.OrdinalIgnoreCase)
+            || exception.Message.Contains("took too long", StringComparison.OrdinalIgnoreCase)
+            || exception.Message.Contains("not connected", StringComparison.OrdinalIgnoreCase)
+            || exception.Message.Contains("DeviceNotConnected", StringComparison.OrdinalIgnoreCase))
+        {
+            return HistorySyncFailure.SensorUnavailable;
+        }
+
+        return exception is IOException
+            ? HistorySyncFailure.LocalStorage
+            : HistorySyncFailure.Transfer;
+    }
+
+    public HistorySyncMessage DescribeSyncOutcome(HistorySyncOutcome outcome) => outcome.MissingRecords > 0
+        ? new HistorySyncMessage(
+            HistorySyncMessageKind.Incomplete,
+            "Incomplete – retry needed",
+            $"History sync was incomplete: {outcome.AddedSamples:N0} new readings saved, {outcome.MissingRecords:N0} records weren't received.")
+        : outcome.AddedSamples > 0
+            ? new HistorySyncMessage(HistorySyncMessageKind.Completed, $"Synced {outcome.AddedSamples:N0} new readings")
+            : new HistorySyncMessage(HistorySyncMessageKind.Completed, "Already up to date");
+
+    public HistoryCsvExport? CreateCsvExport(TimeSpan? visibleRange, DateTime now)
+    {
+        if (SelectedDevice is not { } device)
+        {
+            return null;
+        }
+
         IEnumerable<Co2Sample> samples = device.History;
         if (visibleRange is { } range)
         {
@@ -137,3 +182,24 @@ public sealed class HistoryViewModel : ObservableObject
 }
 
 public sealed record HistoryCsvExport(string FileName, string Contents);
+
+public sealed record HistoryPageState(
+    Aranet4Device? Device,
+    TimeSpan SelectedRange,
+    DateTime? SyncCursor,
+    bool IsSyncing);
+
+public enum HistorySyncFailure
+{
+    SensorUnavailable,
+    LocalStorage,
+    Transfer,
+}
+
+public enum HistorySyncMessageKind
+{
+    Completed,
+    Incomplete,
+}
+
+public sealed record HistorySyncMessage(HistorySyncMessageKind Kind, string Title, string? Details = null);

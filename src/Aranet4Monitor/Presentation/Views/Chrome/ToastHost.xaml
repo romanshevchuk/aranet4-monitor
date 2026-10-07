@@ -10,6 +10,6 @@
             Visibility="{Binding StatusBar.SyncToastVisibility, RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
         <TextBlock Text="{Binding StatusBar.SyncToastText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                    Foreground="{DynamicResource TextPrimary}"
-                   FontSize="13"/>
+                   FontSize="{StaticResource FontSizeBody}"/>
     </Border>
 </UserControl>

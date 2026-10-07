@@ -1,4 +1,5 @@
 using System;
+using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Storage;
 
@@ -11,8 +12,9 @@ public sealed record SettingsActions(
     Action<bool> SetTrayShowNumber,
     Action<bool> SetLargePopups,
     Func<bool, bool> SetStartWithWindows,
-    Action SendTestNotification,
-    Action ToggleSnooze,
+    Action<int> SendTestNotification,
+    Action<MeasurementAlertEffect, int> NotifyMeasurementAlert,
+    Action<bool, DateTime?> UpdateAlertsPaused,
     Action ForgetDetectedDevices,
     Action OpenBluetoothDiagnostics);
 
@@ -31,7 +33,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool notificationsEnabled;
     private bool startWithWindows;
     private string alertStatus = string.Empty;
-    private string snoozeButtonText = "Pause 1 h";
+    private DateTime? alertsPausedUntil;
 
     public SettingsViewModel(
         AppPreferences preferences,
@@ -53,8 +55,8 @@ public sealed class SettingsViewModel : ObservableObject
         this.listenForLiveReadings = listenForLiveReadings;
         this.startWithWindows = startWithWindows;
 
-        TestNotificationCommand = new RelayCommand(_ => actions.SendTestNotification());
-        SnoozeCommand = new RelayCommand(_ => actions.ToggleSnooze());
+        TestNotificationCommand = new RelayCommand(_ => SendTestNotification());
+        SnoozeCommand = new RelayCommand(_ => ToggleAlertPause(DateTime.Now));
         ForgetDetectedDevicesCommand = new RelayCommand(_ => actions.ForgetDetectedDevices());
         OpenBluetoothDiagnosticsCommand = new RelayCommand(_ => actions.OpenBluetoothDiagnostics());
     }
@@ -258,8 +260,95 @@ public sealed class SettingsViewModel : ObservableObject
 
     public string SnoozeButtonText
     {
-        get => snoozeButtonText;
-        set => SetProperty(ref snoozeButtonText, value);
+        get => AlertsPaused ? "Resume alerts" : "Pause 1 h";
+    }
+
+    public DateTime? AlertsPausedUntil
+    {
+        get => alertsPausedUntil;
+        private set
+        {
+            if (!SetProperty(ref alertsPausedUntil, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(AlertsPaused));
+            OnPropertyChanged(nameof(SnoozeButtonText));
+        }
+    }
+
+    public bool AlertsPaused => AlertsPausedUntil is { } until && DateTime.Now < until;
+
+    public void ToggleAlertPause(DateTime now)
+    {
+        var wasPaused = AlertsPausedUntil is { } until && now < until;
+        AlertsPausedUntil = wasPaused ? null : now.AddHours(1);
+        AlertStatus = AlertsPausedUntil is not null
+            ? $"Alerts paused until {AlertsPausedUntil:t}."
+            : "Alerts are on.";
+        actions.UpdateAlertsPaused(AlertsPaused, AlertsPausedUntil);
+    }
+
+    public bool ExpireAlertPause(DateTime now)
+    {
+        if (AlertsPausedUntil is not { } until || now < until)
+        {
+            return false;
+        }
+
+        AlertsPausedUntil = null;
+        AlertStatus = "Alerts are on.";
+        actions.UpdateAlertsPaused(false, null);
+        return true;
+    }
+
+    private void SendTestNotification()
+    {
+        actions.SendTestNotification(AlertThresholdPpm + 80);
+        AlertStatus = "Test notification sent.";
+    }
+
+    public MeasurementAlertEffect HandleMeasurementAlert(int co2Ppm, SensorMonitorResult monitoring, DateTime observedAt)
+    {
+        if (monitoring.NotificationReady && NotificationsEnabled)
+        {
+            preferences.LastCo2AlertAt = observedAt;
+            preferences.LastCo2AlertPpm = co2Ppm;
+            savePreferences(preferences);
+            AlertStatus = $"Alert sent: {co2Ppm:N0} ppm at {observedAt:t}";
+            return NotifyMeasurementAlert(MeasurementAlertEffect.HighCo2, co2Ppm);
+        }
+
+        if (monitoring.NotificationDeferred)
+        {
+            AlertStatus = $"Above your alert level, but notifications are paused until {AlertsPausedUntil:t}.";
+            return MeasurementAlertEffect.None;
+        }
+
+        if (co2Ppm > AlertThresholdPpm)
+        {
+            AlertStatus = $"Above your alert level; waiting for {AlertDurationMinutes} minutes of sustained readings.";
+            return MeasurementAlertEffect.None;
+        }
+
+        if (co2Ppm <= monitoring.ResetThresholdPpm)
+        {
+            AlertStatus = preferences.LastCo2AlertAt is { } previousAlert
+                ? $"Recovered below {monitoring.ResetThresholdPpm:N0} ppm. Last alert {previousAlert:t}."
+                : "No active high-CO₂ alert.";
+            return monitoring.RecoveryNotificationDue && NotificationsEnabled
+                ? NotifyMeasurementAlert(MeasurementAlertEffect.Recovered, co2Ppm)
+                : MeasurementAlertEffect.None;
+        }
+
+        return MeasurementAlertEffect.None;
+    }
+
+    private MeasurementAlertEffect NotifyMeasurementAlert(MeasurementAlertEffect effect, int co2Ppm)
+    {
+        actions.NotifyMeasurementAlert(effect, co2Ppm);
+        return effect;
     }
 
     public RelayCommand TestNotificationCommand { get; }
@@ -291,4 +380,11 @@ public sealed class SettingsViewModel : ObservableObject
             OnPropertyChanged(nameof(StartWithWindows));
         }
     }
+}
+
+public enum MeasurementAlertEffect
+{
+    None,
+    HighCo2,
+    Recovered,
 }

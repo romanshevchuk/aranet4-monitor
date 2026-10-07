@@ -16,10 +16,9 @@
         MinWidth="760"
         WindowStyle="None"
         ResizeMode="CanResize"
-        SizeChanged="Window_SizeChanged"
         Background="{DynamicResource AppBackground}"
         FontFamily="{StaticResource AppFontFamily}"
-        FontSize="13"
+        FontSize="{StaticResource FontSizeBody}"
         UseLayoutRounding="True">
     <Window.Resources>
         <presentation:AppPageVisibilityConverter x:Key="AppPageVisibilityConverter"/>
@@ -28,13 +27,13 @@
         <shell:WindowChrome CaptionHeight="74"
                             ResizeBorderThickness="6"
                             GlassFrameThickness="1"
-                            CornerRadius="0"
+                            CornerRadius="{StaticResource WindowRadius}"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
     <Border x:Name="WindowSurface"
             Background="{DynamicResource AppBackground}"
             BorderThickness="0"
-            CornerRadius="0"
+            CornerRadius="{StaticResource WindowRadius}"
             ClipToBounds="True">
         <Grid x:Name="ShellGrid">
             <Grid.RowDefinitions>

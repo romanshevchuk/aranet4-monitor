@@ -13,7 +13,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid Grid.Row="0"
-                              Margin="0,0,0,14">
+                              Margin="{StaticResource GapTightBottom}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -21,13 +21,13 @@
                             <StackPanel>
                                 <TextBlock Text="How the room breathed"
                                            Foreground="{DynamicResource TextPrimary}"
-                                           FontSize="23"
+                                           FontSize="{StaticResource FontSizeTitle}"
                                            FontWeight="SemiBold"/>
                                 <TextBlock x:Name="HistoryHeaderSummaryTextControl"
                                            Text="No saved readings yet"
                                            Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="13"
-                                           Margin="0,4,0,0"/>
+                                           FontSize="{StaticResource FontSizeBody}"
+                                           Margin="{StaticResource GapTinyTop}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
@@ -35,7 +35,7 @@
                                 <TextBlock x:Name="HistoryLastSyncTextControl"
                                            Text="Not synced yet"
                                            Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="12"
+                                           FontSize="{StaticResource FontSizeSmall}"
                                            VerticalAlignment="Center"
                                            Margin="0,0,12,0"/>
                                 <Button x:Name="SyncHistoryButtonControl"
@@ -56,7 +56,7 @@
                             <Border x:Name="HistoryMainCardControl"
                                     Style="{StaticResource CardStyle}"
                                     Padding="20"
-                                    Margin="0,0,14,0">
+                                    Margin="{StaticResource GapTightTrailing}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -71,18 +71,18 @@
                                         <StackPanel>
                                             <TextBlock Text="CO₂"
                                                        Foreground="{DynamicResource TextPrimary}"
-                                                       FontSize="16"
+                                                       FontSize="{StaticResource FontSizeHeading}"
                                                        FontWeight="SemiBold"/>
                                             <TextBlock x:Name="HistoryChartStatsTextControl"
                                                        Text="No readings yet"
                                                        Foreground="{DynamicResource TextSecondary}"
-                                                       FontSize="13"
+                                                       FontSize="{StaticResource FontSizeBody}"
                                                        Margin="0,3,0,0"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                         <Border Grid.Column="1"
                                                 Background="{DynamicResource SurfaceSecondary}"
-                                                CornerRadius="10"
+                                                CornerRadius="{StaticResource OverlayRadius}"
                                                 Padding="3">
                                             <StackPanel Orientation="Horizontal">
                                                 <RadioButton x:Name="History24HoursButtonControl"

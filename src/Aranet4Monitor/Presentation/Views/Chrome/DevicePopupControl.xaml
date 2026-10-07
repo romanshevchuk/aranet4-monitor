@@ -11,7 +11,7 @@
                              <Border Width="340"
                                     Margin="12,4,18,18"
                                     Style="{StaticResource PopoverCard}"
-                                    Padding="16"
+                                    Padding="{StaticResource GapMediumThickness}"
                                     PreviewKeyDown="Popover_PreviewKeyDown">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="18"
@@ -27,18 +27,18 @@
                                          <TextBlock x:Name="DevicesTitleTextControl"
                                                     Text="SENSORS"
                                                    Foreground="{DynamicResource Ink}"
-                                                   FontSize="13"
+                                                   FontSize="{StaticResource FontSizeBody}"
                                                    FontWeight="Bold"
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
                                                 Background="{DynamicResource SurfaceSelected}"
-                                                CornerRadius="10"
+                                                CornerRadius="{StaticResource OverlayRadius}"
                                                 Padding="9,2">
                                             <TextBlock x:Name="DevicesCountTextControl"
                                                        Text="0"
                                                        Foreground="{DynamicResource Accent}"
                                                        FontWeight="Bold"
-                                                       FontSize="12"/>
+                                                       FontSize="{StaticResource FontSizeSmall}"/>
                                         </Border>
                                     </Grid>
                                     <ListBox x:Name="DevicesListControl"
@@ -84,13 +84,13 @@
                                                          <StackPanel Orientation="Horizontal">
                                                              <TextBlock Text="Aranet4"
                                                                         Foreground="{DynamicResource TextSecondary}"
-                                                                        FontSize="12"/>
+                                                                        FontSize="{StaticResource FontSizeSmall}"/>
                                                              <TextBlock Text=" · "
                                                                         Foreground="{DynamicResource TextSecondary}"
-                                                                        FontSize="12"/>
+                                                                        FontSize="{StaticResource FontSizeSmall}"/>
                                                              <TextBlock Text="{Binding LastSeenAgo}"
                                                                         Foreground="{DynamicResource TextSecondary}"
-                                                                        FontSize="12"
+                                                                        FontSize="{StaticResource FontSizeSmall}"
                                                                         TextTrimming="CharacterEllipsis"/>
                                                          </StackPanel>
                                                      </StackPanel>
@@ -98,7 +98,7 @@
                                                                  Orientation="Horizontal"
                                                                  VerticalAlignment="Center">
                                                          <TextBlock Foreground="{DynamicResource TextPrimary}"
-                                                                    FontSize="18"
+                                                                    FontSize="{StaticResource FontSizeLarge}"
                                                                     FontWeight="Medium"
                                                                     VerticalAlignment="Center">
                                                              <TextBlock.Style>
@@ -117,7 +117,7 @@
                                                          </TextBlock>
                                                          <TextBlock Text="ppm"
                                                                     Foreground="{DynamicResource TextSecondary}"
-                                                                    FontSize="11"
+                                                                    FontSize="{StaticResource FontSizeMicro}"
                                                                     Margin="3,4,0,0"
                                                                     VerticalAlignment="Center"/>
                                                      </StackPanel>
@@ -128,7 +128,7 @@
                                      <Border Margin="2,4,2,0"
                                              Padding="10,8"
                                              Background="{DynamicResource SurfaceSecondary}"
-                                             CornerRadius="8">
+                                             CornerRadius="{StaticResource ControlRadius}">
                                          <Grid>
                                              <Grid.ColumnDefinitions>
                                                  <ColumnDefinition Width="*"/>
@@ -140,22 +140,22 @@
                                                             FontWeight="SemiBold"
                                                             TextTrimming="CharacterEllipsis"/>
                                                  <StackPanel Orientation="Horizontal"
-                                                             Margin="0,4,0,0">
+                                                             Margin="{StaticResource GapTinyTop}">
                                                      <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"
                                                                           VerticalAlignment="Center"/>
                                                      <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
                                                                 Foreground="{DynamicResource TextSecondary}"
-                                                                FontSize="12"
-                                                                Margin="7,0,0,0"/>
+                                                                FontSize="{StaticResource FontSizeSmall}"
+                                                                Margin="{StaticResource GapNarrowLeading}"/>
                                                      <TextBlock Text="·"
                                                                 Foreground="{DynamicResource TextSecondary}"
                                                                 Margin="8,0"/>
                                                  <TextBlock Text="Every"
                                                             Foreground="{DynamicResource TextSecondary}"
-                                                            FontSize="12"/>
+                                                            FontSize="{StaticResource FontSizeSmall}"/>
                                                  <TextBlock Text="{Binding SelectedDevice.MeasurementInterval}"
                                                             Foreground="{DynamicResource TextSecondary}"
-                                                            FontSize="12"
+                                                            FontSize="{StaticResource FontSizeSmall}"
                                                             Margin="4,0,0,0"/>
                                                  </StackPanel>
                                              </StackPanel>
@@ -167,7 +167,7 @@
                                                          Click="ScanDevices_Click"/>
                                                  <Button Content="Manage…"
                                                          Style="{StaticResource SmallLinkButton}"
-                                                         Margin="6,0,0,0"
+                                                         Margin="{StaticResource GapMicroLeading}"
                                                          Click="ManageDevices_Click"/>
                                              </StackPanel>
                                          </Grid>
@@ -175,7 +175,7 @@
                                      <Expander x:Name="DeviceDetailsExpander"
                                                Header="Selected sensor details"
                                                Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="12"
+                                               FontSize="{StaticResource FontSizeSmall}"
                                                Margin="2,6,2,0">
                                     <StackPanel x:Name="DeviceDetailsPanelControl"
                                                 Margin="0,8,0,8">
@@ -184,7 +184,7 @@
                                                      Width="8"
                                                      Height="8"
                                                      Fill="{DynamicResource Muted}"
-                                                     Margin="0,0,8,0"
+                                                     Margin="{StaticResource GapSmallTrailing}"
                                                      VerticalAlignment="Center"/>
                                             <TextBlock x:Name="DeviceStatusTextControl"
                                                        Text="Waiting for a sensor"
@@ -199,13 +199,13 @@
                                                    Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Measurement age"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <TextBlock x:Name="DeviceMeasurementAgeTextControl"
                                                    Text="—"
                                                    Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Battery"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock x:Name="BatteryTextControl"
                                                        Text="—"
@@ -220,27 +220,27 @@
                                         </StackPanel>
                                         <TextBlock Text="Signal"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <StackPanel Orientation="Horizontal">
                                             <controls:SignalBars Bars="{Binding SelectedDevice.SignalBars}"/>
                                             <TextBlock Text="{Binding SelectedDevice.Rssi, StringFormat={}{0} dBm}"
                                                        Foreground="{DynamicResource TextPrimary}"
-                                                       Margin="8,0,0,0"/>
+                                                       Margin="{StaticResource GapSmallLeading}"/>
                                         </StackPanel>
                                         <TextBlock Text="Measurement interval"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <TextBlock x:Name="DeviceIntervalTextControl"
                                                    Text="—"
                                                    Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Firmware"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <TextBlock Text="{Binding SelectedDevice.Firmware}"
                                                    Foreground="{DynamicResource TextPrimary}"/>
                                         <TextBlock Text="Address"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <DockPanel LastChildFill="False">
                                             <TextBlock x:Name="DeviceAddressTextControl"
                                                        Text="—"
@@ -255,7 +255,7 @@
                                         </DockPanel>
                                         <TextBlock Text="Last synced"
                                                    Foreground="{DynamicResource TextSecondary}"
-                                                   Margin="0,8,0,0"/>
+                                                   Margin="{StaticResource GapSmallTop}"/>
                                         <TextBlock x:Name="DeviceLastSyncedTextControl"
                                                    Text="Not synced yet"
                                                    Foreground="{DynamicResource TextPrimary}"/>
@@ -275,8 +275,8 @@
                                               Header="Advanced · Bluetooth diagnostics"
                                               Foreground="{DynamicResource TextSecondary}"
                                               FontWeight="SemiBold"
-                                              Margin="0,4,0,0">
-                                        <StackPanel Margin="0,8,0,0">
+                                              Margin="{StaticResource GapTinyTop}">
+                                        <StackPanel Margin="{StaticResource GapSmallTop}">
                                             <TextBlock x:Name="PacketCountTextControl"
                                                        Text="0 packets received"
                                                        Foreground="{DynamicResource Muted}"
@@ -299,10 +299,10 @@
                                                      VerticalScrollBarVisibility="Auto"
                                                      Height="88"
                                                      FontFamily="Cascadia Mono, Consolas"
-                                                     FontSize="12"
+                                                     FontSize="{StaticResource FontSizeSmall}"
                                                      BorderThickness="0"
                                                      Background="{DynamicResource SurfaceSecondary}"
-                                                     Padding="8"
+                                                     Padding="{StaticResource GapSmallThickness}"
                                                      Foreground="{DynamicResource Ink}"/>
                                             <DockPanel Margin="0,10,0,4"
                                                        LastChildFill="False">
@@ -322,10 +322,10 @@
                                                      VerticalScrollBarVisibility="Auto"
                                                      Height="88"
                                                      FontFamily="Cascadia Mono, Consolas"
-                                                     FontSize="12"
+                                                     FontSize="{StaticResource FontSizeSmall}"
                                                      BorderThickness="0"
                                                      Background="{DynamicResource SurfaceSecondary}"
-                                                     Padding="8"
+                                                     Padding="{StaticResource GapSmallThickness}"
                                                      Foreground="{DynamicResource Ink}"/>
                                         </StackPanel>
                                     </Expander>

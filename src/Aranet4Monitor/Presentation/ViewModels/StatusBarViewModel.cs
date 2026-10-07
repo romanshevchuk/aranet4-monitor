@@ -15,6 +15,7 @@ public enum ListenerStatusKind
 public sealed class StatusBarViewModel : ObservableObject
 {
     private ListenerStatusKind listenerStatus = ListenerStatusKind.Idle;
+    private bool listenerHasBeenStarted;
     private Visibility noticeVisibility = Visibility.Collapsed;
     private Visibility noticeActionVisibility = Visibility.Visible;
     private Visibility bluetoothSettingsVisibility = Visibility.Collapsed;
@@ -28,6 +29,7 @@ public sealed class StatusBarViewModel : ObservableObject
     private string footerStatusText = "Searching";
     private string footerStatusBrushKey = "Muted";
     private Brush footerStatusBrush = ThemeService.GetBrush("Muted");
+    private string deviceChipToolTip = "Sensor details and device list";
     private string syncStatusText = string.Empty;
     private string? syncStatusToolTip;
     private Visibility syncProgressVisibility = Visibility.Collapsed;
@@ -99,6 +101,12 @@ public sealed class StatusBarViewModel : ObservableObject
         private set => SetProperty(ref footerStatusBrush, value);
     }
 
+    public string DeviceChipToolTip
+    {
+        get => deviceChipToolTip;
+        private set => SetProperty(ref deviceChipToolTip, value);
+    }
+
     public string SyncStatusText
     {
         get => syncStatusText;
@@ -147,7 +155,9 @@ public sealed class StatusBarViewModel : ObservableObject
         private set => SetProperty(ref syncProblemVisibility, value);
     }
 
-    public void SetListenerStatus(string message, ListenerStatusKind kind, string? details, bool listenerHasBeenStarted)
+    public void MarkListenerStarted() => listenerHasBeenStarted = true;
+
+    public void SetListenerStatus(string message, ListenerStatusKind kind, string? details)
     {
         SetProperty(ref listenerStatus, kind, nameof(ListenerStatus));
         NoticeVisibility = kind == ListenerStatusKind.Listening || !listenerHasBeenStarted
@@ -186,6 +196,37 @@ public sealed class StatusBarViewModel : ObservableObject
         NoticeActionVisibility = kind == ListenerStatusKind.BluetoothUnavailable
             ? Visibility.Collapsed
             : Visibility.Visible;
+    }
+
+    public void UpdateSensorState(bool hasReading, bool isStale)
+    {
+        if (ListenerStatus == ListenerStatusKind.Error)
+        {
+            SetFooterStatus("Listener error", "Danger");
+            DeviceChipToolTip = "Live readings stopped. Try starting the listener again.";
+            return;
+        }
+
+        if (ListenerStatus is ListenerStatusKind.Idle or ListenerStatusKind.BluetoothUnavailable)
+        {
+            SetFooterStatus(ListenerStatus == ListenerStatusKind.BluetoothUnavailable ? "Bluetooth unavailable" : "Stopped", "Muted");
+            DeviceChipToolTip = ListenerStatus == ListenerStatusKind.BluetoothUnavailable
+                ? "Bluetooth is unavailable. Turn it on in Windows settings to see live readings."
+                : "Live readings are off.";
+            return;
+        }
+
+        if (!hasReading)
+        {
+            SetFooterStatus("Searching", "Muted");
+            DeviceChipToolTip = "Looking for your Aranet4. Make sure Smart Home Integration is enabled in the Aranet Home app.";
+            return;
+        }
+
+        SetFooterStatus(isStale ? "Waiting for sensor" : "Live", isStale ? "Warning" : "Positive");
+        DeviceChipToolTip = isStale
+            ? "No recent readings from this sensor. Move it closer and check its battery."
+            : "Receiving live readings from this sensor.";
     }
 
     public void SetFooterStatus(string text, string brushKey)

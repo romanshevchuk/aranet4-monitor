@@ -21,7 +21,7 @@
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border x:Name="ThumbBorder"
                                                         Background="{DynamicResource TextSecondary}"
-                                                        CornerRadius="4"
+                                                        CornerRadius="{StaticResource SmallRadius}"
                                                         Opacity="0.45"/>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver"
@@ -46,7 +46,7 @@
                         HorizontalAlignment="Center">
                 <TextBlock Text="Settings"
                            Foreground="{DynamicResource TextPrimary}"
-                           FontSize="22"
+                           FontSize="{StaticResource FontSizeSettingsTitle}"
                            FontWeight="SemiBold"/>
                 <TextBlock Text="Adjust CO₂ alerts, display preferences, and tray behavior. Your readings and settings stay on this PC; no account or cloud service is used."
                            Foreground="{DynamicResource TextSecondary}"
@@ -60,7 +60,7 @@
                                    Style="{StaticResource SectionLabel}"/>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -72,7 +72,7 @@
                                                FontWeight="SemiBold"/>
                                     <TextBlock Text="Enable CO₂ alerts and notification controls."
                                                Foreground="{DynamicResource TextSecondary}"
-                                               Margin="0,2,16,0"/>
+                                               Margin="{StaticResource SettingsDescriptionSpacing}"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1"
                                           Style="{StaticResource SwitchCheckBox}"
@@ -83,7 +83,7 @@
                         </Border>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid IsEnabled="{Binding IsAlertConfigurationEnabled}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -96,7 +96,7 @@
                                     <TextBlock Text="Notify after sustained readings above this value."
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap"
-                                               Margin="0,2,16,0"/>
+                                               Margin="{StaticResource SettingsDescriptionSpacing}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
@@ -124,7 +124,7 @@
                         </Border>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid IsEnabled="{Binding IsAlertConfigurationEnabled}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -137,7 +137,7 @@
                                     <TextBlock Text="Send a preview using your current alert settings."
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap"
-                                               Margin="0,2,16,0"/>
+                                               Margin="{StaticResource SettingsDescriptionSpacing}"/>
                                 </StackPanel>
                                 <Button Grid.Column="1"
                                         Content="Send test notification"
@@ -164,13 +164,13 @@
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}"
-                        Margin="0,16,0,0">
+                        Margin="{StaticResource SettingsSectionSpacing}">
                     <StackPanel>
                         <TextBlock Text="DISPLAY"
                                    Style="{StaticResource SectionLabel}"/>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -182,7 +182,7 @@
                                            VerticalAlignment="Center"/>
                                 <Border Grid.Column="1"
                                         Background="{DynamicResource SurfaceSecondary}"
-                                        CornerRadius="8"
+                                        CornerRadius="{StaticResource ControlRadius}"
                                         Padding="2">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton Content="°C"
@@ -199,7 +199,7 @@
                         </Border>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -211,7 +211,7 @@
                                            VerticalAlignment="Center"/>
                                 <Border Grid.Column="1"
                                         Background="{DynamicResource SurfaceSecondary}"
-                                        CornerRadius="8"
+                                        CornerRadius="{StaticResource ControlRadius}"
                                         Padding="2">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton Content="Auto"
@@ -232,7 +232,7 @@
                         </Border>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -245,7 +245,7 @@
                                     <TextBlock Text="Show notifications in the app's larger pop-up window."
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap"
-                                               Margin="0,2,16,0"/>
+                                               Margin="{StaticResource SettingsDescriptionSpacing}"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1"
                                           Style="{StaticResource SwitchCheckBox}"
@@ -258,13 +258,13 @@
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}"
-                        Margin="0,16,0,0">
+                        Margin="{StaticResource SettingsSectionSpacing}">
                     <StackPanel>
                         <TextBlock Text="TRAY AND STARTUP"
                                    Style="{StaticResource SectionLabel}"/>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -283,7 +283,7 @@
                         </Border>
                         <Border BorderBrush="{DynamicResource Line}"
                                 BorderThickness="0,0,0,1"
-                                Padding="0,14">
+                                Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -296,7 +296,7 @@
                                     <TextBlock Text="Keep the sensor listener running while the app is open."
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap"
-                                               Margin="0,2,16,0"/>
+                                               Margin="{StaticResource SettingsDescriptionSpacing}"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1"
                                           Style="{StaticResource SwitchCheckBox}"
@@ -305,7 +305,7 @@
                                           AutomationProperties.Name="Listen for live sensor readings"/>
                             </Grid>
                         </Border>
-                        <Border Padding="0,14">
+                        <Border Padding="{StaticResource SettingsRowPadding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -326,7 +326,7 @@
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}"
-                        Margin="0,16,0,0">
+                        Margin="{StaticResource SettingsSectionSpacing}">
                     <StackPanel>
                         <TextBlock Text="LOCAL DATA AND SENSOR"
                                    Style="{StaticResource SectionLabel}"/>
@@ -341,7 +341,7 @@
                             <Button Content="Bluetooth diagnostics"
                                     Style="{StaticResource SmallLinkButton}"
                                     Command="{Binding OpenBluetoothDiagnosticsCommand}"
-                                    Margin="8,0,0,0"/>
+                                    Margin="{StaticResource GapSmallLeading}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

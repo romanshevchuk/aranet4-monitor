@@ -5,11 +5,11 @@
         <StackPanel Margin="0,12,0,8">
             <TextBlock Text="Day at a glance"
                        Foreground="{DynamicResource TextPrimary}"
-                       FontSize="14"
+                       FontSize="{StaticResource FontSizeEmphasis}"
                        FontWeight="SemiBold"/>
             <TextBlock Text="One stripe every 20 minutes · ● airing detected"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="12"
+                       FontSize="{StaticResource FontSizeSmall}"
                        Margin="0,2,0,0"/>
         </StackPanel>
         <UniformGrid x:Name="Cells"
@@ -27,27 +27,27 @@
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="StartTimeText"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"/>
+                       FontSize="{StaticResource FontSizeMicro}"/>
             <TextBlock x:Name="QuarterTimeText"
                        Grid.Column="1"
                        TextAlignment="Center"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"/>
+                       FontSize="{StaticResource FontSizeMicro}"/>
             <TextBlock x:Name="HalfTimeText"
                        Grid.Column="2"
                        TextAlignment="Center"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"/>
+                       FontSize="{StaticResource FontSizeMicro}"/>
             <TextBlock x:Name="ThreeQuarterTimeText"
                        Grid.Column="3"
                        TextAlignment="Center"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"/>
+                       FontSize="{StaticResource FontSizeMicro}"/>
             <TextBlock Text="Now"
                        Grid.Column="4"
                        TextAlignment="Right"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"/>
+                       FontSize="{StaticResource FontSizeMicro}"/>
         </Grid>
     </StackPanel>
 </UserControl>

@@ -28,7 +28,7 @@
                 </Grid>
                 <TextBlock Text="Air Pulse"
                            Foreground="{DynamicResource TextPrimary}"
-                           FontSize="16"
+                           FontSize="{StaticResource FontSizeHeading}"
                            FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
             </StackPanel>
@@ -42,7 +42,6 @@
                         Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         CommandParameter="{x:Static presentation:AppPage.Live}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                        Click="LiveNavigation_Click"
                         AutomationProperties.Name="Show live dashboard"/>
                 <Button x:Name="HistoryNavigationControl"
                         Content="History"
@@ -50,7 +49,6 @@
                         Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         CommandParameter="{x:Static presentation:AppPage.History}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                        Click="HistoryNavigation_Click"
                         AutomationProperties.Name="Show sensor history chart"/>
                 <Button x:Name="SettingsNavigationControl"
                         Content="Settings"
@@ -58,7 +56,6 @@
                         Command="{Binding Shell.NavigateCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         CommandParameter="{x:Static presentation:AppPage.Settings}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                        Click="SettingsNavigation_Click"
                         ToolTip="Application settings and options"
                         AutomationProperties.Name="Open settings"/>
             </StackPanel>
@@ -71,7 +68,7 @@
                     VerticalAlignment="Center"
                     shell:WindowChrome.IsHitTestVisibleInChrome="True"
                     Click="DeviceChip_Click"
-                    ToolTip="Sensor details and device list">
+                    ToolTip="{Binding StatusBar.DeviceChipToolTip, RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock x:Name="ChipNameControl"
                                Text="Searching for sensor…"
@@ -89,7 +86,7 @@
             <StackPanel Grid.Column="4"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        Margin="6,0,0,0"
+                        Margin="{StaticResource GapMicroLeading}"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <Button Content="&#xE921;"
                         Style="{StaticResource CaptionButton}"

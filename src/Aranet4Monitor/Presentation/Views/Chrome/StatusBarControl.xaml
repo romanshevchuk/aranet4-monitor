@@ -13,33 +13,33 @@
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        Margin="0,0,14,0">
+                        Margin="{StaticResource GapTightTrailing}">
                 <Ellipse x:Name="FooterStatusDot"
                          Width="8"
                          Height="8"
                          Fill="{Binding StatusBar.FooterStatusBrush, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
-                         Margin="0,0,8,0"
+                         Margin="{StaticResource GapSmallTrailing}"
                          VerticalAlignment="Center"/>
                 <TextBlock x:Name="FooterStatusText"
                            Text="{Binding StatusBar.FooterStatusText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                            Foreground="{DynamicResource TextSecondary}"
-                           FontSize="13"
+                           FontSize="{StaticResource FontSizeBody}"
                            FontWeight="Medium"
                            VerticalAlignment="Center"/>
             </StackPanel>
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        Margin="0,0,14,0">
+                        Margin="{StaticResource GapTightTrailing}">
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <controls:SignalBars x:Name="DetailSignalControl"
                                          VerticalAlignment="Center"
-                                         Margin="0,0,8,0"/>
+                                         Margin="{StaticResource GapSmallTrailing}"/>
                     <TextBlock x:Name="RssiLabel"
                                Text="—"
                                Foreground="{DynamicResource TextSecondary}"
-                               FontSize="13"
+                               FontSize="{StaticResource FontSizeBody}"
                                Visibility="Collapsed"
                                VerticalAlignment="Center"/>
                 </StackPanel>
@@ -60,9 +60,9 @@
                     <TextBlock x:Name="SyncStatusText"
                                Text="{Binding StatusBar.SyncStatusText, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                                ToolTip="{Binding StatusBar.SyncStatusToolTip, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
-                               FontSize="12"
+                               FontSize="{StaticResource FontSizeSmall}"
                                Foreground="{DynamicResource TextPrimary}"
-                               Margin="8,0,0,0"
+                               Margin="{StaticResource GapSmallLeading}"
                                VerticalAlignment="Center"
                                MaxWidth="190"
                                TextTrimming="CharacterEllipsis"/>
@@ -73,7 +73,7 @@
                         Click="CancelHistorySync_Click"
                         IsEnabled="False"
                         Visibility="Collapsed"
-                        Margin="6,0,0,0"/>
+                        Margin="{StaticResource GapMicroLeading}"/>
             </StackPanel>
             <Button x:Name="FooterBatteryControl"
                     Grid.Column="3"
@@ -90,8 +90,8 @@
                             Height="10"
                             BorderBrush="{DynamicResource TextSecondary}"
                             BorderThickness="1"
-                            CornerRadius="2"
-                            Margin="8,0,0,0"
+                            CornerRadius="{StaticResource TightRadius}"
+                            Margin="{StaticResource GapSmallLeading}"
                             Padding="1">
                         <ProgressBar x:Name="FooterBatteryProgress"
                                      Style="{StaticResource ThinBar}"
@@ -102,7 +102,7 @@
                                Text="—"
                                Foreground="{DynamicResource TextPrimary}"
                                FontWeight="SemiBold"
-                               Margin="6,0,0,0"
+                               Margin="{StaticResource GapMicroLeading}"
                                VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>

@@ -7,21 +7,32 @@ using Aranet4Monitor.Domain.Measurements;
 using Aranet4Monitor.Models;
 using Aranet4Monitor.Presentation.Controls;
 using Aranet4Monitor.Presentation.Formatting;
+using Aranet4Monitor.Presentation.ViewModels;
 using WpfEllipse = System.Windows.Shapes.Ellipse;
 
 namespace Aranet4Monitor.Presentation.Views.History;
 
 public partial class HistoryPage : System.Windows.Controls.UserControl
 {
-    public event RoutedEventHandler? SyncHistoryRequested;
+    public event Action? SyncStarted;
+
+    public event Action? SyncFinished;
+
+    public event Action<string>? SyncToastRequested;
+
+    public event Action<string, string>? SyncProblemRequested;
+
+    public event Action<Aranet4Device>? SyncCompleted;
+
+    public LiveViewModel? LiveViewModel { get; set; }
 
     public HistoryPage()
     {
         InitializeComponent();
-        HistorySidebarControl.ExportRequested += (_, args) => ExportRequested?.Invoke(this, args);
+        HistorySidebarControl.ExportRequested += ExportCsv_Click;
     }
 
-    public event RoutedEventHandler? ExportRequested;
+    public event Action<string>? CsvExported;
 
     public Grid HistoryView => HistoryViewControl;
 
@@ -44,6 +55,38 @@ public partial class HistoryPage : System.Windows.Controls.UserControl
     public HistorySidebar HistorySidebar => HistorySidebarControl;
 
     public void ScrollToTop() => HistoryScrollViewer.ScrollToTop();
+
+    public void SetSyncButtonState(bool hasDevice, bool isSyncing)
+    {
+        SyncHistoryButton.IsEnabled = hasDevice && !isSyncing;
+        SyncHistoryButton.Content = isSyncing ? "Syncing…" : "Sync history";
+        SyncHistoryButton.ToolTip = isSyncing
+            ? "A history sync is already in progress."
+            : hasDevice
+                ? "Sync stored CO₂, temperature, humidity and pressure history for the selected sensor"
+                : "Select a sensor to sync its stored history.";
+    }
+
+    public void BeginSync() => SyncHistory_Click(this, new RoutedEventArgs());
+
+    public void Activate()
+    {
+        RefreshFromLiveDevice();
+        ScrollToTop();
+        LongHistoryChart.Focus();
+    }
+
+    public void RefreshFromLiveDevice()
+    {
+        if (DataContext is not HistoryViewModel history || LiveViewModel is not { } live)
+        {
+            return;
+        }
+
+        history.SelectedDevice = live.SelectedDevice;
+        var state = history.CreatePageState();
+        RefreshHistory(state.Device, state.SelectedRange, state.SyncCursor, state.IsSyncing);
+    }
 
     public void ApplyNarrowLayout(bool useNarrowLayout)
     {
@@ -122,6 +165,50 @@ public partial class HistoryPage : System.Windows.Controls.UserControl
             : Metrics.Describe(device.History, selectedRange, now, MetricKind.Co2);
 
         RefreshDayAtAGlance(device, now);
+    }
+
+    private void ExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not HistoryViewModel history)
+        {
+            return;
+        }
+
+        var owner = Window.GetWindow(this);
+        if (history.SelectedDevice is not { History.Count: > 0 })
+        {
+            MessageBox.Show(owner, "There are no readings to export yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var export = history.CreateCsvExport(history.SelectedRange, DateTime.Now);
+        if (export is null)
+        {
+            MessageBox.Show(owner, "There are no readings in the visible range yet.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV file (*.csv)|*.csv",
+            DefaultExt = ".csv",
+            AddExtension = true,
+            FileName = export.FileName,
+        };
+        if (dialog.ShowDialog(owner) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            File.WriteAllText(dialog.FileName, export.Contents);
+            CsvExported?.Invoke(Path.GetFileName(dialog.FileName));
+        }
+        catch (IOException ex)
+        {
+            MessageBox.Show(owner, ex.Message, "Export CSV", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void RefreshDayAtAGlance(Aranet4Device? device, DateTime now)
@@ -262,5 +349,67 @@ public partial class HistoryPage : System.Windows.Controls.UserControl
                 ? $"{(int)age.TotalHours} h ago"
                 : $"{(int)age.TotalDays} d ago";
 
-    private void SyncHistory_Click(object sender, RoutedEventArgs e) => SyncHistoryRequested?.Invoke(sender, e);
+    private async void SyncHistory_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not HistoryViewModel history
+            || LiveViewModel is not { } live
+            || history.IsSyncing
+            || live.SelectedDevice is not { } device)
+        {
+            return;
+        }
+
+        if (!live.TryGetBluetoothAddress(device, out var bluetoothAddress))
+        {
+            SyncProblemRequested?.Invoke(
+                "Sensor unavailable – move closer and try again.",
+                "Could not identify the selected sensor.");
+            return;
+        }
+
+        SyncStarted?.Invoke();
+        try
+        {
+            var result = await history.SyncAsync(device, bluetoothAddress);
+            if (result is null)
+            {
+                SyncToastRequested?.Invoke("Sync cancelled");
+                return;
+            }
+
+            SyncCompleted?.Invoke(device);
+            var message = history.DescribeSyncOutcome(result);
+            if (message.Kind == HistorySyncMessageKind.Incomplete)
+            {
+                SyncProblemRequested?.Invoke(message.Title, message.Details ?? string.Empty);
+            }
+            else
+            {
+                SyncToastRequested?.Invoke(message.Title);
+            }
+        }
+        catch (Exception exception)
+        {
+            switch (history.ClassifySyncFailure(exception))
+            {
+                case HistorySyncFailure.SensorUnavailable:
+                    SyncProblemRequested?.Invoke("Sensor unavailable – move closer and try again.", exception.Message);
+                    break;
+                case HistorySyncFailure.LocalStorage:
+                    SyncProblemRequested?.Invoke(
+                        "Sync failed: History could not be saved locally. Check available disk space and try again.",
+                        exception.Message);
+                    break;
+                default:
+                    SyncProblemRequested?.Invoke(
+                        "Sync failed: The history transfer did not complete. Move closer to the sensor and try again.",
+                        exception.Message);
+                    break;
+            }
+        }
+        finally
+        {
+            SyncFinished?.Invoke();
+        }
+    }
 }

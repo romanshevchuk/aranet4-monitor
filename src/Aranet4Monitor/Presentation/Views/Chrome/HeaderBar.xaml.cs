@@ -1,16 +1,11 @@
 using System.Windows;
 using System.Windows.Controls;
+using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor.Presentation.Views.Chrome;
 
 public partial class HeaderBar : System.Windows.Controls.UserControl
 {
-    public event EventHandler<RoutedEventArgs>? LiveNavigationRequested;
-
-    public event EventHandler<RoutedEventArgs>? HistoryNavigationRequested;
-
-    public event EventHandler<RoutedEventArgs>? SettingsNavigationRequested;
-
     public event EventHandler<RoutedEventArgs>? DeviceChipRequested;
 
     public event EventHandler<RoutedEventArgs>? MinimizeRequested;
@@ -28,20 +23,26 @@ public partial class HeaderBar : System.Windows.Controls.UserControl
 
     public TextBlock ChipNameText => ChipNameControl;
 
+    public void SetDeviceName(string name) => ChipNameText.Text = name;
+
     public Button LiveNavigationButton => LiveNavigationControl;
 
     public Button HistoryNavigationButton => HistoryNavigationControl;
 
     public Button SettingsNavigationButton => SettingsNavigationControl;
 
-    private void LiveNavigation_Click(object sender, RoutedEventArgs e) =>
-        LiveNavigationRequested?.Invoke(this, e);
-
-    private void HistoryNavigation_Click(object sender, RoutedEventArgs e) =>
-        HistoryNavigationRequested?.Invoke(this, e);
-
-    private void SettingsNavigation_Click(object sender, RoutedEventArgs e) =>
-        SettingsNavigationRequested?.Invoke(this, e);
+    public void SelectPage(AppPage page)
+    {
+        LiveNavigationButton.Style = (Style)FindResource(page == AppPage.Live
+            ? "HeaderNavigationSelectedButton"
+            : "HeaderNavigationButton");
+        HistoryNavigationButton.Style = (Style)FindResource(page == AppPage.History
+            ? "HeaderNavigationSelectedButton"
+            : "HeaderNavigationButton");
+        SettingsNavigationButton.Style = (Style)FindResource(page == AppPage.Settings
+            ? "HeaderNavigationSelectedButton"
+            : "HeaderNavigationButton");
+    }
 
     private void DeviceChip_Click(object sender, RoutedEventArgs e) =>
         DeviceChipRequested?.Invoke(this, e);
