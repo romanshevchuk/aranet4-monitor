@@ -1,4 +1,3 @@
-using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Presentation.ViewModels;
 
 namespace Aranet4Monitor.Presentation.Monitoring;

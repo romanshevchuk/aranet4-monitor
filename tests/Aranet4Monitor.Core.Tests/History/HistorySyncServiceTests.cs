@@ -1,4 +1,3 @@
-using Aranet4Monitor.Domain.Measurements;
 using Xunit;
 
 namespace Aranet4Monitor.Core.Tests.History;

@@ -1,8 +1,5 @@
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Threading;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Presentation.Monitoring;

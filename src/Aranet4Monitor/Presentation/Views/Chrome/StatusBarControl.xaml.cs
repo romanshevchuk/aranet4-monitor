@@ -1,8 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using Aranet4Monitor.Models;
-using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Presentation.ViewModels;
 
 namespace Aranet4Monitor.Presentation.Views.Chrome;

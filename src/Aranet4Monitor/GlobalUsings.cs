@@ -16,5 +16,4 @@ global using MessageBox = System.Windows.MessageBox;
 global using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 global using Pen = System.Windows.Media.Pen;
 global using Point = System.Windows.Point;
-global using RadioButton = System.Windows.Controls.RadioButton;
 global using Size = System.Windows.Size;

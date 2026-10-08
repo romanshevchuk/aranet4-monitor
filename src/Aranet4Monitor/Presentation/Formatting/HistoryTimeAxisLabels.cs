@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using Aranet4Monitor.Presentation.Controls;
 

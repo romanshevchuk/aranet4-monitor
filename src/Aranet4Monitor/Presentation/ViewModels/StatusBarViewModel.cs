@@ -1,6 +1,4 @@
 using System.Windows;
-using System.Windows.Media;
-using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor.Presentation.ViewModels;
 

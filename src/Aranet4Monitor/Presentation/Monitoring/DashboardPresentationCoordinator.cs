@@ -1,6 +1,4 @@
 using System.Windows;
-using Aranet4Monitor.Application.Monitoring;
-using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Presentation.Tray;
 using Aranet4Monitor.Presentation.ViewModels;
 using Aranet4Monitor.Presentation.Views.Chrome;

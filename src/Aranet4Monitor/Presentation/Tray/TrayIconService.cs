@@ -1,5 +1,4 @@
 using Aranet4Monitor.Alerts;
-using Aranet4Monitor.Application.Alerts;
 
 namespace Aranet4Monitor.Presentation.Tray;
 

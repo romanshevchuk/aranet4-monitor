@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Aranet4Monitor.Domain.Measurements;
 
 namespace Aranet4Monitor.Models;
 

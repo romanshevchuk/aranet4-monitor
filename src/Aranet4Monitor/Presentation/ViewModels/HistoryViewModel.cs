@@ -1,9 +1,6 @@
 using System.Globalization;
 using System.Text;
-using Aranet4Monitor.Application.History;
 using Aranet4Monitor.Application.Monitoring;
-using Aranet4Monitor.Domain.Measurements;
-using Aranet4Monitor.Models;
 
 namespace Aranet4Monitor.Presentation.ViewModels;
 

@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows.Threading;
-using Aranet4Monitor.Models;
 using Aranet4Monitor.Presentation.ViewModels;
 using Aranet4Monitor.Presentation.Views.Chrome;
 using Aranet4Monitor.Presentation.Views.History;

@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
-using Aranet4Monitor.Abstractions;
-using Aranet4Monitor.Protocol.Aranet4;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Storage.Streams;

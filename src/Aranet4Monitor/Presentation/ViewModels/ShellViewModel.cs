@@ -1,7 +1,4 @@
-using Aranet4Monitor.Abstractions;
-using Aranet4Monitor.Application.History;
 using Aranet4Monitor.Application.Monitoring;
-using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor.Presentation.ViewModels;
 

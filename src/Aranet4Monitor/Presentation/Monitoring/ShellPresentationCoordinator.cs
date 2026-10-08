@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
 using Aranet4Monitor.Presentation.ViewModels;
 using Aranet4Monitor.Presentation.Views;
 using Aranet4Monitor.Presentation.Views.Chrome;

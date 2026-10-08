@@ -1,5 +1,4 @@
 using System.Windows.Threading;
-using Aranet4Monitor.Abstractions;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Presentation.ViewModels;
 using Aranet4Monitor.Storage;

@@ -1,5 +1,3 @@
-using Aranet4Monitor.Abstractions;
-
 namespace Aranet4Monitor.Storage;
 
 public sealed class JsonHistoryStore : IHistoryStore

@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 
 namespace Aranet4Monitor.Presentation.Views.History;
 

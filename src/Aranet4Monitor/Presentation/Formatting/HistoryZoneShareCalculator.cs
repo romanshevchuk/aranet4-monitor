@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Aranet4Monitor.Domain.AirQuality;
-using Aranet4Monitor.Domain.Measurements;
-
 namespace Aranet4Monitor.Presentation.Formatting;
 
 public readonly record struct HistoryZoneShares(TimeSpan Good, TimeSpan Elevated, TimeSpan High)

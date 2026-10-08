@@ -1,10 +1,6 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using Aranet4Monitor.Domain.AirQuality;
-using Aranet4Monitor.Domain.Measurements;
-using Aranet4Monitor.Models;
 using Aranet4Monitor.Presentation.Controls;
 using Aranet4Monitor.Presentation.Formatting;
 using Aranet4Monitor.Presentation.ViewModels;

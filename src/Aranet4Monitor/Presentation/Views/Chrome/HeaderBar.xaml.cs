@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using Aranet4Monitor.Presentation;
 
 namespace Aranet4Monitor.Presentation.Views.Chrome;
 

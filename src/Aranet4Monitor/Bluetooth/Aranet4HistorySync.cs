@@ -1,8 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Threading.Channels;
-using Aranet4Monitor.Abstractions;
-using Aranet4Monitor.Application.History;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;

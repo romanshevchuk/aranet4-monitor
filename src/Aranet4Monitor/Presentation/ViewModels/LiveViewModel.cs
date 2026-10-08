@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using Aranet4Monitor.Abstractions;
 using Aranet4Monitor.Application.Monitoring;
 using Aranet4Monitor.Storage;
 namespace Aranet4Monitor.Presentation.ViewModels;

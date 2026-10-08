@@ -1,6 +1,4 @@
-using System;
 using Aranet4Monitor.Application.Monitoring;
-using Aranet4Monitor.Presentation;
 using Aranet4Monitor.Storage;
 
 namespace Aranet4Monitor.Presentation.ViewModels;

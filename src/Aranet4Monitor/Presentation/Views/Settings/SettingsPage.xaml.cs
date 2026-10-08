@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using Aranet4Monitor.Presentation.ViewModels;
 
 namespace Aranet4Monitor.Presentation.Views;
