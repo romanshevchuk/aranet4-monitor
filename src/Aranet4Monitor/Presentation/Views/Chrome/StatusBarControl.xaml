@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Aranet4Monitor.Presentation.Controls">
     <Border Style="{StaticResource StatusStrip}"
-            Padding="22,8">
+            Padding="22,10">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>

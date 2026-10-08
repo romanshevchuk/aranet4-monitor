@@ -36,6 +36,8 @@ public sealed class MetricChart : FrameworkElement
     private static Pen GridPen => ThemePalette.Grid;
     private static Pen TooltipPen => ThemePalette.Grid;
     private static Pen ThresholdPen => ThemePalette.Threshold;
+    private static Brush LabelPlate => Solid(ThemeService.GetColor("SurfaceColor"), 224);
+    private readonly List<(FormattedText Text, Point Origin)> pendingLabels = [];
     private static Pen CursorPen => ThemePalette.Threshold;
     private static Pen FocusPen => ThemePalette.Focus;
 
@@ -213,6 +215,7 @@ public sealed class MetricChart : FrameworkElement
         var kind = Metric;
         var accent = MetricColors.Accent(kind);
         plot = new Rect(52, 8, w - 52 - 16, h - 8 - 28);
+        pendingLabels.Clear();
         var pts = (Samples ?? Array.Empty<Co2Sample>())
             .Select(sample => (sample.Time, Value: Metrics.Value(sample, kind, TemperatureDisplayUnit)))
             .Where(p => p.Value.HasValue)
@@ -429,6 +432,7 @@ public sealed class MetricChart : FrameworkElement
         var pen = new Pen(lineBrush, 2.25) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         dc.DrawGeometry(null, pen, line);
         dc.Pop();
+        DrawPendingLabels(dc);
 
         // Latest reading marker, or the hover read-out.
         if (hover == -1)
@@ -477,7 +481,19 @@ public sealed class MetricChart : FrameworkElement
             labelY = yPosition + 3; // line sits at the top edge (e.g. "High · 1,400" with axis max 1,400): draw below it
         }
 
-        dc.DrawText(text, new Point(plot.Left + 6, labelY));
+        pendingLabels.Add((text, new Point(plot.Left + 6, labelY)));
+    }
+
+    private void DrawPendingLabels(DrawingContext dc)
+    {
+        foreach (var (text, origin) in pendingLabels)
+        {
+            var plate = new Rect(origin.X - 3, origin.Y - 1, text.Width + 6, text.Height + 2);
+            dc.DrawRoundedRectangle(LabelPlate, null, plate, 3, 3);
+            dc.DrawText(text, origin);
+        }
+
+        pendingLabels.Clear();
     }
 
     private void DrawHumidityComfort(DrawingContext dc, Func<double, double> y, double from, double to)
@@ -498,7 +514,7 @@ public sealed class MetricChart : FrameworkElement
 
         var text = Text($"Comfortable · {from:0}-{to:0}%", 11, MutedText);
         var labelY = Math.Max(plot.Top + 3, top + 3);
-        dc.DrawText(text, new Point(plot.Left + 6, labelY));
+        pendingLabels.Add((text, new Point(plot.Left + 6, labelY)));
     }
 
     private void DrawTimeAxis(DrawingContext dc, Func<DateTime, double> x, DateTime t0, DateTime t1)

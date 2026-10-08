@@ -4,9 +4,8 @@
              xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
              xmlns:presentation="clr-namespace:Aranet4Monitor.Presentation">
     <Border Padding="22,17"
-            Background="{DynamicResource Surface}"
-            BorderBrush="{DynamicResource Border}"
-            BorderThickness="0,0,0,1">
+            Background="{DynamicResource AppBackground}"
+            BorderThickness="0">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>

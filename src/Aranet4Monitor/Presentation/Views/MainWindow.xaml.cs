@@ -50,6 +50,9 @@ public partial class MainWindow : Window
         Shell = new ShellViewModel(services.HistorySyncService, sensorMonitor, sensorSource: sensorSource);
 
         InitializeComponent();
+#if DEBUG
+        PreviewKeyDown += DemoStates_PreviewKeyDown;
+#endif
         trayWindow = new TrayWindowCoordinator(this, preferences, preferencesStore, notifications);
         dashboard = new DashboardPresentationCoordinator(
             Live,
@@ -246,4 +249,32 @@ public partial class MainWindow : Window
 
     private void DismissSyncProblem_Click(object sender, RoutedEventArgs e) => StatusBar.HideSyncProblem();
 
+#if DEBUG
+    // Ctrl+Shift+1/2/3 force Good/Elevated/High CO₂, Ctrl+Shift+0 forces "no reading".
+    // Turn off "Listen for live readings" first, otherwise the next real packet overwrites the value.
+    private void DemoStates_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (System.Windows.Input.Keyboard.Modifiers != (System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift))
+        {
+            return;
+        }
+
+        int? ppm = e.Key switch
+        {
+            System.Windows.Input.Key.D1 => 650,
+            System.Windows.Input.Key.D2 => 1150,
+            System.Windows.Input.Key.D3 => 1750,
+            System.Windows.Input.Key.D0 => 0,
+            _ => null,
+        };
+        if (ppm is null || Live.SelectedDevice is not { } device)
+        {
+            return;
+        }
+
+        device.Co2Ppm = ppm.Value;
+        dashboard.ShowDetails(device);
+        e.Handled = true;
+    }
+#endif
 }

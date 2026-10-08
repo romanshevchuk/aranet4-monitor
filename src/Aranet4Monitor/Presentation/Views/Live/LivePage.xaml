@@ -76,7 +76,7 @@
                                            Text="ppm CO₂"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{StaticResource FontSizeEmphasis}"
-                                           Margin="2,0,0,0"
+                                           Margin="2,0,0,8"
                                            Visibility="Collapsed"/>
                             </StackPanel>
                             <TextBlock x:Name="TrendTextControl"
@@ -352,11 +352,7 @@
                                      Margin="0,5,8,0"
                                      VerticalAlignment="Top"/>
                             <StackPanel Grid.Column="1">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="ChartContextTitleTextControl"
                                                Text="Outdoor reference · about 420 ppm"
                                                Foreground="{DynamicResource Ink}"
@@ -364,12 +360,11 @@
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"/>
                                     <TextBlock x:Name="ChartContextInfoControl"
-                                               Grid.Column="1"
                                                Text="ⓘ"
                                                Foreground="{DynamicResource TextSecondary}"
                                                FontSize="{StaticResource FontSizeBody}"
-                                               Margin="{StaticResource GapSmallLeading}"
-                                               VerticalAlignment="Top"
+                                               Margin="8,0,0,0"
+                                               VerticalAlignment="Center"
                                                Cursor="Help"
                                                ToolTipService.ShowDuration="12000"
                                                AutomationProperties.Name="About CO₂ readings">
@@ -378,8 +373,8 @@
                                                        MaxWidth="260"
                                                        TextWrapping="Wrap"/>
                                         </TextBlock.ToolTip>
-                                                </TextBlock>
-                                </Grid>
+                                    </TextBlock>
+                                </StackPanel>
                                 <Grid Margin="0,2,0,0">
                                     <TextBlock x:Name="ChartContextTextControl"
                                                Text="CO₂ is a ventilation signal; it does not measure particles or VOCs."

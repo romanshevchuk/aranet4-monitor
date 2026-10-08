@@ -19,19 +19,31 @@ public static class Co2Stats
 
         var latest = co2Samples[^1];
 
+        var maxAge = TimeSpan.FromMinutes(60);
         Co2Sample? reference = null;
         for (var i = co2Samples.Length - 2; i >= 0; i--)
         {
-            if (latest.Time - co2Samples[i].Time >= TimeSpan.FromMinutes(30))
+            var age = latest.Time - co2Samples[i].Time;
+            if (age > maxAge)
+            {
+                break;
+            }
+
+            if (age >= TimeSpan.FromMinutes(30))
             {
                 reference = co2Samples[i];
                 break;
             }
         }
-        // Not 30 minutes of data yet: fall back to the oldest sample if it's at least 10 minutes back.
-        if (reference is null && latest.Time - co2Samples[0].Time >= TimeSpan.FromMinutes(10))
+
+        // Not 30 minutes of data yet: use the oldest sample inside the last hour if it is at least 10 minutes back.
+        if (reference is null)
         {
-            reference = co2Samples[0];
+            var oldestRecent = co2Samples.FirstOrDefault(sample => latest.Time - sample.Time <= maxAge);
+            if (oldestRecent is not null && latest.Time - oldestRecent.Time >= TimeSpan.FromMinutes(10))
+            {
+                reference = oldestRecent;
+            }
         }
 
         if (reference is null)
@@ -40,6 +52,7 @@ public static class Co2Stats
         }
 
         var delta = latest.Ppm - reference.Ppm;
+
         var minutes = (int)Math.Round((latest.Time - reference.Time).TotalMinutes);
         return delta switch
         {

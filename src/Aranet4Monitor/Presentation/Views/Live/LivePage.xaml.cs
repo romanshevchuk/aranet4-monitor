@@ -4,6 +4,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Aranet4Monitor.Presentation.Controls;
+using Aranet4Monitor.Presentation.Formatting;
 
 namespace Aranet4Monitor.Presentation.Views.Live;
 
@@ -382,8 +383,8 @@ public partial class LivePage : System.Windows.Controls.UserControl
             return;
         }
 
-        var belowThreshold = samples.Count(sample => sample.Ppm < 1000);
-        Co2DayShareText.Text = $"{Math.Round(belowThreshold * 100.0 / samples.Length):0}%";
+        var zoneShares = HistoryZoneShareCalculator.Calculate(samples, now);
+        Co2DayShareText.Text = $"{zoneShares.GoodPercent}%";
         Co2DayShareDetailText.Text = "Good · 24 h";
 
         var peak = samples.MaxBy(sample => sample.Ppm)!;

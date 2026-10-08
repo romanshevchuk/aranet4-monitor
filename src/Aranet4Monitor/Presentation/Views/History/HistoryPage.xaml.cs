@@ -146,7 +146,7 @@ public partial class HistoryPage : System.Windows.Controls.UserControl
             ? device is null
                 ? "Select a sensor to explore its saved readings."
                 : "No readings in the last 24 hours"
-            : DescribeDayQuality(Share(recentCo2.Count(sample => sample.Ppm < 1_000), recentCo2.Length));
+            : DescribeDayQuality(HistoryZoneShareCalculator.Calculate(recentCo2, now).GoodPercent);
         HistoryLastSyncText.Text = device is null
             ? "Not synced yet"
             : syncCursor is { } syncedThrough
