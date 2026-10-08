@@ -225,6 +225,7 @@ public partial class LivePage : System.Windows.Controls.UserControl
         Co2CaptionText.Text = "Waiting for your first live reading, or sync history to download stored readings.";
         Co2CaptionText.Visibility = Visibility.Visible;
         Co2AdviceText.Visibility = Visibility.Collapsed;
+        Co2ExplanationText.Visibility = Visibility.Collapsed;
         TrendText.Visibility = Visibility.Collapsed;
         UpdateCo2DaySummary(null, now);
         TemperatureText.Text = HumidityText.Text = PressureText.Text = "—";
@@ -254,6 +255,7 @@ public partial class LivePage : System.Windows.Controls.UserControl
             Co2CaptionText.Text = "Waiting for your first live reading, or sync history to download stored readings.";
             Co2CaptionText.Visibility = Visibility.Visible;
             Co2AdviceText.Visibility = Visibility.Collapsed;
+            Co2ExplanationText.Visibility = Visibility.Collapsed;
             TrendText.Visibility = Visibility.Collapsed;
             ShowQuality(0);
             AutomationProperties.SetName(Co2Tab, "CO₂, no reading, show history");
@@ -499,6 +501,7 @@ public partial class LivePage : System.Windows.Controls.UserControl
         {
             Co2Tab.Foreground = ThemeService.GetBrush("Border");
             QualityBadge.Visibility = Visibility.Collapsed;
+            Co2ExplanationText.Visibility = Visibility.Collapsed;
             GaugeMarkerGrid.Visibility = Visibility.Collapsed;
             return;
         }
@@ -529,10 +532,21 @@ public partial class LivePage : System.Windows.Controls.UserControl
             _ => "Co2PoorStroke",
         });
         QualityIcon.Fill = new SolidColorBrush(statusColor);
-        QualityText.Foreground = new SolidColorBrush(statusColor);
+        QualityText.Foreground = ThemeService.GetBrush(level switch
+        {
+            Co2Level.Good => "Co2GoodText",
+            Co2Level.Fair => "Co2FairText",
+            _ => "Co2PoorText",
+        });
         QualityBadge.Visibility = Visibility.Visible;
+        Co2ExplanationText.Text = ppm < Co2Quality.FairFromPpm
+            ? "CO₂ is in a comfortable range."
+            : ppm < Co2Quality.PoorFromPpm
+                ? "CO₂ is above the ideal indoor level."
+                : "CO₂ is well above the recommended indoor level.";
+        Co2ExplanationText.Visibility = Visibility.Visible;
         Co2AdviceText.Text = ppm < Co2Quality.FairFromPpm
-            ? "Comfortable. Nothing to do."
+            ? "Nothing to do."
             : ppm < Co2Quality.PoorFromPpm
                 ? "Open a window for about 10 minutes."
                 : "Open a window or door when you can.";

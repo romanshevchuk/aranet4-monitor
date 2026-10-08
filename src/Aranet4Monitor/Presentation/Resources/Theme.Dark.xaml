@@ -34,6 +34,13 @@
     <Color x:Key="Co2PoorZoneColor">#F0786B</Color>
     <Color x:Key="DisabledColor">#5C6B77</Color>
 
+    <Color x:Key="Co2GoodTextColor">#45D99A</Color>
+    <Color x:Key="Co2FairTextColor">#F5B94F</Color>
+    <Color x:Key="Co2PoorTextColor">#F0786B</Color>
+    <SolidColorBrush x:Key="Co2GoodText" Color="{StaticResource Co2GoodTextColor}"/>
+    <SolidColorBrush x:Key="Co2FairText" Color="{StaticResource Co2FairTextColor}"/>
+    <SolidColorBrush x:Key="Co2PoorText" Color="{StaticResource Co2PoorTextColor}"/>
+    
     <SolidColorBrush x:Key="TextPrimary"
             Color="{StaticResource TextPrimaryColor}"/>
     <SolidColorBrush x:Key="TextSecondary"

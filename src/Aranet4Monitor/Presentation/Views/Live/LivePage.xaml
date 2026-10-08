@@ -91,11 +91,17 @@
                                        FontSize="{StaticResource FontSizeBody}"
                                        Margin="2,0,0,0"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock x:Name="Co2AdviceTextControl"
+                            <TextBlock x:Name="Co2ExplanationText"
                                        FontSize="{StaticResource FontSizeBody}"
-                                       FontWeight="Normal"
                                        Foreground="{DynamicResource TextSecondary}"
                                        Margin="2,7,0,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="Collapsed"/>
+                            <TextBlock x:Name="Co2AdviceTextControl"
+                                       FontSize="{StaticResource FontSizeBody}"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       Margin="2,3,0,0"
                                        Visibility="Visible"/>
 
                             <!-- Gauge: 400 - 2000 ppm -->

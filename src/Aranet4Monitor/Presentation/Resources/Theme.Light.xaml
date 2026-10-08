@@ -34,6 +34,14 @@
         <Color x:Key="Co2FairZoneColor">#D7952F</Color>
         <Color x:Key="Co2PoorZoneColor">#C9564E</Color>
         <Color x:Key="DisabledColor">#9AA8B0</Color>
+    
+        <!-- Darker variants of the zone colours, readable as small text on white. -->
+        <Color x:Key="Co2GoodTextColor">#16865F</Color>
+        <Color x:Key="Co2FairTextColor">#A8700F</Color>
+        <Color x:Key="Co2PoorTextColor">#B13F38</Color>
+        <SolidColorBrush x:Key="Co2GoodText" Color="{StaticResource Co2GoodTextColor}"/>
+        <SolidColorBrush x:Key="Co2FairText" Color="{StaticResource Co2FairTextColor}"/>
+        <SolidColorBrush x:Key="Co2PoorText" Color="{StaticResource Co2PoorTextColor}"/>
 
         <SolidColorBrush x:Key="TextPrimary"
                          Color="{StaticResource TextPrimaryColor}"/>
